@@ -24,16 +24,16 @@ It is open source under the MIT license.
 
 ## Features
 
-- 📡 Discover nearby devices automatically
-- ⚡ WiFi Direct between Android devices (~250 Mbps)
-- 🐢 Bluetooth for desktop and cross-platform transfers (~3 Mbps)
-- 📴 Fully offline transfers — a router is never involved
-- 📄 Send any file, or plain text
-- 📋 Clipboard sync — copy on one device, paste on the other
-- 📊 Real-time transfer progress with accept/reject bottom sheet
-- 📱 Responsive layout: phone, tablet, foldable, desktop window
-- 🌍 English and বাংলা (Bengali)
-- 🌓 Dark mode first
+- Discover nearby devices automatically
+- WiFi Direct between Android devices (~250 Mbps)
+- Bluetooth for desktop and cross-platform transfers (~3 Mbps)
+- Fully offline transfers — a router is never involved
+- Send any file, or plain text
+- Clipboard sync — copy on one device, paste on the other
+- Real-time transfer progress with accept/reject bottom sheet
+- Responsive layout: phone, tablet, foldable, desktop window
+- English and বাংলা (Bengali)
+- Dark mode first
 
 ## How it works
 
@@ -64,8 +64,6 @@ Every [`v*.*.*`](https://github.com/mahimmazidul/throw/releases) tag builds all 
 
 ## Screenshots
 
-<!-- Screenshots go here once the UI lands: phone, tablet, desktop -->
-
 ## Tech stack
 
 | Layer | Choice |
@@ -95,24 +93,21 @@ flutter run
 
 ```
 throw/
-│
-├── .github/               # workflows, issue/PR templates, dependabot, CODEOWNERS
-├── docs/                  # GitHub Pages landing page
-├── android/               # manifest, gradle, proguard
-│
+├── .github/
+├── docs/
+├── android/
 ├── lib/
 │   ├── main.dart
 │   ├── app.dart
-│   ├── core/              # breakpoints, constants, theme, permissions, utils
-│   ├── l10n/              # app_en.arb, app_bn.arb
-│   ├── models/            # device, transfer, payload
-│   ├── services/          # transfer_service (abstract), nearby, bluetooth, factory
-│   ├── providers/         # device, transfer, locale
-│   ├── screens/           # home, discover, transfer, settings
-│   └── widgets/           # adaptive nav, responsive layout, device card, ...
-│
-├── test/                  # unit tests
-├── assets/                # logo, lottie animations
+│   ├── core/
+│   ├── l10n/
+│   ├── models/
+│   ├── services/
+│   ├── providers/
+│   ├── screens/
+│   └── widgets/
+├── test/
+├── assets/
 ├── pubspec.yaml
 ├── l10n.yaml
 └── analysis_options.yaml
