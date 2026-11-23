@@ -1,16 +1,17 @@
 /* Throw — landing page
    Mobile first. Breakpoints: 768px, 1024px.
-   Palette: bg #0F0F0F · text #E8E8E8 · secondary #888888
-            accent #7C6AF7 (download link only) · surface #161616 · border #1E1E1E */
+   Palette: bg #14171F · text #E4E8F0 · secondary #98A0B3
+            accent #8B7CF7 (download link only) · surface #1B1F29 · border #282D3A
+   Soothing blue-slate base — tinted, never pure black or white. */
 
 :root {
-  --bg: #0F0F0F;
-  --text: #E8E8E8;
-  --secondary: #888888;
-  --accent: #7C6AF7;
-  --surface: #161616;
-  --border: #1E1E1E;
-  --nav-border: #1a1a1a;
+  --bg: #14171F;
+  --text: #E4E8F0;
+  --secondary: #98A0B3;
+  --accent: #8B7CF7;
+  --surface: #1B1F29;
+  --border: #282D3A;
+  --nav-border: #222632;
 }
 
 * {
@@ -55,7 +56,7 @@ a:focus-visible {
   align-items: center;
   justify-content: space-between;
   padding: 14px 20px;
-  background: rgba(15, 15, 15, 0.82);
+  background: rgba(20, 23, 31, 0.82);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--nav-border);
@@ -167,6 +168,65 @@ h2 {
   border-top: 1px solid var(--border);
 }
 
+/* ── FAQ ─────────────────────────────────────── */
+
+.faq details {
+  border-bottom: 1px solid var(--border);
+}
+
+.faq details:first-of-type {
+  border-top: 1px solid var(--border);
+}
+
+.faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.4;
+  cursor: pointer;
+  list-style: none;
+  transition: opacity 150ms ease;
+}
+
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq summary:hover {
+  opacity: 0.72;
+}
+
+.faq summary:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.faq summary::after {
+  content: "+";
+  color: var(--secondary);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.faq details[open] summary::after {
+  content: "\2212";
+}
+
+.faq details p {
+  color: var(--secondary);
+  font-size: 16px;
+  line-height: 1.6;
+  max-width: 640px;
+  padding: 0 0 18px;
+}
+
 /* ── Download table ──────────────────────────── */
 
 .table-wrap {
@@ -205,7 +265,7 @@ td a {
   display: inline-block;
   text-decoration: underline;
   text-underline-offset: 3px;
-  text-decoration-color: #333;
+  text-decoration-color: #3a4152;
   transition: transform 150ms ease, text-decoration-color 150ms ease;
 }
 
@@ -267,6 +327,11 @@ td a:hover {
     padding: 48px 0;
   }
 
+  .faq summary {
+    font-size: 17px;
+    padding: 18px 0;
+  }
+
   .footer {
     padding: 32px 32px 56px;
   }
@@ -306,14 +371,16 @@ td a:hover {
   .nav-link,
   .download-link,
   .footer a,
-  td a {
+  td a,
+  .faq summary {
     transition: none;
   }
 
   .nav-link:hover,
   .download-link:hover,
   .footer a:hover,
-  td a:hover {
+  td a:hover,
+  .faq summary:hover {
     transform: none;
   }
 }
