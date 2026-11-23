@@ -19,7 +19,7 @@
 ## What is Throw?
 
 Throw is an offline file and text sharing app for Android, Windows, and Linux.
-Files move directly between devices over WiFi Direct (Android↔Android) or Bluetooth (desktop) — no internet, no server, no router.
+Files move directly between devices over WiFi Direct (Android↔Android) or Bluetooth (desktop). The transfer never passes through a server.
 It is open source under the MIT license.
 
 ## Features
@@ -27,7 +27,7 @@ It is open source under the MIT license.
 - 📡 Discover nearby devices automatically
 - ⚡ WiFi Direct between Android devices (~250 Mbps)
 - 🐢 Bluetooth for desktop and cross-platform transfers (~3 Mbps)
-- 📴 Works fully offline — no internet, no router, ever
+- 📴 Fully offline transfers — a router is never involved
 - 📄 Send any file, or plain text
 - 📋 Clipboard sync — copy on one device, paste on the other
 - 📊 Real-time transfer progress with accept/reject bottom sheet
@@ -96,29 +96,23 @@ flutter run
 ```
 throw/
 │
-├── .github/
-│   ├── workflows/          # ci.yml, cd.yml, pages.yml
-│   ├── ISSUE_TEMPLATE/
-│   ├── pull_request_template.md
-│   ├── dependabot.yml
-│   └── CODEOWNERS
-│
-├── docs/                   # GitHub Pages landing page
-├── android/                # manifest, gradle, proguard
+├── .github/               # workflows, issue/PR templates, dependabot, CODEOWNERS
+├── docs/                  # GitHub Pages landing page
+├── android/               # manifest, gradle, proguard
 │
 ├── lib/
 │   ├── main.dart
 │   ├── app.dart
-│   ├── core/               # breakpoints, constants, theme, permissions, utils
-│   ├── l10n/               # app_en.arb, app_bn.arb
-│   ├── models/             # device, transfer, payload
-│   ├── services/           # transfer_service (abstract), nearby, bluetooth, factory
-│   ├── providers/          # device, transfer, locale
-│   ├── screens/            # home, discover, transfer, settings
-│   └── widgets/            # adaptive nav, responsive layout, device card, ...
+│   ├── core/              # breakpoints, constants, theme, permissions, utils
+│   ├── l10n/              # app_en.arb, app_bn.arb
+│   ├── models/            # device, transfer, payload
+│   ├── services/          # transfer_service (abstract), nearby, bluetooth, factory
+│   ├── providers/         # device, transfer, locale
+│   ├── screens/           # home, discover, transfer, settings
+│   └── widgets/           # adaptive nav, responsive layout, device card, ...
 │
-├── test/                   # unit tests
-├── assets/                 # logo, lottie animations
+├── test/                  # unit tests
+├── assets/                # logo, lottie animations
 ├── pubspec.yaml
 ├── l10n.yaml
 └── analysis_options.yaml
