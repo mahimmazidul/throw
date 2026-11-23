@@ -14,3 +14,16 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Issue templates, PR template, dependabot, CODEOWNERS
 - Community docs
 - App logo and social preview
+- GitHub Pages landing page with FAQ, responsive and zero-JS
+- Soothing blue-slate palette for web and app theme
+- Responsive breakpoints and app constants
+- Material 3 theme with bundled Hind Siliguri (dark first, light ready)
+- English and Bengali localization strings
+- App entry point with offline-safe font loading
+- Icon, splash, and MSIX packaging configuration
+- Android manifest (share sheet included, no INTERNET permission), ProGuard
+  rules, and release signing config
+- Device, payload, transfer, and connection-request models
+- Permission flow for nearby devices and Bluetooth
+- Abstract transfer service and platform factory
+- Nearby service for Android (WiFi Direct via nearby_connections)
