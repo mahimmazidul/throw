@@ -48,3 +48,56 @@ dev_dependencies:
 flutter:
   generate: true # enables flutter gen-l10n
   uses-material-design: true
+
+  # Bundled so the offline app never fetches fonts at runtime.
+  fonts:
+    - family: Hind Siliguri
+      fonts:
+        - asset: assets/fonts/HindSiliguri-Light.ttf
+          weight: 300
+        - asset: assets/fonts/HindSiliguri-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/HindSiliguri-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/HindSiliguri-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/HindSiliguri-Bold.ttf
+          weight: 700
+
+  assets:
+    - assets/logo.png
+    - assets/logo_foreground.png
+    - assets/animations/
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  windows:
+    generate: true
+    image_path: assets/logo.png
+    icon_size: 48
+  linux:
+    generate: true
+    image_path: assets/logo.png
+  image_path: assets/logo.png
+  adaptive_icon_background: "#14171F"
+  adaptive_icon_foreground: assets/logo_foreground.png
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#14171F"
+  image: assets/logo.png
+  android_12:
+    image: assets/logo.png
+    icon_background_color: "#14171F"
+  fullscreen: true
+  android: true
+  ios: false
+  web: false
+
+msix_config:
+  display_name: Throw
+  publisher_display_name: Md. Mazidul Islam Mahim
+  identity_name: com.mahimmazidul.throw
+  publisher: CN=mahimmazidul
+  logo_path: assets/logo.png
