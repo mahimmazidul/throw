@@ -22,7 +22,7 @@ jobs:
           cache-key: >-
             flutter-:os:-:channel:-:version:-:arch:-:hash:
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.pub-cache
