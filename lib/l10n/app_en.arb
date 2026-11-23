@@ -1,0 +1,47 @@
+{
+  "@@locale": "en",
+  "appTitle": "Throw",
+  "tagline": "Send files and text to nearby devices.",
+  "navHome": "Home",
+  "navDiscover": "Discover",
+  "navTransfers": "Transfers",
+  "navSettings": "Settings",
+  "actionSend": "Send",
+  "actionCancel": "Cancel",
+  "actionAccept": "Accept",
+  "actionReject": "Reject",
+  "actionRetry": "Retry",
+  "actionCopy": "Copy",
+  "actionPaste": "Paste",
+  "actionClose": "Close",
+  "stateSearching": "Searching for devices…",
+  "stateNoDevices": "No devices nearby yet.",
+  "stateConnected": "Connected",
+  "stateConnecting": "Connecting…",
+  "stateTransferring": "Transferring…",
+  "stateComplete": "Transfer complete",
+  "stateFailed": "Transfer failed",
+  "stateCancelled": "Cancelled",
+  "stateRejected": "Rejected",
+  "incomingTitle": "Incoming transfer",
+  "incomingFrom": "From {device}",
+  "@incomingFrom": {
+    "description": "Incoming transfer request, name of the sending device",
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "speedWifi": "WiFi Direct · ~250 Mbps",
+  "speedBluetooth": "Bluetooth · ~3 Mbps",
+  "settingsLanguage": "Language",
+  "settingsTheme": "Theme",
+  "settingsDeviceName": "Device name",
+  "settingsAbout": "About",
+  "permissionTitle": "Permissions needed",
+  "permissionBody": "Throw needs nearby device access to find and transfer to devices around you.",
+  "errorBluetoothOff": "Bluetooth is off. Turn it on to discover devices.",
+  "errorLocationOff": "Location services are off. Nearby discovery needs them on Android.",
+  "sendClipboardHint": "Copy something first, then send it."
+}
