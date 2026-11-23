@@ -5,7 +5,6 @@
 # Throw
 
 **Throw anything to anyone nearby.**
-**No internet. No server. Just fast.**
 
 [![GitHub release](https://img.shields.io/github/v/release/mahimmazidul/throw?include_prereleases&sort=semver)](https://github.com/mahimmazidul/throw/releases/latest)
 [![CI](https://github.com/mahimmazidul/throw/actions/workflows/ci.yml/badge.svg)](https://github.com/mahimmazidul/throw/actions/workflows/ci.yml)
