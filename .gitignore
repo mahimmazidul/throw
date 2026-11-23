@@ -1,0 +1,26 @@
+# Secrets — never, ever commit these
+key.properties
+*.jks
+*.keystore
+.env
+.env.*
+token.txt
+
+# Flutter / Dart build artifacts
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+coverage/
+
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+
+# Platform local config
+local.properties
+ios/Pods/
+macos/Pods/

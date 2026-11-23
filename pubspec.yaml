@@ -1,0 +1,50 @@
+name: throw
+description: "Offline file and text sharing — no internet, no server, no router."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.19.0
+
+  # Core transfer stack
+  nearby_connections: ^4.3.0 # Android only (WiFi Direct, ~250 Mbps)
+  flutter_blue_plus: ^1.31.0 # Desktop + Android fallback (Bluetooth, ~3 Mbps)
+  file_picker: ^6.0.0
+  permission_handler: ^11.0.0
+  open_file: ^3.3.2
+  receive_sharing_intent: ^1.8.0 # Android only
+  path_provider: ^2.1.0
+  provider: ^6.1.0
+
+  # UI & animation
+  flutter_animate: ^4.5.0
+  animations: ^2.0.11
+  lottie: ^3.1.0
+  flutter_animate_on_scroll: ^1.0.0
+  skeletonizer: ^1.4.0
+  flutter_slidable: ^3.1.0
+  google_fonts: ^6.2.1
+
+  # Responsive & adaptive
+  flutter_adaptive_scaffold: ^0.1.9 # Google's official adaptive scaffold
+  window_manager: ^0.3.8 # Desktop window control
+  flutter_window_close: ^0.2.2 # Graceful desktop exit
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.0
+  msix: ^3.16.7 # Windows MSIX packaging
+
+flutter:
+  generate: true # enables flutter gen-l10n
+  uses-material-design: true
