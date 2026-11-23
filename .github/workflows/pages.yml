@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'docs/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -28,5 +29,10 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/
+      # deploy-pages queries the artifact registration API immediately; if the
+      # upload hasn't propagated yet it fails with "No artifacts named
+      # github-pages were found". Give the API time to register the upload.
+      - name: Wait for artifact registration
+        run: sleep 20
       - id: deployment
         uses: actions/deploy-pages@v4
