@@ -1,5 +1,5 @@
 name: throw
-description: "Offline file and text sharing — no internet, no server, no router."
+description: "Offline file and text sharing."
 publish_to: "none"
 version: 1.0.0+1
 
