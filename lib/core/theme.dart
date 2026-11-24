@@ -71,7 +71,10 @@ abstract final class ThrowTheme {
       brightness: Brightness.dark,
       colorScheme: scheme,
       scaffoldBackgroundColor: ThrowColors.bg,
-      textTheme: GoogleFonts.hindSiliguriTextTheme(_typeScale()).apply(color: ThrowColors.text),
+      textTheme: GoogleFonts.hindSiliguriTextTheme(_typeScale()).apply(
+        bodyColor: ThrowColors.text,
+        displayColor: ThrowColors.text,
+      ),
       dividerTheme: const DividerThemeData(color: ThrowColors.border, thickness: 1, space: 1),
       cardTheme: CardThemeData(
         color: ThrowColors.surface,
@@ -196,7 +199,10 @@ abstract final class ThrowTheme {
       brightness: Brightness.light,
       colorScheme: scheme,
       scaffoldBackgroundColor: ThrowColors.lightBg,
-      textTheme: GoogleFonts.hindSiliguriTextTheme(_typeScale()).apply(color: ThrowColors.lightText),
+      textTheme: GoogleFonts.hindSiliguriTextTheme(_typeScale()).apply(
+        bodyColor: ThrowColors.lightText,
+        displayColor: ThrowColors.lightText,
+      ),
       dividerTheme: const DividerThemeData(color: ThrowColors.lightBorder, thickness: 1, space: 1),
       cardTheme: CardThemeData(
         color: ThrowColors.lightSurface,
