@@ -62,6 +62,25 @@ falls back to its own storage directory and says so on the receipt instead of
 claiming a location it cannot reach. A second file with the same name is saved
 as `name (1).ext`; nothing is overwritten.
 
+## What sending costs you in storage
+
+Nothing, once the transfer is over.
+
+Choosing a file does not hand Throw your file — both platforms copy it into the
+app's cache first, the Android share sheet into `cacheDir/`, the File Picker into
+`cacheDir/file_picker/`. Throw deletes that copy the moment the transfer that
+needed it ends, whether it completed, failed, was cancelled, or was rejected. A
+copy is only deleted when the last transfer reading it has finished, so sending
+one file to several devices at once cannot pull the file out from under the
+sends still running.
+
+Your original is never touched: only paths inside a cache directory are ever
+registered for deletion.
+
+`Settings → Storage` shows what is currently held and offers to clear it. It
+normally reads "Nothing held". Anything a previous version left behind is
+reclaimed on the next launch.
+
 ## Screenshots
 
 <p align="center">

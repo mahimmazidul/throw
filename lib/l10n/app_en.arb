@@ -359,5 +359,18 @@
   "receivedSubtitle": "Everything that arrived, newest first.",
   "errorGeneric": "Something went wrong. Try again.",
   "errorGenericWithDetail": "Something went wrong. Try again — if it keeps happening, the details have been logged.",
-  "errorShowDetail": "Show details"
+  "errorShowDetail": "Show details",
+  "settingsStorage": "Temporary files",
+  "settingsStorageSection": "Storage",
+  "settingsStorageEmpty": "Nothing held",
+  "settingsStorageInUse": "{size} in temporary copies",
+  "@settingsStorageInUse": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsStorageClear": "Clear",
+  "settingsStorageCleared": "Temporary copies deleted"
 }

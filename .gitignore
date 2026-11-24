@@ -24,3 +24,6 @@ coverage/
 local.properties
 ios/Pods/
 macos/Pods/
+
+# Golden-test failure dumps: generated on every pixel diff, never source.
+test/failures/

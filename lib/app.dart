@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'core/preferences.dart';
+import 'core/temp_files.dart';
 import 'core/theme.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/device_provider.dart';
@@ -15,15 +16,20 @@ import 'screens/transfer_screen.dart';
 import 'widgets/adaptive_nav.dart';
 
 class ThrowApp extends StatelessWidget {
-  const ThrowApp({super.key, this.preferences});
+  const ThrowApp({super.key, this.preferences, this.tempFiles});
 
   /// Injected by `main()` after loading the platform store; `null` keeps an
   /// in-memory store so tests and previews run without plugins.
   final AppPreferences? preferences;
 
+  /// Owns deletion of temporary copies. Injected so tests can point it at a
+  /// temp directory instead of the real cache.
+  final TempFileRegistry? tempFiles;
+
   @override
   Widget build(BuildContext context) {
     final prefs = preferences ?? AppPreferences.inMemory();
+    final temp = tempFiles ?? TempFileRegistry();
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
@@ -31,9 +37,12 @@ class ThrowApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => DeviceProvider(preferences: prefs),
         ),
-        ChangeNotifierProvider(create: (_) => TransferProvider()),
+        Provider<TempFileRegistry>.value(value: temp),
         ChangeNotifierProvider(
-            create: (_) => ShareInboxProvider()..initialize()),
+          create: (_) => TransferProvider(tempFiles: temp),
+        ),
+        ChangeNotifierProvider(
+            create: (_) => ShareInboxProvider(tempFiles: temp)..initialize()),
       ],
       child: Consumer<LocaleProvider>(
         builder: (context, localeProvider, _) {

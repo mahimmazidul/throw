@@ -581,4 +581,24 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get errorShowDetail => 'বিস্তারিত দেখুন';
+
+  @override
+  String get settingsStorage => 'সাময়িক ফাইল';
+
+  @override
+  String get settingsStorageSection => 'স্টোরেজ';
+
+  @override
+  String get settingsStorageEmpty => 'কিছু রাখা নেই';
+
+  @override
+  String settingsStorageInUse(String size) {
+    return '$size সাময়িক কপিতে আছে';
+  }
+
+  @override
+  String get settingsStorageClear => 'মুছুন';
+
+  @override
+  String get settingsStorageCleared => 'সাময়িক কপি মুছে ফেলা হয়েছে';
 }

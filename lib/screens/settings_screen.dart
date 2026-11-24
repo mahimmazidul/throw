@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../core/constants.dart';
 import '../core/motion.dart';
+import '../core/temp_files.dart';
 import '../core/theme.dart';
 import '../core/utils.dart';
 import '../l10n/app_localizations.dart';
@@ -16,6 +17,7 @@ import '../providers/locale_provider.dart';
 import '../widgets/entrance.dart';
 import '../widgets/panel.dart';
 import '../widgets/screen_header.dart';
+import '../widgets/storage_row.dart';
 import 'about_screen.dart';
 
 /// Settings: three flat sections on the canvas — this device, appearance,
@@ -253,6 +255,16 @@ class SettingsScreen extends StatelessWidget {
                         onTap: () => localeProvider.setThemeMode(
                           isDark ? ThemeMode.light : ThemeMode.dark,
                         ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppConstants.space5),
+                  Section(
+                    header: l10n.settingsStorageSection,
+                    children: [
+                      Provider<TempFileRegistry>.value(
+                        value: context.read<TempFileRegistry>(),
+                        child: const StorageRow(),
                       ),
                     ],
                   ),

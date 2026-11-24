@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
+import '../core/temp_files.dart';
 import '../models/app_error.dart';
 import '../models/device_model.dart';
 import '../models/payload_model.dart';
@@ -18,16 +19,24 @@ import '../services/transfer_service_factory.dart';
 /// the file going to the other two, and the UI shows which failed.
 class TransferProvider extends ChangeNotifier {
   final TransferService _service;
+  final TempFileRegistry _tempFiles;
 
   final Map<String, TransferModel> _transfersMap = {};
   final List<PayloadModel> _receivedPayloads = [];
   AppError? _error;
 
+  /// Cache copies currently being read, with the number of live sends using
+  /// each. Sending one file to three devices must not let the first device to
+  /// fail delete the bytes the other two are still streaming, so a copy is
+  /// only deleted when its count reaches zero.
+  final Map<String, int> _leases = {};
+
   StreamSubscription<TransferModel>? _transfersSub;
   StreamSubscription<PayloadModel>? _payloadsSub;
 
-  TransferProvider({TransferService? service})
-      : _service = service ?? TransferServiceFactory.instance {
+  TransferProvider({TransferService? service, TempFileRegistry? tempFiles})
+      : _service = service ?? TransferServiceFactory.instance,
+        _tempFiles = tempFiles ?? TempFileRegistry() {
     _transfersSub = _service.transfers.listen((transfer) {
       _transfersMap[transfer.id] = transfer;
       notifyListeners();
@@ -87,12 +96,20 @@ class TransferProvider extends ChangeNotifier {
     required int sizeBytes,
   }) {
     return _sendOne(target, () async {
-      await _service.sendFile(
-        endpointId: target.id,
-        file: File(filePath),
-        displayName: fileName,
-        sizeBytes: sizeBytes,
-      );
+      final leased = await _lease(filePath);
+      try {
+        await _service.sendFile(
+          endpointId: target.id,
+          file: File(filePath),
+          displayName: fileName,
+          sizeBytes: sizeBytes,
+        );
+      } finally {
+        // Terminal whatever happened: the bytes were either all sent, or the
+        // transfer failed and the copy is dead weight. Failure used to leak the
+        // whole file; this is the line that stops it.
+        if (leased) await _unlease(filePath);
+      }
     });
   }
 
@@ -141,6 +158,26 @@ class TransferProvider extends ChangeNotifier {
     return results.where((ok) => ok).length;
   }
 
+  /// Takes ownership of a cache copy and counts one live send against it.
+  /// Returns false for a path the user owns, which is never deleted.
+  Future<bool> _lease(String path) async {
+    if (!await _tempFiles.takeOwnership(path)) return false;
+    _leases[path] = (_leases[path] ?? 0) + 1;
+    return true;
+  }
+
+  /// Ends one send's claim on [path]; deletes the copy when nobody else needs
+  /// it.
+  Future<void> _unlease(String path) async {
+    final remaining = (_leases[path] ?? 1) - 1;
+    if (remaining > 0) {
+      _leases[path] = remaining;
+      return;
+    }
+    _leases.remove(path);
+    await _tempFiles.releaseAll([path]);
+  }
+
   Future<bool> _sendOne(
     DeviceModel target,
     Future<void> Function() action,
@@ -177,6 +214,10 @@ class TransferProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    // Rows are gone; nothing can be mid-send once this provider is disposed.
+    final stranded = _leases.keys.toList();
+    _leases.clear();
+    if (stranded.isNotEmpty) unawaited(_tempFiles.releaseAll(stranded));
     _transfersSub?.cancel();
     _payloadsSub?.cancel();
     super.dispose();

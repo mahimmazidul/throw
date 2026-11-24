@@ -13,6 +13,7 @@ import 'package:throw_app/models/device_model.dart';
 import 'package:throw_app/models/payload_model.dart';
 import 'package:throw_app/models/transfer_model.dart';
 import 'package:throw_app/providers/device_provider.dart';
+import 'package:throw_app/core/temp_files.dart';
 import 'package:throw_app/providers/locale_provider.dart';
 import 'package:throw_app/providers/share_inbox_provider.dart';
 import 'package:throw_app/providers/transfer_provider.dart';
@@ -168,6 +169,7 @@ Widget _wrapScreen(
       ChangeNotifierProvider(
         create: (_) => TransferProvider(service: service),
       ),
+      Provider<TempFileRegistry>.value(value: TempFileRegistry()),
       ChangeNotifierProvider(create: (_) => ShareInboxProvider()),
     ],
     child: MaterialApp(

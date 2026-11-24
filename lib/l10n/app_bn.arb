@@ -167,5 +167,11 @@
   "receivedSubtitle": "যা কিছু এসেছে, নতুনটি আগে।",
   "errorGeneric": "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
   "errorGenericWithDetail": "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন — বারবার হলে বিস্তারিত লগে রাখা হয়েছে।",
-  "errorShowDetail": "বিস্তারিত দেখুন"
+  "errorShowDetail": "বিস্তারিত দেখুন",
+  "settingsStorage": "সাময়িক ফাইল",
+  "settingsStorageSection": "স্টোরেজ",
+  "settingsStorageEmpty": "কিছু রাখা নেই",
+  "settingsStorageInUse": "{size} সাময়িক কপিতে আছে",
+  "settingsStorageClear": "মুছুন",
+  "settingsStorageCleared": "সাময়িক কপি মুছে ফেলা হয়েছে"
 }

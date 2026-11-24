@@ -1105,6 +1105,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show details'**
   String get errorShowDetail;
+
+  /// No description provided for @settingsStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary files'**
+  String get settingsStorage;
+
+  /// No description provided for @settingsStorageSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get settingsStorageSection;
+
+  /// No description provided for @settingsStorageEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing held'**
+  String get settingsStorageEmpty;
+
+  /// No description provided for @settingsStorageInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} in temporary copies'**
+  String settingsStorageInUse(String size);
+
+  /// No description provided for @settingsStorageClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get settingsStorageClear;
+
+  /// No description provided for @settingsStorageCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary copies deleted'**
+  String get settingsStorageCleared;
 }
 
 class _AppLocalizationsDelegate

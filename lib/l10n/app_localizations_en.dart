@@ -580,4 +580,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorShowDetail => 'Show details';
+
+  @override
+  String get settingsStorage => 'Temporary files';
+
+  @override
+  String get settingsStorageSection => 'Storage';
+
+  @override
+  String get settingsStorageEmpty => 'Nothing held';
+
+  @override
+  String settingsStorageInUse(String size) {
+    return '$size in temporary copies';
+  }
+
+  @override
+  String get settingsStorageClear => 'Clear';
+
+  @override
+  String get settingsStorageCleared => 'Temporary copies deleted';
 }

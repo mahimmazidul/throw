@@ -5,6 +5,74 @@ All notable changes to Throw are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] — 2026-11-24
+
+Reported as "works but failed transfer consumes sender storage of app". It was
+not the transfer — it was the copy the transfer was reading.
+
+### The leak
+
+Neither way of choosing a file gives Throw the file the user picked:
+
+* the Android share sheet (`receive_sharing_intent`) copies the shared file into
+  the app's cache directory before handing over a path — its own documentation
+  says "All files are copied to a temp cache folder";
+* the File Picker copies picks into `cacheDir/file_picker/<millis>/<name>` and
+  exposes `clearTemporaryFiles()` for cleaning them up.
+
+Throw never called either cleanup path. Every shared photo or picked file left a
+second full-size copy in the app's cache for the life of the install, whether the
+transfer succeeded, failed, was cancelled, or was never started. A phone that
+shared a 200 MB video five times was a gigabyte down with nothing to show for it.
+A failed transfer looked worse than a successful one only because the user was
+also left with no file to show for the space.
+
+### Fixed — copies are released at the end of every transfer
+
+`TempFileRegistry` (`lib/core/temp_files.dart`) owns the copies. A path is
+registered when a share or pick is accepted and deleted when the transfer that
+needed it reaches **any** terminal state — completed, failed, cancelled or
+rejected. There is deliberately no success-only branch to get wrong.
+
+Ownership is reference-counted, which fixes two cases a naive delete would have
+turned into data loss:
+
+* sending one file to three devices: the first device to fail no longer deletes
+  the bytes the other two are still streaming;
+* the share inbox holding a file while the user picks a device: the send ending
+  no longer pulls the file out from under the inbox that is still showing it.
+
+### Safety — the user's own files are never touched
+
+A path is only registered if it resolves inside a cache directory. The real
+`DCIM/Camera/x.jpg` the desktop pickers return, or a file in Documents, can never
+be deleted by this code path — deleting a user's original would be a far worse
+bug than the leak it fixes. Paths that merely share the cache prefix
+(`cache_backup/` next to `cache/`) are rejected too.
+
+### Fixed — upgrading reclaims what earlier builds left behind
+
+Whatever is still registered at launch is debris: nothing can be mid-transfer
+before the process has started. Startup releases everything registered and
+sweeps the picker's cache directory, so an install that leaked across several
+versions gets its space back without clearing app data.
+
+### Added — a Storage row in Settings
+
+The fix is invisible by nature, so Settings now reports what Throw is holding in
+temporary copies and offers to clear it. The honest steady state reads "Nothing
+held"; a user who just lost a large file to a failed send can confirm the space
+came back instead of taking it on faith.
+
+### Tests
+
+31 new tests (224 total, up from 193) cover the registry, the transfer provider
+and the share inbox against a real filesystem: a failed send deletes its copy,
+a successful one does too, a copy still being read survives, the user's original
+is never deleted, a corrupt registry file is not fatal, and a restart reclaims
+what a previous run stranded. Removing the release call turns six of them red,
+which is how they were checked.
+
 ## [1.2.0] — 2026-11-24
 
 Everything below came from using the built app and reporting what broke. The
