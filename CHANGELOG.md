@@ -5,6 +5,11 @@ All notable changes to Throw are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8]
+
+- Restore the Android app label resource and align the app version with the release tag.
+- Update payload tests and run screenshot rendering as a smoke test in CI.
+
 ## [Unreleased]
 
 ### Added

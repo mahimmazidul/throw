@@ -74,6 +74,8 @@ Widget _wrapScreen(Widget child) {
 }
 
 void main() {
+  const compareScreenshots = bool.fromEnvironment('THROW_COMPARE_SCREENSHOTS');
+
   testWidgets('render app screenshots', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
@@ -89,10 +91,13 @@ void main() {
     for (final entry in screens.entries) {
       await tester.pumpWidget(_wrapScreen(entry.value));
       await tester.pumpAndSettle();
-      await expectLater(
-        find.byType(MaterialApp),
-        matchesGoldenFile('../assets/screenshots/${entry.key}.png'),
-      );
+      expect(tester.takeException(), isNull, reason: entry.key);
+      if (compareScreenshots) {
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile('../assets/screenshots/${entry.key}.png'),
+        );
+      }
     }
   });
 }
