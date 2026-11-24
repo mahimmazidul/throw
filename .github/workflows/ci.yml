@@ -15,9 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Pinned, not `3.x`: a moving major silently changes golden rasterisation
+      # and analyzer rules between two commits with none of our own changes.
+      # Bump this together with pubspec.lock.
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x'
+          flutter-version: '3.50.1'
           channel: stable
           cache: true
 
@@ -26,6 +29,14 @@ jobs:
       - run: flutter gen-l10n
       - run: flutter analyze --no-fatal-infos
       - run: flutter test --coverage
+
+      # Goldens must match the committed screenshots. This used to live in a
+      # separate workflow that failed silently on every release, so a fully
+      # transparent palette shipped twice without anyone seeing it.
+      - name: Verify screenshots match the committed goldens
+        run: >-
+          flutter test --dart-define=THROW_COMPARE_SCREENSHOTS=true
+          test/screenshots_test.dart
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3

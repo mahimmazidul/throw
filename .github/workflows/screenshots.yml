@@ -21,14 +21,24 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.50.1'
           channel: stable
           cache: true
 
       - name: Install dependencies
         run: flutter pub get
 
+      # Fonts: the test harness now registers the bundled Plus Jakarta Sans,
+      # HindSiliguri and the SDK's MaterialIcons through FLUTTER_ROOT. Without
+      # that step the regenerated PNGs are white canvases full of tofu boxes —
+      # which is what this workflow used to commit to main.
       - name: Regenerate screenshots
-        run: flutter test --update-goldens --dart-define=THROW_COMPARE_SCREENSHOTS=true test/screenshots_test.dart
+        env:
+          FLUTTER_ROOT: ${{ env.FLUTTER_ROOT }}
+        run: >-
+          flutter test --update-goldens
+          --dart-define=THROW_COMPARE_SCREENSHOTS=true
+          test/screenshots_test.dart
 
       - name: Commit and push screenshot updates
         run: |
