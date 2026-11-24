@@ -105,7 +105,7 @@ class NearbyService implements TransferService {
             id: id,
             name: name,
             platform: DevicePlatform.android,
-            transport: TransportType.wifiDirect,
+            channel: TransferChannel.wifiDirect, lastSeen: DateTime.now(),
             isConnected: false,
           );
           _discoveredDevices[id] = device;
@@ -178,10 +178,10 @@ class NearbyService implements TransferService {
     final transferId = DateTime.now().microsecondsSinceEpoch.toString();
     final transfer = TransferModel(
       id: transferId,
-      device: target,
-      payload: payload,
-      direction: TransferDirection.outgoing,
-      state: TransferState.transferring,
+      peer: target,
+      payloads: [payload],
+      
+      status: TransferStatus.transferring,
       bytesTransferred: 0,
       totalBytes: payload.sizeBytes,
       startedAt: DateTime.now(),
@@ -195,7 +195,7 @@ class NearbyService implements TransferService {
         await _nearby.sendBytesPayload(target.id, bytes);
         _updateTransferState(
           transferId,
-          TransferState.completed,
+          TransferStatus.completed,
           bytesTransferred: bytes.length,
         );
       } else if (payload.filePath != null) {
@@ -215,7 +215,7 @@ class NearbyService implements TransferService {
         return _transfers[payloadId.toString()]!;
       }
     } catch (e) {
-      _updateTransferState(transferId, TransferState.failed);
+      _updateTransferState(transferId, TransferStatus.failed);
       rethrow;
     }
 
@@ -229,7 +229,7 @@ class NearbyService implements TransferService {
     if (numericId != null) {
       await _nearby.cancelPayload(numericId);
     }
-    _updateTransferState(transfer.id, TransferState.cancelled);
+    _updateTransferState(transfer.id, TransferStatus.cancelled);
   }
 
   void _onConnectionInitiated(String id, ConnectionInfo info) {
@@ -238,7 +238,7 @@ class NearbyService implements TransferService {
           id: id,
           name: info.endpointName,
           platform: DevicePlatform.android,
-          transport: TransportType.wifiDirect,
+          channel: TransferChannel.wifiDirect, lastSeen: DateTime.now(),
           isConnected: false,
         );
     _discoveredDevices[id] = device;
@@ -268,7 +268,7 @@ class NearbyService implements TransferService {
           id: endpointId,
           name: endpointId,
           platform: DevicePlatform.android,
-          transport: TransportType.wifiDirect,
+          channel: TransferChannel.wifiDirect, lastSeen: DateTime.now(),
           isConnected: true,
         );
 
@@ -287,10 +287,10 @@ class NearbyService implements TransferService {
 
       final transfer = TransferModel(
         id: payload.id.toString(),
-        device: device,
-        payload: PayloadModel.text(text),
-        direction: TransferDirection.incoming,
-        state: TransferState.completed,
+        peer: device,
+        payload: PayloadModel(id: DateTime.now().microsecondsSinceEpoch.toString(), type: PayloadType.text, text: text, sizeBytes: text.length),
+        
+        status: TransferStatus.completed,
         bytesTransferred: payload.bytes!.length,
         totalBytes: payload.bytes!.length,
         startedAt: DateTime.now(),
@@ -302,14 +302,14 @@ class NearbyService implements TransferService {
       _receivedFilePayloads[payload.id] = payload;
       final transfer = TransferModel(
         id: payload.id.toString(),
-        device: device,
+        peer: device,
         payload: PayloadModel.file(
           filePath: payload.uri ?? '',
           fileName: _pendingFileNames[payload.id] ?? 'incoming_file',
           sizeBytes: 0,
         ),
-        direction: TransferDirection.incoming,
-        state: TransferState.transferring,
+        
+        status: TransferStatus.transferring,
         bytesTransferred: 0,
         totalBytes: 0,
         startedAt: DateTime.now(),
@@ -328,21 +328,21 @@ class NearbyService implements TransferService {
     final existing = _transfers[id];
     if (existing == null) return;
 
-    TransferState nextState = existing.state;
+    TransferStatus nextState = existing.status;
     if (update.status == PayloadStatus.SUCCESS) {
-      nextState = TransferState.completed;
-      final device = _discoveredDevices[endpointId] ?? existing.device;
+      nextState = TransferStatus.completed;
+      final device = _discoveredDevices[endpointId] ?? existing.peer;
       await _finalizeFileIfReady(update.id, device);
     } else if (update.status == PayloadStatus.FAILURE) {
-      nextState = TransferState.failed;
+      nextState = TransferStatus.failed;
     } else if (update.status == PayloadStatus.CANCELED) {
-      nextState = TransferState.cancelled;
+      nextState = TransferStatus.cancelled;
     }
 
     _transfers[id] = existing.copyWith(
       bytesTransferred: update.bytesTransferred,
       totalBytes: update.totalBytes,
-      state: nextState,
+      status: nextState,
     );
     _transfersController.add(_transfers.values.toList());
   }
@@ -368,7 +368,7 @@ class NearbyService implements TransferService {
             fileName: fileName,
             sizeBytes: existing.totalBytes,
           ),
-          state: TransferState.completed,
+          status: TransferStatus.completed,
         );
         _transfersController.add(_transfers.values.toList());
       }
@@ -379,13 +379,13 @@ class NearbyService implements TransferService {
 
   void _updateTransferState(
     String id,
-    TransferState state, {
+    TransferStatus state, {
     int? bytesTransferred,
   }) {
     final existing = _transfers[id];
     if (existing == null) return;
     _transfers[id] = existing.copyWith(
-      state: state,
+      status: state,
       bytesTransferred: bytesTransferred ?? existing.bytesTransferred,
     );
     _transfersController.add(_transfers.values.toList());

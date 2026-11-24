@@ -145,8 +145,8 @@ class BluetoothService implements TransferService {
       final device = DeviceModel(
         id: id,
         name: (name != null && name.isNotEmpty) ? name : id,
-        platform: DevicePlatform.unknown,
-        transport: TransportType.bluetooth,
+        platform: DevicePlatform.windows,
+        channel: TransferChannel.bluetooth, lastSeen: DateTime.now(),
         isConnected: _discoveredDevices[id]?.isConnected ?? false,
       );
       _discoveredDevices[id] = device;
@@ -246,10 +246,10 @@ class BluetoothService implements TransferService {
     final transferId = DateTime.now().microsecondsSinceEpoch.toString();
     var transfer = TransferModel(
       id: transferId,
-      device: target,
-      payload: payload,
-      direction: TransferDirection.outgoing,
-      state: TransferState.transferring,
+      peer: target,
+      payloads: [payload],
+      
+      status: TransferStatus.transferring,
       bytesTransferred: 0,
       totalBytes: data.length,
       startedAt: DateTime.now(),
@@ -281,14 +281,14 @@ class BluetoothService implements TransferService {
       }
 
       transfer = transfer.copyWith(
-        state: TransferState.completed,
+        status: TransferStatus.completed,
         bytesTransferred: data.length,
       );
       _transfers[transferId] = transfer;
       _transfersController.add(_transfers.values.toList());
       return transfer;
     } catch (e) {
-      transfer = transfer.copyWith(state: TransferState.failed);
+      transfer = transfer.copyWith(state: TransferStatus.failed);
       _transfers[transferId] = transfer;
       _transfersController.add(_transfers.values.toList());
       rethrow;
@@ -300,7 +300,7 @@ class BluetoothService implements TransferService {
     final existing = _transfers[transfer.id];
     if (existing != null) {
       _transfers[transfer.id] =
-          existing.copyWith(state: TransferState.cancelled);
+          existing.copyWith(state: TransferStatus.cancelled);
       _transfersController.add(_transfers.values.toList());
     }
   }
@@ -310,18 +310,18 @@ class BluetoothService implements TransferService {
         DeviceModel(
           id: deviceId,
           name: deviceId,
-          platform: DevicePlatform.unknown,
-          transport: TransportType.bluetooth,
+          platform: DevicePlatform.windows,
+          channel: TransferChannel.bluetooth, lastSeen: DateTime.now(),
           isConnected: true,
         );
 
     final text = utf8.decode(bytes, allowMalformed: true);
     final transfer = TransferModel(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
-      device: device,
-      payload: PayloadModel.text(text),
-      direction: TransferDirection.incoming,
-      state: TransferState.completed,
+      peer: device,
+      payload: PayloadModel(id: DateTime.now().microsecondsSinceEpoch.toString(), type: PayloadType.text, text: text, sizeBytes: text.length),
+      
+      status: TransferStatus.completed,
       bytesTransferred: bytes.length,
       totalBytes: bytes.length,
       startedAt: DateTime.now(),
