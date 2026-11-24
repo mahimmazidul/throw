@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-
-import '../core/theme.dart';
 import 'package:provider/provider.dart';
 
+import '../core/constants.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/transfer_provider.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/error_banner.dart';
+import '../widgets/screen_header.dart';
 import '../widgets/transfer_progress.dart';
 
 /// Transfers screen showing active and completed file/text transfers.
@@ -15,68 +16,41 @@ class TransferScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
     final provider = context.watch<TransferProvider>();
     final transfers = provider.transfers.reversed.toList();
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppConstants.space5),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                ClipRRect(
-                  borderRadius: ThrowRadius.chip,
-                  child: Image.asset('assets/logo.png', width: 32, height: 32),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.navTransfers,
-                        style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      Text(
-                        l10n.transfersSubtitle,
-                        style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            ScreenHeader(
+              title: l10n.navTransfers,
+              subtitle: l10n.transfersSubtitle,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppConstants.space4),
             if (provider.error != null) ...[
-              ErrorBanner(error: provider.error!, onDismiss: provider.clearError),
-              const SizedBox(height: 12),
+              ErrorBanner(
+                error: provider.error!,
+                onDismiss: provider.clearError,
+              ),
+              const SizedBox(height: AppConstants.space3),
             ],
             Expanded(
               child: transfers.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.swap_horiz_rounded,
-                            size: 48,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            l10n.stateNoDevices,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
+                  ? EmptyState(
+                      icon: Icons.swap_horiz_rounded,
+                      // This used to render `stateNoDevices` — Discover's copy
+                      // on the Transfers screen. It now says what is actually
+                      // empty and what will land here.
+                      title: l10n.transfersEmptyTitle,
+                      body: l10n.transfersEmptyBody,
                     )
                   : ListView.builder(
                       itemCount: transfers.length,
+                      padding:
+                          const EdgeInsets.only(bottom: AppConstants.space4),
                       itemBuilder: (context, index) {
                         final transfer = transfers[index];
                         return TransferProgressTile(
