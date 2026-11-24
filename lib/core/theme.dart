@@ -40,33 +40,48 @@ import 'package:flutter/material.dart';
 ///  * [lightAccent] — deeper moss, for accent text on sage paper
 ///    (~6.6:1, against ~4.2:1 for [accent]).
 abstract final class ThrowColors {
-  // Dark (default)
-  static const Color bg = Color(0x0A1214);
-  static const Color surface = Color(0x101A1D);
-  static const Color surfaceHigh = Color(0x162226);
-  static const Color border = Color(0x33474D);
-  static const Color text = Color(0xDEE7E9);
-  static const Color secondary = Color(0x8FA0A4);
-  static const Color accent = Color(0x0E6A64);
-  static const Color onAccent = Color(0xF3FBFA);
-  static const Color accentContainer = Color(0x102E2C);
-  static const Color onAccentContainer = Color(0xCFE8E4);
+  // Dark (default).
+  //
+  // Every literal is 8-digit `0xAARRGGBB`. The previous revision wrote them as
+  // 6-digit values (`Color(0x0A1214)`), which Dart reads as `0x00RRGGBB` —
+  // **alpha zero**. The whole palette was transparent: the dark theme rendered
+  // as the window's white default with white-on-white text, and the widget
+  // tests could not see it because luminance maths ignores alpha. The
+  // `theme_and_errors_test.dart` opacity group now fails the build if any
+  // token loses its alpha channel again.
+  static const Color bg = Color(0xFF0A1214);
+  static const Color surface = Color(0xFF101A1D);
+  static const Color surfaceHigh = Color(0xFF162226);
+  static const Color border = Color(0xFF33474D);
+  static const Color text = Color(0xFFDEE7E9);
+  static const Color secondary = Color(0xFF8FA0A4);
+  static const Color accent = Color(0xFF0E6A64);
+  static const Color onAccent = Color(0xFFF3FBFA);
+  static const Color accentContainer = Color(0xFF102E2C);
+  static const Color onAccentContainer = Color(0xFFCFE8E4);
 
   /// Accent as text on the dark canvas — lighter sage so it clears AA.
-  static const Color accentText = Color(0x5FBFB4);
+  static const Color accentText = Color(0xFF5FBFB4);
+
+  /// Tint of [accent] used for icon badges and chip fills on the dark canvas
+  /// (14–16%). Kept as a named token so widgets stop re-deriving it.
+  static const Color accentTint = Color(0x2A0E6A64);
 
   // Light — sage paper, never #FFFFFF
-  static const Color lightBg = Color(0xEDF1F0);
-  static const Color lightSurface = Color(0xF8FAFA);
-  static const Color lightSurfaceHigh = Color(0xE1E8E7);
-  static const Color lightBorder = Color(0xCBD5D4);
-  static const Color lightText = Color(0x10191A);
-  static const Color lightSecondary = Color(0x57686B);
-  static const Color lightAccentContainer = Color(0xD3E4E2);
-  static const Color lightOnAccentContainer = Color(0x0A3F3B);
+  static const Color lightBg = Color(0xFFEDF1F0);
+  static const Color lightSurface = Color(0xFFF8FAFA);
+  static const Color lightSurfaceHigh = Color(0xFFE1E8E7);
+  static const Color lightBorder = Color(0xFFCBD5D4);
+  static const Color lightText = Color(0xFF10191A);
+  static const Color lightSecondary = Color(0xFF57686B);
+  static const Color lightAccentContainer = Color(0xFFD3E4E2);
+  static const Color lightOnAccentContainer = Color(0xFF0A3F3B);
 
   /// Accent for light mode — deeper moss so it clears AA on sage paper.
-  static const Color lightAccent = Color(0x1B6660);
+  static const Color lightAccent = Color(0xFF1B6660);
+
+  /// Tint of [lightAccent] for badges and chips on sage paper.
+  static const Color lightAccentTint = Color(0x291B6660);
 }
 
 /// One corner scale for the whole app.
@@ -105,14 +120,26 @@ abstract final class ThrowRadius {
 /// omitted the text button, navigation bar and navigation rail themes from
 /// [light], so light mode silently fell back to stock Material shapes.
 abstract final class ThrowTheme {
+  /// Latin display face, bundled with the app.
+  static const String _latin = 'Plus Jakarta Sans';
+
+  /// Bengali fallback, also bundled. Plus Jakarta Sans has no Bengali glyphs at
+  /// all, and the pubspec's own note says Windows and Linux ship no guarantee
+  /// of one — so every component theme that names [_latin] must name this too,
+  /// or Bangla button, tab and snackbar labels render as tofu boxes.
+  static const List<String> _fallback = ['HindSiliguri'];
+
   /// Plus Jakarta Sans type scale — clean, modern, readable.
   static TextTheme _typeScale() => const TextTheme(
         displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w700, height: 1.1, fontFamilyFallback: ['HindSiliguri']),
         displayMedium: TextStyle(fontSize: 45, fontWeight: FontWeight.w700, height: 1.1, fontFamilyFallback: ['HindSiliguri']),
+        displaySmall: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, height: 1.15, fontFamilyFallback: ['HindSiliguri']),
         headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, height: 1.2, fontFamilyFallback: ['HindSiliguri']),
         headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w600, height: 1.25, fontFamilyFallback: ['HindSiliguri']),
+        headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, height: 1.3, fontFamilyFallback: ['HindSiliguri']),
         titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, height: 1.3, fontFamilyFallback: ['HindSiliguri']),
         titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, height: 1.4, fontFamilyFallback: ['HindSiliguri']),
+        titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.4, fontFamilyFallback: ['HindSiliguri']),
         bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, height: 1.5, fontFamilyFallback: ['HindSiliguri']),
         bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, height: 1.5, fontFamilyFallback: ['HindSiliguri']),
         bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, height: 1.4, fontFamilyFallback: ['HindSiliguri']),
@@ -179,7 +206,8 @@ abstract final class ThrowTheme {
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       textTheme: _typeScale().apply(
-        fontFamily: 'Plus Jakarta Sans',
+        fontFamily: _latin,
+          fontFamilyFallback: _fallback,
         bodyColor: ThrowColors.text,
         displayColor: ThrowColors.text,
       ),
@@ -206,7 +234,8 @@ abstract final class ThrowTheme {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
           textStyle: const TextStyle(
-            fontFamily: 'Plus Jakarta Sans',
+            fontFamily: _latin,
+          fontFamilyFallback: _fallback,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -220,7 +249,8 @@ abstract final class ThrowTheme {
           side: const BorderSide(color: ThrowColors.border),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
           textStyle: const TextStyle(
-            fontFamily: 'Plus Jakarta Sans',
+            fontFamily: _latin,
+          fontFamilyFallback: _fallback,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -232,16 +262,37 @@ abstract final class ThrowTheme {
           minimumSize: const Size(48, 48),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
           textStyle: const TextStyle(
-            fontFamily: 'Plus Jakarta Sans',
+            fontFamily: _latin,
+          fontFamilyFallback: _fallback,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
         ),
       ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: ThrowColors.accentText,
+        unselectedLabelColor: ThrowColors.secondary,
+        indicatorColor: ThrowColors.accentText,
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: ThrowColors.border,
+        labelStyle: TextStyle(
+          fontFamily: _latin,
+          fontFamilyFallback: _fallback,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontFamily: _latin,
+          fontFamilyFallback: _fallback,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: ThrowColors.surfaceHigh,
         contentTextStyle: const TextStyle(
-          fontFamily: 'Plus Jakarta Sans',
+          fontFamily: _latin,
+          fontFamilyFallback: _fallback,
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: ThrowColors.text,
@@ -312,7 +363,8 @@ abstract final class ThrowTheme {
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       textTheme: _typeScale().apply(
-        fontFamily: 'Plus Jakarta Sans',
+        fontFamily: _latin,
+          fontFamilyFallback: _fallback,
         bodyColor: ThrowColors.lightText,
         displayColor: ThrowColors.lightText,
       ),
@@ -343,7 +395,8 @@ abstract final class ThrowTheme {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
           textStyle: const TextStyle(
-            fontFamily: 'Plus Jakarta Sans',
+            fontFamily: _latin,
+          fontFamilyFallback: _fallback,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -357,7 +410,8 @@ abstract final class ThrowTheme {
           side: const BorderSide(color: ThrowColors.lightBorder),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
           textStyle: const TextStyle(
-            fontFamily: 'Plus Jakarta Sans',
+            fontFamily: _latin,
+          fontFamilyFallback: _fallback,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -369,16 +423,37 @@ abstract final class ThrowTheme {
           minimumSize: const Size(48, 48),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
           textStyle: const TextStyle(
-            fontFamily: 'Plus Jakarta Sans',
+            fontFamily: _latin,
+          fontFamilyFallback: _fallback,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
         ),
       ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: ThrowColors.lightAccent,
+        unselectedLabelColor: ThrowColors.lightSecondary,
+        indicatorColor: ThrowColors.lightAccent,
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: ThrowColors.lightBorder,
+        labelStyle: TextStyle(
+          fontFamily: _latin,
+          fontFamilyFallback: _fallback,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontFamily: _latin,
+          fontFamilyFallback: _fallback,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: ThrowColors.lightSurfaceHigh,
         contentTextStyle: const TextStyle(
-          fontFamily: 'Plus Jakarta Sans',
+          fontFamily: _latin,
+          fontFamilyFallback: _fallback,
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: ThrowColors.lightText,

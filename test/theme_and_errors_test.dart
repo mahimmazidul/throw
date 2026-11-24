@@ -167,6 +167,147 @@ void main() {
     });
   });
 
+  // ── The regression that shipped v1.0.15 ────────────────────────────────
+  //
+  // Every palette token was written as a 6-digit literal (`Color(0x0A1214)`),
+  // which Dart reads as `0x00RRGGBB` — alpha zero. The whole dark theme was
+  // transparent, and every contrast assertion above passed because luminance
+  // maths ignores alpha. These tests exist to make that impossible again.
+
+  group('palette opacity', () {
+    const tokens = <String, Color>{
+      'bg': ThrowColors.bg,
+      'surface': ThrowColors.surface,
+      'surfaceHigh': ThrowColors.surfaceHigh,
+      'border': ThrowColors.border,
+      'text': ThrowColors.text,
+      'secondary': ThrowColors.secondary,
+      'accent': ThrowColors.accent,
+      'onAccent': ThrowColors.onAccent,
+      'accentContainer': ThrowColors.accentContainer,
+      'onAccentContainer': ThrowColors.onAccentContainer,
+      'accentText': ThrowColors.accentText,
+      'lightBg': ThrowColors.lightBg,
+      'lightSurface': ThrowColors.lightSurface,
+      'lightSurfaceHigh': ThrowColors.lightSurfaceHigh,
+      'lightBorder': ThrowColors.lightBorder,
+      'lightText': ThrowColors.lightText,
+      'lightSecondary': ThrowColors.lightSecondary,
+      'lightAccentContainer': ThrowColors.lightAccentContainer,
+      'lightOnAccentContainer': ThrowColors.lightOnAccentContainer,
+      'lightAccent': ThrowColors.lightAccent,
+    };
+
+    test('every base token is fully opaque', () {
+      for (final entry in tokens.entries) {
+        expect(
+          (entry.value.a * 255).round(),
+          255,
+          reason: '${entry.key} must be 0xFF over its RGB value; '
+              'it is #${entry.value.toARGB32().toRadixString(16).padLeft(8, '0')}',
+        );
+      }
+    });
+
+    test('accents in three cuts stay distinguishable', () {
+      // fill, dark-canvas text, light-canvas text — cheap guard against the
+      // three being collapsed back into one value.
+      expect(ThrowColors.accent, isNot(ThrowColors.accentText));
+      expect(ThrowColors.accent, isNot(ThrowColors.lightAccent));
+      expect(ThrowColors.accentText, isNot(ThrowColors.lightAccent));
+    });
+  });
+
+  group('Bangla coverage in component themes', () {
+    // Plus Jakarta Sans has no Bengali glyphs. If a component theme names it
+    // without the bundled HindSiliguri fallback, every button, tab, snackbar
+    // and navigation label turns into tofu boxes in Bangla — on Windows and
+    // Linux, which is most of this app's desktop surface.
+    test('no text style names the Latin face without the Bangla fallback', () {
+      final themes = [ThrowTheme.dark(), ThrowTheme.light()];
+      final offenders = <String>[];
+
+      for (final theme in themes) {
+        final styles = <String, TextStyle?>{
+          'filledButton': theme.filledButtonTheme.style?.textStyle?.resolve({}),
+          'outlinedButton':
+              theme.outlinedButtonTheme.style?.textStyle?.resolve({}),
+          'textButton': theme.textButtonTheme.style?.textStyle?.resolve({}),
+          'snackBar': theme.snackBarTheme.contentTextStyle,
+          'tabLabel': theme.tabBarTheme.labelStyle,
+          'tabUnselected': theme.tabBarTheme.unselectedLabelStyle,
+          'headlineSmall': theme.textTheme.headlineSmall,
+          'titleSmall': theme.textTheme.titleSmall,
+          'displaySmall': theme.textTheme.displaySmall,
+          'bodyMedium': theme.textTheme.bodyMedium,
+        };
+        styles.forEach((name, style) {
+          if (style == null) return;
+          if (style.fontFamily == 'Plus Jakarta Sans' &&
+              !(style.fontFamilyFallback?.contains('HindSiliguri') ?? false)) {
+            offenders.add('${theme.brightness.name}/$name');
+          }
+        });
+      }
+      expect(offenders, isEmpty,
+          reason: 'styles missing the Bangla fallback: $offenders');
+    });
+
+    test('the full M3 scale is declared, so nothing falls back to Roboto', () {
+      final t = ThrowTheme.dark().textTheme;
+      for (final entry in {
+        'displayLarge': t.displayLarge,
+        'displayMedium': t.displayMedium,
+        'displaySmall': t.displaySmall,
+        'headlineLarge': t.headlineLarge,
+        'headlineMedium': t.headlineMedium,
+        'headlineSmall': t.headlineSmall,
+        'titleLarge': t.titleLarge,
+        'titleMedium': t.titleMedium,
+        'titleSmall': t.titleSmall,
+        'bodyLarge': t.bodyLarge,
+        'bodyMedium': t.bodyMedium,
+        'bodySmall': t.bodySmall,
+        'labelLarge': t.labelLarge,
+        'labelMedium': t.labelMedium,
+        'labelSmall': t.labelSmall,
+      }.entries) {
+        expect(entry.value?.fontFamily, 'Plus Jakarta Sans',
+            reason: '${entry.key} fell back to the default typography');
+      }
+    });
+  });
+
+  group('theme is actually dark', () {
+    test('dark() paints an opaque dark canvas with opaque light text', () {
+      final theme = ThrowTheme.dark();
+      final bg = theme.scaffoldBackgroundColor;
+      final fg = theme.colorScheme.onSurface;
+      expect((bg.a * 255).round(), 255, reason: 'scaffold must not be transparent');
+      expect(_luminance(bg), lessThan(0.05), reason: 'dark canvas expected');
+      expect(_luminance(fg), greaterThan(0.5), reason: 'light text expected');
+      expect(contrast(fg, bg), greaterThan(4.5));
+    });
+
+    test('light() paints an opaque, non-white canvas', () {
+      final theme = ThrowTheme.light();
+      final bg = theme.scaffoldBackgroundColor;
+      expect((bg.a * 255).round(), 255);
+      expect(bg, isNot(const Color(0xFFFFFFFF)));
+      expect(_luminance(bg), greaterThan(0.5));
+      expect(contrast(theme.colorScheme.onSurface, bg), greaterThan(4.5));
+    });
+
+    test('cards are visibly separated from the canvas in both themes', () {
+      for (final theme in [ThrowTheme.dark(), ThrowTheme.light()]) {
+        final card = theme.cardTheme.color!;
+        final bg = theme.scaffoldBackgroundColor;
+        expect((card.a * 255).round(), 255);
+        expect(card, isNot(bg), reason: 'a card that matches the canvas is invisible');
+      }
+    });
+  });
+
   group('ErrorBanner', () {
     testWidgets('renders the message for the code', (tester) async {
       await _pumpBanner(
