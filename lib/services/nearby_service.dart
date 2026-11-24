@@ -181,7 +181,8 @@ class NearbyService implements TransferService {
     final fileName = file.path.split(RegExp(r'[/\\]')).last;
     final sizeBytes = await file.length();
     final payloadId = await _nearby.sendFilePayload(endpointId, file.path);
-    final metaBytes = Uint8List.fromList('$payloadId:$fileName'.codeUnits);
+    final metaBytes =
+        Uint8List.fromList('THROW_FILE_META:$payloadId:$fileName'.codeUnits);
     await _nearby.sendBytesPayload(endpointId, metaBytes);
 
     final transfer = TransferModel(
@@ -260,13 +261,32 @@ class NearbyService implements TransferService {
   void _onPayloadReceived(String endpointId, Payload payload) async {
     if (payload.type == PayloadType.BYTES && payload.bytes != null) {
       final text = String.fromCharCodes(payload.bytes!);
-      final colonIdx = text.indexOf(':');
-      if (colonIdx > 0) {
-        final maybeId = int.tryParse(text.substring(0, colonIdx));
-        if (maybeId != null) {
-          _pendingFileNames[maybeId] = text.substring(colonIdx + 1);
-          await _finalizeFileIfReady(maybeId);
-          return;
+      const metaPrefix = 'THROW_FILE_META:';
+      String? metaBody;
+      if (text.startsWith(metaPrefix)) {
+        metaBody = text.substring(metaPrefix.length);
+      } else {
+        // Backward compat with older builds that sent "<payloadId>:<fileName>".
+        final colonIdx = text.indexOf(':');
+        if (colonIdx > 0) {
+          final maybeId = int.tryParse(text.substring(0, colonIdx));
+          final rest = text.substring(colonIdx + 1);
+          if (maybeId != null && rest.isNotEmpty && !rest.contains('\n')) {
+            metaBody = text;
+          }
+        }
+      }
+      if (metaBody != null) {
+        final colonIdx = metaBody.indexOf(':');
+        if (colonIdx > 0) {
+          final maybeId = int.tryParse(metaBody.substring(0, colonIdx));
+          final fileName = metaBody.substring(colonIdx + 1);
+          if (maybeId != null && fileName.isNotEmpty) {
+            _pendingFileNames[maybeId] = fileName;
+            _ensureIncomingFileTransfer(endpointId, maybeId, fileName);
+            await _finalizeFileIfReady(maybeId);
+            return;
+          }
         }
       }
 
@@ -282,6 +302,7 @@ class NearbyService implements TransferService {
       );
     } else if (payload.type == PayloadType.FILE) {
       _receivedFilePayloads[payload.id] = payload;
+      _ensureIncomingFileTransfer(endpointId, payload.id, _pendingFileNames[payload.id]);
     }
   }
 
@@ -290,7 +311,16 @@ class NearbyService implements TransferService {
     PayloadTransferUpdate update,
   ) async {
     final id = update.id.toString();
-    final existing = _transfers[id];
+    var existing = _transfers[id];
+    if (existing == null) {
+      // Incoming file transfers don't have a local TransferModel yet.
+      final fileName = _pendingFileNames[update.id];
+      final payload = _receivedFilePayloads[update.id];
+      if (fileName != null || payload != null) {
+        _ensureIncomingFileTransfer(endpointId, update.id, fileName);
+        existing = _transfers[id];
+      }
+    }
     if (existing == null) return;
 
     var nextStatus = existing.status;
@@ -339,6 +369,60 @@ class NearbyService implements TransferService {
     }
   }
 
+
+  void _ensureIncomingFileTransfer(String endpointId, int payloadId, String? fileName) {
+    final id = payloadId.toString();
+    if (_transfers.containsKey(id)) {
+      if (fileName != null && fileName.isNotEmpty) {
+        final existing = _transfers[id]!;
+        final payload = existing.payloads.isNotEmpty ? existing.payloads.first : null;
+        if (payload != null && (payload.name == null || payload.name!.isEmpty)) {
+          final updatedPayload = PayloadModel(
+            id: payload.id,
+            kind: payload.kind,
+            direction: payload.direction,
+            name: fileName,
+            path: payload.path,
+            text: payload.text,
+            sizeBytes: payload.sizeBytes,
+            createdAt: payload.createdAt,
+          );
+          _transfers[id] = existing.copyWith(payloads: [updatedPayload]);
+          _transfersController.add(_transfers[id]!);
+        }
+      }
+      return;
+    }
+    final peer = _discoveredDevices[endpointId] ??
+        DeviceModel(
+          id: endpointId,
+          name: endpointId,
+          platform: DevicePlatform.android,
+          channel: TransferChannel.wifiDirect,
+          isConnected: true,
+          lastSeen: DateTime.now(),
+        );
+    final transfer = TransferModel(
+      id: id,
+      peer: peer,
+      payloads: [
+        PayloadModel(
+          id: id,
+          kind: PayloadKind.file,
+          direction: PayloadDirection.received,
+          name: fileName,
+          sizeBytes: 0,
+          createdAt: DateTime.now(),
+        ),
+      ],
+      status: TransferStatus.transferring,
+      bytesTransferred: 0,
+      totalBytes: 0,
+      startedAt: DateTime.now(),
+    );
+    _transfers[id] = transfer;
+    _transfersController.add(transfer);
+  }
   void _updateTransferStatus(String id, TransferStatus status) {
     final existing = _transfers[id];
     if (existing == null) return;
