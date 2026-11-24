@@ -64,7 +64,12 @@ Every [`v*.*.*`](https://github.com/mahimmazidul/throw/releases) tag builds all 
 
 ## Screenshots
 
-<img src="assets/social_preview.png" alt="Throw preview" width="600" />
+<p align="center">
+  <img src="assets/screenshots/home.png" alt="Home screen" width="200" />
+  <img src="assets/screenshots/discover.png" alt="Discover screen" width="200" />
+  <img src="assets/screenshots/transfers.png" alt="Transfers screen" width="200" />
+  <img src="assets/screenshots/settings.png" alt="Settings screen" width="200" />
+</p>
 
 ## Tech stack
 
