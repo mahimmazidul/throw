@@ -166,7 +166,7 @@ jobs:
 
           cat > throw-deb/DEBIAN/control << EOF
           Package: throw-app
-          Version: ${{ github.ref_name }}
+          Version: ${{ env.DEB_VERSION }}
           Architecture: amd64
           Maintainer: Md. Mazidul Islam Mahim <mahimmazidul@gmail.com>
           Depends: libbluetooth3, libdbus-1-3
