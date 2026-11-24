@@ -33,9 +33,7 @@ class TransferProvider extends ChangeNotifier {
 
   List<TransferModel> get transfers => _transfers;
   List<TransferModel> get activeTransfers => _transfers
-      .where((t) =>
-          t.state == TransferState.pending ||
-          t.state == TransferState.transferring)
+      .where((t) => t.isActive)
       .toList(growable: false);
   List<TransferModel> get incomingQueue => List.unmodifiable(_incomingQueue);
   String? get error => _error;
@@ -53,7 +51,15 @@ class TransferProvider extends ChangeNotifier {
 
   Future<TransferModel?> sendText(DeviceModel target, String text) async {
     if (text.trim().isEmpty) return null;
-    return sendPayload(target, PayloadModel.text(text));
+    return sendPayload(
+      target,
+      PayloadModel(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        type: PayloadType.text,
+        text: text,
+        sizeBytes: text.length,
+      ),
+    );
   }
 
   Future<TransferModel?> sendFile(
@@ -64,7 +70,9 @@ class TransferProvider extends ChangeNotifier {
   }) async {
     return sendPayload(
       target,
-      PayloadModel.file(
+      PayloadModel(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        type: PayloadType.file,
         filePath: filePath,
         fileName: fileName,
         sizeBytes: sizeBytes,
