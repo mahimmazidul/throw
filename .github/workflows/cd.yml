@@ -259,58 +259,49 @@ jobs:
           ref: main
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update release download links in docs
+      # The site is a single prebuilt bundle in docs/, so tags are rewritten in
+      # place rather than rebuilt (the web source does not live in this repo).
+      # Every release swaps whatever version the site currently shows for this
+      # one — the release pill, the per-row asset URLs and the Throw-<tag>-*
+      # filenames all carry the same v*.*.* string, so one replace covers them.
+      - name: Update release tag across the site
         run: |
-          TAG="${{ github.event.inputs.tag || github.ref_name }}"
           python3 - <<'PY'
           import os, re, pathlib
-          tag=os.environ['TAG']
-          p=pathlib.Path('docs/index.html')
-          s=p.read_text()
-          block=f"""<!-- RELEASE_LINKS_START -->
-                <div class="dl-grid" data-release="{tag}">
-                  <div class="dl-card">
-                    <h3>Android</h3>
-                    <div class="ver">{tag}</div>
-                    <div class="dl-links">
-                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/Throw-{tag}-arm64-v8a.apk"><span>ARM64 APK</span><small>.apk</small></a>
-                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/Throw-{tag}-armeabi-v7a.apk"><span>ARM32 APK</span><small>.apk</small></a>
-                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/Throw-{tag}-x86_64.apk"><span>x86_64 APK</span><small>.apk</small></a>
-                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/Throw-{tag}.aab"><span>Android App Bundle</span><small>.aab</small></a>
-                    </div>
-                  </div>
-                  <div class="dl-card">
-                    <h3>Windows</h3>
-                    <div class="ver">{tag}</div>
-                    <div class="dl-links">
-                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/Throw-{tag}-windows-x64.zip"><span>Windows ZIP</span><small>.zip</small></a>
-                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/Throw-{tag}-windows.msix"><span>Windows MSIX</span><small>.msix</small></a>
-                    </div>
-                  </div>
-                  <div class="dl-card">
-                    <h3>Linux</h3>
-                    <div class="ver">{tag}</div>
-                    <div class="dl-links">
-                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/Throw-{tag}-linux-amd64.deb"><span>Debian/Ubuntu</span><small>.deb</small></a>
-                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/Throw-{tag}-linux-x86_64.AppImage"><span>AppImage</span><small>.AppImage</small></a>
-                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/Throw-{tag}-linux-x64.tar.gz"><span>Tarball</span><small>.tar.gz</small></a>
-                    </div>
-                  </div>
-                </div>
-                <!-- RELEASE_LINKS_END -->"""
-          s=re.sub(r'<!-- RELEASE_LINKS_START -->.*?<!-- RELEASE_LINKS_END -->', block, s, flags=re.S)
-          s=re.sub(r'Latest: v[0-9]+\.[0-9]+\.[0-9]+', f'Latest: {tag}', s)
-          p.write_text(s)
-          print('updated', tag)
+
+          tag = os.environ["TAG"].strip()
+          if not tag.startswith("v"):
+              tag = "v" + tag
+          pattern = re.compile(r"v\d+\.\d+\.\d+")
+
+          changed = []
+          for rel in ("docs/index.html", "README.md"):
+              p = pathlib.Path(rel)
+              if not p.exists():
+                  continue
+              s = p.read_text(encoding="utf-8")
+              found = sorted(set(pattern.findall(s)))
+              new = s
+              for old in found:
+                  if old != tag:
+                      new = new.replace(old, tag)
+              if new != s:
+                  p.write_text(new, encoding="utf-8")
+                  changed.append(f"{rel}: {found} -> {tag}")
+
+          if changed:
+              print("updated: " + "; ".join(changed))
+          else:
+              print(f"site already points at {tag}; nothing to rewrite")
           PY
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
 
       - name: Commit and push docs update
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/index.html
+          git add docs/index.html README.md
           if git diff --staged --quiet; then
             echo "No docs changes"
             exit 0
