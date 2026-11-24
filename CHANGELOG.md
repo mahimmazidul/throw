@@ -5,6 +5,10 @@ All notable changes to Throw are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.10]
+
+- Change Android/Linux application ID to `com.mahimmazidul.throwapp` (namespace, applicationId, MainActivity package).
+
 ## [1.0.9]
 
 - Fix Android release build by enforcing compileSdk 37 across app/plugins and consolidating Gradle config.

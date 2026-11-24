@@ -1,4 +1,4 @@
-package com.mahimmazidul.throw_app
+package com.mahimmazidul.throwapp
 
 import io.flutter.embedding.android.FlutterActivity
 

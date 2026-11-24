@@ -16,7 +16,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.mahimmazidul.throw_app"
+    namespace = "com.mahimmazidul.throwapp"
     compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
@@ -26,7 +26,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.mahimmazidul.throw_app"
+        applicationId = "com.mahimmazidul.throwapp"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
