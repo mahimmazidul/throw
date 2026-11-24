@@ -105,7 +105,7 @@ class DeviceProvider extends ChangeNotifier {
       await _service.startAdvertising(deviceName: _deviceName);
       _isAdvertising = true;
     } catch (e) {
-      _error = e.toString();
+      _error = _friendlyError(e);
       _isAdvertising = false;
     }
     notifyListeners();
@@ -116,7 +116,7 @@ class DeviceProvider extends ChangeNotifier {
       await _service.stopAdvertising();
       _isAdvertising = false;
     } catch (e) {
-      _error = e.toString();
+      _error = _friendlyError(e);
     }
     notifyListeners();
   }
@@ -136,7 +136,7 @@ class DeviceProvider extends ChangeNotifier {
       await _service.startDiscovery();
       _isDiscovering = true;
     } catch (e) {
-      _error = e.toString();
+      _error = _friendlyError(e);
       _isDiscovering = false;
     }
     notifyListeners();
@@ -147,7 +147,7 @@ class DeviceProvider extends ChangeNotifier {
       await _service.stopDiscovery();
       _isDiscovering = false;
     } catch (e) {
-      _error = e.toString();
+      _error = _friendlyError(e);
     }
     notifyListeners();
   }
@@ -157,7 +157,7 @@ class DeviceProvider extends ChangeNotifier {
     try {
       await _service.connect(device);
     } catch (e) {
-      _error = e.toString();
+      _error = _friendlyError(e);
       notifyListeners();
     }
   }
@@ -167,7 +167,7 @@ class DeviceProvider extends ChangeNotifier {
     try {
       await _service.disconnect(device.id);
     } catch (e) {
-      _error = e.toString();
+      _error = _friendlyError(e);
       notifyListeners();
     }
   }
@@ -178,7 +178,7 @@ class DeviceProvider extends ChangeNotifier {
     try {
       await _service.acceptConnection(request.endpointId);
     } catch (e) {
-      _error = e.toString();
+      _error = _friendlyError(e);
       notifyListeners();
     }
   }
@@ -189,7 +189,7 @@ class DeviceProvider extends ChangeNotifier {
     try {
       await _service.rejectConnection(request.endpointId);
     } catch (e) {
-      _error = e.toString();
+      _error = _friendlyError(e);
       notifyListeners();
     }
   }
