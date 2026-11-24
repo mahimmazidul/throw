@@ -26,12 +26,8 @@ class DiscoverScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                gradient: LinearGradient(
-                  colors: [
-                    theme.colorScheme.primary.withValues(alpha: 0.16),
-                    theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                  ],
-                ),
+                // Flat tint, no gradient — matches the home header.
+                color: theme.colorScheme.primaryContainer,
                 border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4)),
               ),
               child: Column(

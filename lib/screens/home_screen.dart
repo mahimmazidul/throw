@@ -116,14 +116,8 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  theme.colorScheme.primary.withValues(alpha: 0.22),
-                  theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.45),
-                ],
-              ),
+              // Flat tint, no gradient — one token, one edge, no radiant wash.
+              color: theme.colorScheme.primaryContainer,
               border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35)),
             ),
             child: Column(

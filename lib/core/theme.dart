@@ -28,7 +28,18 @@ import 'package:google_fonts/google_fonts.dart';
 ///    a single obvious green or a bright accent.
 ///
 /// Nothing here uses a gradient, a glow, or a tinted elevation — the surface
-/// ramp is flat on purpose.
+/// ramp is flat on purpose. That rule used to stop at this file: the home and
+/// discover headers still carried a `LinearGradient` wash, the exact kind of
+/// radiant effect this palette exists to avoid. They are flat now.
+///
+/// The accent ships in three cuts rather than one, because a single moss
+/// cannot clear WCAG AA on both a near-black and a sage field:
+///
+///  * [accent] — the fill; white sits on it at ~4.8:1.
+///  * [accentText] — lighter sage, for accent *text* on the dark canvas
+///    (~7:1, against ~3.7:1 for [accent]).
+///  * [lightAccent] — deeper moss, for accent text on sage paper
+///    (~6.6:1, against ~4.2:1 for [accent]).
 abstract final class ThrowColors {
   // Dark (default)
   static const Color bg = Color(0xFF161A17);
@@ -42,6 +53,9 @@ abstract final class ThrowColors {
   static const Color accentContainer = Color(0xFF2C3A2A);
   static const Color onAccentContainer = Color(0xFFDCE7D9);
 
+  /// Accent as text on the dark canvas — lighter sage so it clears AA.
+  static const Color accentText = Color(0xFF8FAA89);
+
   // Light — sage paper, never #FFFFFF
   static const Color lightBg = Color(0xFFEBF0E8);
   static const Color lightSurface = Color(0xFFF5F8F3);
@@ -51,6 +65,9 @@ abstract final class ThrowColors {
   static const Color lightSecondary = Color(0xFF5F6B5C);
   static const Color lightAccentContainer = Color(0xFFD7E3D3);
   static const Color lightOnAccentContainer = Color(0xFF2A3A28);
+
+  /// Accent for light mode — deeper moss so it clears AA on sage paper.
+  static const Color lightAccent = Color(0xFF3E5A3B);
 }
 
 /// Material 3 themes for Throw.
@@ -87,8 +104,8 @@ abstract final class ThrowTheme {
   /// Flat hover/focus washes for the desktop build — alpha only, no glow.
   static const Color _hoverWash = Color(0x145A7A55);
   static const Color _focusWash = Color(0x245A7A55);
-  static const Color _lightHoverWash = Color(0x0F5A7A55);
-  static const Color _lightFocusWash = Color(0x1A5A7A55);
+  static const Color _lightHoverWash = Color(0x0F3E5A3B);
+  static const Color _lightFocusWash = Color(0x1A3E5A3B);
 
   static ThemeData dark() {
     final scheme = ColorScheme.fromSeed(
@@ -132,7 +149,7 @@ abstract final class ThrowTheme {
       textSelectionTheme: const TextSelectionThemeData(
         cursorColor: ThrowColors.accent,
         selectionColor: Color(0x5A5A7A55),
-        selectionHandleColor: ThrowColors.accent,
+        selectionHandleColor: ThrowColors.accentText,
       ),
       cardTheme: const CardThemeData(
         color: ThrowColors.surface,
@@ -171,7 +188,7 @@ abstract final class ThrowTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: ThrowColors.accent,
+          foregroundColor: ThrowColors.accentText,
           minimumSize: const Size(48, 48),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
           textStyle: GoogleFonts.plusJakartaSans(
@@ -223,7 +240,7 @@ abstract final class ThrowTheme {
       seedColor: ThrowColors.accent,
       brightness: Brightness.light,
     ).copyWith(
-      primary: ThrowColors.accent,
+      primary: ThrowColors.lightAccent,
       onPrimary: ThrowColors.onAccent,
       primaryContainer: ThrowColors.lightAccentContainer,
       onPrimaryContainer: ThrowColors.lightOnAccentContainer,
@@ -262,9 +279,9 @@ abstract final class ThrowTheme {
         space: 1,
       ),
       textSelectionTheme: const TextSelectionThemeData(
-        cursorColor: ThrowColors.accent,
-        selectionColor: Color(0x4D5A7A55),
-        selectionHandleColor: ThrowColors.accent,
+        cursorColor: ThrowColors.lightAccent,
+        selectionColor: Color(0x4D3E5A3B),
+        selectionHandleColor: ThrowColors.lightAccent,
       ),
       cardTheme: const CardThemeData(
         color: ThrowColors.lightSurface,
@@ -277,7 +294,7 @@ abstract final class ThrowTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: ThrowColors.accent,
+          backgroundColor: ThrowColors.lightAccent,
           foregroundColor: ThrowColors.onAccent,
           minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -303,7 +320,7 @@ abstract final class ThrowTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: ThrowColors.accent,
+          foregroundColor: ThrowColors.lightAccent,
           minimumSize: const Size(48, 48),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
           textStyle: GoogleFonts.plusJakartaSans(
