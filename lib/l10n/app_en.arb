@@ -154,5 +154,28 @@
       }
     }
   },
-  "transfersSubtitle": "Track active and recent transfers."
+  "transfersSubtitle": "Track active and recent transfers.",
+  "homeTagline": "Send files and text directly to nearby devices.",
+  "homeChooseDevice": "Choose a device",
+  "homePickDeviceFirst": "Pick a device above to send something.",
+  "actionClear": "Clear",
+  "actionRefresh": "Refresh",
+  "discoverScanningHint": "Scanning… keep Throw open on both devices.",
+  "discoverIdleHint": "Find devices, or make this one visible.",
+  "settingsSubtitle": "Manage your device, language, and appearance.",
+  "settingsEditName": "Rename",
+  "transfersEmptyTitle": "Nothing transferred yet",
+  "transfersEmptyBody": "Files and text you send or receive will appear here.",
+  "transfersOpen": "Open",
+  "receivedTitle": "Received",
+  "receivedEmptyTitle": "Nothing received yet",
+  "receivedEmptyBody": "Text and files that arrive will be saved here with the newest first.",
+  "receivedActionCopy": "Copy",
+  "receivedActionCopied": "Copied to clipboard",
+  "receivedActionSave": "Save as",
+  "receivedActionOpenFile": "Open file",
+  "receivedOpenFailed": "Could not open that item.",
+  "receivedShareMissing": "That file has no saved path, so it cannot be opened.",
+  "receivedTypeText": "Text",
+  "receivedTypeFile": "File"
 }
