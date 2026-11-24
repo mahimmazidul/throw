@@ -18,7 +18,7 @@ abstract final class Permissions {
     if (!Platform.isAndroid) return true;
 
     final results = await <Permission>[
-      Permission.nearbyDevices,
+      Permission.nearbyWifiDevices,
       Permission.locationWhenInUse,
       Permission.bluetoothScan,
       Permission.bluetoothConnect,
@@ -29,8 +29,8 @@ abstract final class Permissions {
         (results[p] ?? PermissionStatus.denied).isGranted;
 
     // WiFi Direct gate: NEARBY_WIFI_DEVICES on Android 13+, location before.
-    final wifiReady =
-        granted(Permission.nearbyDevices) || granted(Permission.locationWhenInUse);
+    final wifiReady = granted(Permission.nearbyWifiDevices) ||
+        granted(Permission.locationWhenInUse);
     // BLE gate: scan/connect on Android 12+, legacy Bluetooth before.
     final bleReady = granted(Permission.bluetoothScan) ||
         granted(Permission.bluetoothConnect) ||
@@ -43,7 +43,7 @@ abstract final class Permissions {
   static Future<bool> hasNearbyAccess() async {
     if (!Platform.isAndroid) return true;
 
-    final wifiReady = await Permission.nearbyDevices.isGranted ||
+    final wifiReady = await Permission.nearbyWifiDevices.isGranted ||
         await Permission.locationWhenInUse.isGranted;
     final bleReady = await Permission.bluetoothScan.isGranted ||
         await Permission.bluetoothConnect.isGranted ||
@@ -56,13 +56,15 @@ abstract final class Permissions {
   static Future<bool> isPermanentlyDenied() async {
     if (!Platform.isAndroid) return false;
 
-    final statuses = await [
-      Permission.nearbyDevices,
+    for (final p in [
+      Permission.nearbyWifiDevices,
       Permission.locationWhenInUse,
       Permission.bluetoothScan,
       Permission.bluetoothConnect,
-    ].status;
-    return statuses.values.any((s) => s.isPermanentlyDenied);
+    ]) {
+      if (await p.isPermanentlyDenied) return true;
+    }
+    return false;
   }
 
   /// Opens this app's system settings page (used after a permanent denial).
