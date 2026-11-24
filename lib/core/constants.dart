@@ -29,7 +29,7 @@ abstract final class AppConstants {
   static const String serviceName = 'throw';
 
   /// Android Nearby service id (matches the application id in the manifest).
-  static const String androidServiceId = 'com.throwapp.service';
+  static const String androidServiceId = 'com.mahimmazidul.throw.service';
 
   /// Stop discovery when nothing has shown up within this window.
   static const Duration discoveryTimeout = Duration(seconds: 30);

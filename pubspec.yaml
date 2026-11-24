@@ -15,7 +15,7 @@ dependencies:
 
   # Core transfer stack
   nearby_connections: ^4.3.0 # Android only (WiFi Direct, ~250 Mbps)
-  flutter_blue_plus: ^1.31.0 # Desktop + Android fallback (Bluetooth, ~3 Mbps)
+  bluetooth_low_energy: ^6.2.1 # Desktop + Android fallback (BLE)
   file_picker: ^6.0.0
   permission_handler: ^11.0.0
   open_file: ^3.3.2

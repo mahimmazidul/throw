@@ -13,7 +13,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace "com.throwapp.throw"
+    namespace "com.mahimmazidul.throw"
     compileSdk flutter.compileSdkVersion
 
     compileOptions {
@@ -26,7 +26,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.throwapp.throw"
+        applicationId "com.mahimmazidul.throw"
         minSdk 21
         targetSdk flutter.targetSdkVersion
         versionCode flutter.versionCode
