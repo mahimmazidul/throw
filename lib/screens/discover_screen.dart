@@ -79,7 +79,7 @@ class DiscoverScreen extends StatelessWidget {
               ...provider.pendingRequests.map(
                 (req) => Card(
                   child: ListTile(
-                    title: Text(l10n.incomingFrom(req.name)),
+                    title: Text(l10n.incomingFrom(req.deviceName)),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
@@ -12,36 +13,31 @@ import '../services/transfer_service_factory.dart';
 class TransferProvider extends ChangeNotifier {
   final TransferService _service;
 
-  List<TransferModel> _transfers = const [];
-  final List<TransferModel> _incomingQueue = [];
+  final Map<String, TransferModel> _transfersMap = {};
+  final List<PayloadModel> _receivedPayloads = [];
   String? _error;
 
-  StreamSubscription<List<TransferModel>>? _transfersSub;
-  StreamSubscription<TransferModel>? _incomingSub;
+  StreamSubscription<TransferModel>? _transfersSub;
+  StreamSubscription<PayloadModel>? _payloadsSub;
 
   TransferProvider({TransferService? service})
       : _service = service ?? TransferServiceFactory.instance {
-    _transfersSub = _service.transfers.listen((list) {
-      _transfers = List.unmodifiable(list);
+    _transfersSub = _service.transfers.listen((transfer) {
+      _transfersMap[transfer.id] = transfer;
       notifyListeners();
     });
-    _incomingSub = _service.incomingTransfers.listen((transfer) {
-      _incomingQueue.add(transfer);
+    _payloadsSub = _service.receivedPayloads.listen((payload) {
+      _receivedPayloads.add(payload);
       notifyListeners();
     });
   }
 
-  List<TransferModel> get transfers => _transfers;
-  List<TransferModel> get activeTransfers => _transfers
-      .where((t) => t.isActive)
-      .toList(growable: false);
-  List<TransferModel> get incomingQueue => List.unmodifiable(_incomingQueue);
+  List<TransferModel> get transfers => List.unmodifiable(_transfersMap.values);
+  List<TransferModel> get activeTransfers =>
+      _transfersMap.values.where((t) => t.isActive).toList(growable: false);
+  List<PayloadModel> get receivedPayloads =>
+      List.unmodifiable(_receivedPayloads);
   String? get error => _error;
-
-  void dismissIncoming(String transferId) {
-    _incomingQueue.removeWhere((t) => t.id == transferId);
-    notifyListeners();
-  }
 
   void clearError() {
     if (_error == null) return;
@@ -49,55 +45,36 @@ class TransferProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<TransferModel?> sendText(DeviceModel target, String text) async {
-    if (text.trim().isEmpty) return null;
-    return sendPayload(
-      target,
-      PayloadModel(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        type: PayloadType.text,
-        text: text,
-        sizeBytes: text.length,
-      ),
-    );
+  Future<void> sendText(DeviceModel target, String text) async {
+    if (text.trim().isEmpty) return;
+    _error = null;
+    try {
+      await _service.sendText(endpointId: target.id, text: text);
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+    }
   }
 
-  Future<TransferModel?> sendFile(
+  Future<void> sendFile(
     DeviceModel target, {
     required String filePath,
     required String fileName,
     required int sizeBytes,
   }) async {
-    return sendPayload(
-      target,
-      PayloadModel(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        type: PayloadType.file,
-        filePath: filePath,
-        fileName: fileName,
-        sizeBytes: sizeBytes,
-      ),
-    );
-  }
-
-  Future<TransferModel?> sendPayload(
-    DeviceModel target,
-    PayloadModel payload,
-  ) async {
     _error = null;
     try {
-      return await _service.sendPayload(target, payload);
+      await _service.sendFile(endpointId: target.id, file: File(filePath));
     } catch (e) {
       _error = e.toString();
       notifyListeners();
-      return null;
     }
   }
 
   Future<void> cancelTransfer(TransferModel transfer) async {
     _error = null;
     try {
-      await _service.cancelTransfer(transfer);
+      await _service.cancelTransfer(transfer.id);
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -107,7 +84,7 @@ class TransferProvider extends ChangeNotifier {
   @override
   void dispose() {
     _transfersSub?.cancel();
-    _incomingSub?.cancel();
+    _payloadsSub?.cancel();
     super.dispose();
   }
 }

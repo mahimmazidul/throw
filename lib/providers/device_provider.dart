@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import '../core/constants.dart';
 import '../models/device_model.dart';
 import '../services/transfer_service.dart';
 import '../services/transfer_service_factory.dart';
@@ -11,34 +10,35 @@ import '../services/transfer_service_factory.dart';
 class DeviceProvider extends ChangeNotifier {
   final TransferService _service;
 
-  List<DeviceModel> _devices = const [];
-  final List<DeviceModel> _pendingRequests = [];
-  String _deviceName = AppConstants.defaultDeviceName;
+  final Map<String, DeviceModel> _devicesMap = {};
+  final List<ConnectionRequest> _pendingRequests = [];
+  String _deviceName = 'Throw Device';
   bool _isAdvertising = false;
   bool _isDiscovering = false;
   String? _error;
 
-  StreamSubscription<List<DeviceModel>>? _devicesSub;
-  StreamSubscription<DeviceModel>? _requestsSub;
+  StreamSubscription<DeviceModel>? _devicesSub;
+  StreamSubscription<ConnectionRequest>? _requestsSub;
 
   DeviceProvider({TransferService? service})
       : _service = service ?? TransferServiceFactory.instance {
-    _devicesSub = _service.discoveredDevices.listen((list) {
-      _devices = List.unmodifiable(list);
+    _devicesSub = _service.devices.listen((device) {
+      _devicesMap[device.id] = device;
       notifyListeners();
     });
-    _requestsSub = _service.connectionRequests.listen((device) {
-      if (!_pendingRequests.any((d) => d.id == device.id)) {
-        _pendingRequests.add(device);
+    _requestsSub = _service.connectionRequests.listen((req) {
+      if (!_pendingRequests.any((r) => r.endpointId == req.endpointId)) {
+        _pendingRequests.add(req);
         notifyListeners();
       }
     });
   }
 
-  List<DeviceModel> get devices => _devices;
+  List<DeviceModel> get devices => List.unmodifiable(_devicesMap.values);
   List<DeviceModel> get connectedDevices =>
-      _devices.where((d) => d.isConnected).toList(growable: false);
-  List<DeviceModel> get pendingRequests => List.unmodifiable(_pendingRequests);
+      _devicesMap.values.where((d) => d.isConnected).toList(growable: false);
+  List<ConnectionRequest> get pendingRequests =>
+      List.unmodifiable(_pendingRequests);
   String get deviceName => _deviceName;
   bool get isAdvertising => _isAdvertising;
   bool get isDiscovering => _isDiscovering;
@@ -60,8 +60,8 @@ class DeviceProvider extends ChangeNotifier {
   Future<void> startAdvertising() async {
     _error = null;
     try {
-      await _service.startAdvertising(_deviceName);
-      _isAdvertising = _service.isAdvertising;
+      await _service.startAdvertising(deviceName: _deviceName);
+      _isAdvertising = true;
     } catch (e) {
       _error = e.toString();
       _isAdvertising = false;
@@ -72,7 +72,7 @@ class DeviceProvider extends ChangeNotifier {
   Future<void> stopAdvertising() async {
     try {
       await _service.stopAdvertising();
-      _isAdvertising = _service.isAdvertising;
+      _isAdvertising = false;
     } catch (e) {
       _error = e.toString();
     }
@@ -83,7 +83,7 @@ class DeviceProvider extends ChangeNotifier {
     _error = null;
     try {
       await _service.startDiscovery();
-      _isDiscovering = _service.isDiscovering;
+      _isDiscovering = true;
     } catch (e) {
       _error = e.toString();
       _isDiscovering = false;
@@ -94,7 +94,7 @@ class DeviceProvider extends ChangeNotifier {
   Future<void> stopDiscovery() async {
     try {
       await _service.stopDiscovery();
-      _isDiscovering = _service.isDiscovering;
+      _isDiscovering = false;
     } catch (e) {
       _error = e.toString();
     }
@@ -114,29 +114,29 @@ class DeviceProvider extends ChangeNotifier {
   Future<void> disconnect(DeviceModel device) async {
     _error = null;
     try {
-      await _service.disconnect(device);
+      await _service.disconnect(device.id);
     } catch (e) {
       _error = e.toString();
       notifyListeners();
     }
   }
 
-  Future<void> acceptConnection(DeviceModel device) async {
-    _pendingRequests.removeWhere((d) => d.id == device.id);
+  Future<void> acceptConnection(ConnectionRequest request) async {
+    _pendingRequests.removeWhere((r) => r.endpointId == request.endpointId);
     notifyListeners();
     try {
-      await _service.acceptConnection(device);
+      await _service.acceptConnection(request.endpointId);
     } catch (e) {
       _error = e.toString();
       notifyListeners();
     }
   }
 
-  Future<void> rejectConnection(DeviceModel device) async {
-    _pendingRequests.removeWhere((d) => d.id == device.id);
+  Future<void> rejectConnection(ConnectionRequest request) async {
+    _pendingRequests.removeWhere((r) => r.endpointId == request.endpointId);
     notifyListeners();
     try {
-      await _service.rejectConnection(device);
+      await _service.rejectConnection(request.endpointId);
     } catch (e) {
       _error = e.toString();
       notifyListeners();
