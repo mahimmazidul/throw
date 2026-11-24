@@ -62,6 +62,10 @@ Every [`v*.*.*`](https://github.com/mahimmazidul/throw/releases) tag builds all 
 | Linux (universal) | tar.gz | [Latest Release](https://github.com/mahimmazidul/throw/releases/latest) |
 | Linux | AppImage | [Latest Release](https://github.com/mahimmazidul/throw/releases/latest) |
 
+## Screenshots
+
+<img src="assets/social_preview.png" alt="Throw preview" width="600" />
+
 ## Tech stack
 
 | Layer | Choice |
