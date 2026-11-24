@@ -47,6 +47,21 @@ Get the latest build from [GitHub Releases](https://github.com/mahimmazidul/thro
 | Windows | ZIP, MSIX |
 | Linux | .deb, AppImage, tar.gz |
 
+## Where received files go
+
+Throw writes received files into a folder you can open with any file manager:
+
+| Platform | Folder |
+|----------|--------|
+| Android | `Download/Throw` (public Downloads) |
+| Windows | `%USERPROFILE%\Documents\Throw` |
+| Linux | `~/Documents/Throw` |
+
+If the public folder is not writable — some OEM ROMs lock it down — the app
+falls back to its own storage directory and says so on the receipt instead of
+claiming a location it cannot reach. A second file with the same name is saved
+as `name (1).ext`; nothing is overwritten.
+
 ## Screenshots
 
 <p align="center">
@@ -56,6 +71,7 @@ Get the latest build from [GitHub Releases](https://github.com/mahimmazidul/thro
   <img src="assets/screenshots/transfers.png" alt="Transfers screen" width="200" />
   <img src="assets/screenshots/settings.png" alt="Settings screen" width="200" />
   <img src="assets/screenshots/home_bn.png" alt="Home screen in বাংলা" width="200" />
+  <img src="assets/screenshots/about.png" alt="About screen" width="200" />
 </p>
 
 Screenshots are rendered by `test/screenshots_test.dart` with the bundled fonts
