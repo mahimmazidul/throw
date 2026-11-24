@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../lib/core/theme.dart';
@@ -51,7 +52,7 @@ class _FakeTransferService implements TransferService {
   Future<void> dispose() async {}
 }
 
-Widget _wrapScreen(Widget child) {
+Widget _wrapScreen(Widget child, ThemeData theme) {
   final fakeService = _FakeTransferService();
   return MultiProvider(
     providers: [
@@ -65,7 +66,7 @@ Widget _wrapScreen(Widget child) {
     ],
     child: MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThrowTheme.dark(),
+      theme: theme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(body: child),
@@ -81,6 +82,16 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
 
+    // Finish loading bundled fonts before mounting render objects that listen
+    // for system font changes. Late notifications leave frames at teardown.
+    GoogleFonts.config.allowRuntimeFetching = false;
+    final theme = await tester.runAsync(() async {
+      final theme = ThrowTheme.dark();
+      await GoogleFonts.pendingFonts();
+      return theme;
+    });
+    expect(theme, isNotNull);
+
     final screens = {
       'home': const HomeScreen(),
       'discover': const DiscoverScreen(),
@@ -89,7 +100,7 @@ void main() {
     };
 
     for (final entry in screens.entries) {
-      await tester.pumpWidget(_wrapScreen(entry.value));
+      await tester.pumpWidget(_wrapScreen(entry.value, theme!));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: entry.key);
       if (compareScreenshots) {
@@ -99,5 +110,7 @@ void main() {
         );
       }
     }
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
   });
 }
