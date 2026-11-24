@@ -62,15 +62,13 @@ Every [`v*.*.*`](https://github.com/mahimmazidul/throw/releases) tag builds all 
 | Linux (universal) | tar.gz | [Latest Release](https://github.com/mahimmazidul/throw/releases/latest) |
 | Linux | AppImage | [Latest Release](https://github.com/mahimmazidul/throw/releases/latest) |
 
-## Screenshots
-
 ## Tech stack
 
 | Layer | Choice |
 | --- | --- |
 | Framework | Flutter 3.x (stable), Dart >=3.0.0 <4.0.0 |
 | Android transfer | `nearby_connections` (WiFi Direct) |
-| Desktop transfer | `flutter_blue_plus` (Bluetooth) |
+| Desktop transfer | `bluetooth_low_energy` (Bluetooth) |
 | State management | `provider` |
 | UI | Material 3, `flutter_animate`, `lottie`, `skeletonizer`, `flutter_slidable` |
 | Typography | Hind Siliguri (`google_fonts`) |
