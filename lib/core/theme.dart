@@ -82,6 +82,30 @@ abstract final class ThrowColors {
 
   /// Tint of [lightAccent] for badges and chips on sage paper.
   static const Color lightAccentTint = Color(0x291B6660);
+
+  // Grouped surfaces — the ramp that replaces "a card per idea".
+  //
+  // Cards used to be the only grouping mechanism, which is why every screen
+  // read as a stack of unrelated boxes. These give two steps under the canvas
+  // (panel) and one above it (raised) so content can sit *on* a surface
+  // instead of inside a box drawn on the background.
+  static const Color containerLow = Color(0xFF122024);
+  static const Color containerHigh = Color(0xFF1A2A2E);
+  static const Color raised = Color(0xFF1F3034);
+
+  static const Color lightContainerLow = Color(0xFFF4F7F6);
+  static const Color lightContainerHigh = Color(0xFFE6ECEB);
+  static const Color lightRaised = Color(0xFFFFFFFF);
+
+  /// Hairline separator — half the weight of [border], used inside groups so a
+  /// list does not turn into a grid of lines.
+  static const Color hairline = Color(0xFF223134);
+  static const Color lightHairline = Color(0xFFDCE4E3);
+
+  /// Muted ink for tertiary text (timestamps, meta) — one step below
+  /// [secondary] on the canvas.
+  static const Color inkMuted = Color(0xFF879799);
+  static const Color lightInkMuted = Color(0xFF5A6A6D);
 }
 
 /// One corner scale for the whole app.
@@ -131,21 +155,81 @@ abstract final class ThrowTheme {
 
   /// Plus Jakarta Sans type scale — clean, modern, readable.
   static TextTheme _typeScale() => const TextTheme(
-        displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w700, height: 1.1, fontFamilyFallback: ['HindSiliguri']),
-        displayMedium: TextStyle(fontSize: 45, fontWeight: FontWeight.w700, height: 1.1, fontFamilyFallback: ['HindSiliguri']),
-        displaySmall: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, height: 1.15, fontFamilyFallback: ['HindSiliguri']),
-        headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, height: 1.2, fontFamilyFallback: ['HindSiliguri']),
-        headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w600, height: 1.25, fontFamilyFallback: ['HindSiliguri']),
-        headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, height: 1.3, fontFamilyFallback: ['HindSiliguri']),
-        titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, height: 1.3, fontFamilyFallback: ['HindSiliguri']),
-        titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, height: 1.4, fontFamilyFallback: ['HindSiliguri']),
-        titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.4, fontFamilyFallback: ['HindSiliguri']),
-        bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, height: 1.5, fontFamilyFallback: ['HindSiliguri']),
-        bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, height: 1.5, fontFamilyFallback: ['HindSiliguri']),
-        bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, height: 1.4, fontFamilyFallback: ['HindSiliguri']),
-        labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.3, fontFamilyFallback: ['HindSiliguri']),
-        labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, height: 1.3, fontFamilyFallback: ['HindSiliguri']),
-        labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, height: 1.3, fontFamilyFallback: ['HindSiliguri']),
+        displayLarge: TextStyle(
+            fontSize: 57,
+            fontWeight: FontWeight.w700,
+            height: 1.1,
+            fontFamilyFallback: ['HindSiliguri']),
+        displayMedium: TextStyle(
+            fontSize: 45,
+            fontWeight: FontWeight.w700,
+            height: 1.1,
+            fontFamilyFallback: ['HindSiliguri']),
+        displaySmall: TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.w700,
+            height: 1.15,
+            fontFamilyFallback: ['HindSiliguri']),
+        headlineLarge: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.w700,
+            height: 1.2,
+            fontFamilyFallback: ['HindSiliguri']),
+        headlineMedium: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w600,
+            height: 1.25,
+            fontFamilyFallback: ['HindSiliguri']),
+        headlineSmall: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            height: 1.3,
+            fontFamilyFallback: ['HindSiliguri']),
+        titleLarge: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
+            height: 1.3,
+            fontFamilyFallback: ['HindSiliguri']),
+        titleMedium: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            height: 1.4,
+            fontFamilyFallback: ['HindSiliguri']),
+        titleSmall: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            height: 1.4,
+            fontFamilyFallback: ['HindSiliguri']),
+        bodyLarge: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+            height: 1.5,
+            fontFamilyFallback: ['HindSiliguri']),
+        bodyMedium: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            height: 1.5,
+            fontFamilyFallback: ['HindSiliguri']),
+        bodySmall: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            height: 1.4,
+            fontFamilyFallback: ['HindSiliguri']),
+        labelLarge: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            height: 1.3,
+            fontFamilyFallback: ['HindSiliguri']),
+        labelMedium: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            height: 1.3,
+            fontFamilyFallback: ['HindSiliguri']),
+        labelSmall: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            height: 1.3,
+            fontFamilyFallback: ['HindSiliguri']),
       );
 
   /// Corners are softened from the original 6/8dp: biophilic guidance is to
@@ -182,14 +266,15 @@ abstract final class ThrowTheme {
       onPrimaryContainer: ThrowColors.onAccentContainer,
       secondary: ThrowColors.secondary,
       onSecondary: ThrowColors.bg,
-      secondaryContainer: ThrowColors.surfaceHigh,
+      secondaryContainer: ThrowColors.containerHigh,
       onSecondaryContainer: ThrowColors.text,
       surface: ThrowColors.bg,
       onSurface: ThrowColors.text,
-      surfaceContainerLow: ThrowColors.surface,
+      surfaceContainerLowest: ThrowColors.bg,
+      surfaceContainerLow: ThrowColors.containerLow,
       surfaceContainer: ThrowColors.surface,
-      surfaceContainerHigh: ThrowColors.surfaceHigh,
-      surfaceContainerHighest: ThrowColors.surfaceHigh,
+      surfaceContainerHigh: ThrowColors.containerHigh,
+      surfaceContainerHighest: ThrowColors.raised,
       outline: ThrowColors.border,
       outlineVariant: ThrowColors.border,
       error: const Color(0xFFD08D7C),
@@ -207,11 +292,12 @@ abstract final class ThrowTheme {
       highlightColor: Colors.transparent,
       textTheme: _typeScale().apply(
         fontFamily: _latin,
-          fontFamilyFallback: _fallback,
+        fontFamilyFallback: _fallback,
         bodyColor: ThrowColors.text,
         displayColor: ThrowColors.text,
       ),
-      dividerTheme: const DividerThemeData(color: ThrowColors.border, thickness: 1, space: 1),
+      dividerTheme: const DividerThemeData(
+          color: ThrowColors.border, thickness: 1, space: 1),
       textSelectionTheme: const TextSelectionThemeData(
         cursorColor: ThrowColors.accent,
         selectionColor: Color(0x5A0E6A64),
@@ -235,7 +321,7 @@ abstract final class ThrowTheme {
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
           textStyle: const TextStyle(
             fontFamily: _latin,
-          fontFamilyFallback: _fallback,
+            fontFamilyFallback: _fallback,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -250,7 +336,7 @@ abstract final class ThrowTheme {
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
           textStyle: const TextStyle(
             fontFamily: _latin,
-          fontFamilyFallback: _fallback,
+            fontFamilyFallback: _fallback,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -263,7 +349,7 @@ abstract final class ThrowTheme {
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
           textStyle: const TextStyle(
             fontFamily: _latin,
-          fontFamilyFallback: _fallback,
+            fontFamilyFallback: _fallback,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -343,10 +429,11 @@ abstract final class ThrowTheme {
       onSecondaryContainer: ThrowColors.lightText,
       surface: ThrowColors.lightSurface,
       onSurface: ThrowColors.lightText,
-      surfaceContainerLow: ThrowColors.lightSurface,
+      surfaceContainerLowest: ThrowColors.lightBg,
+      surfaceContainerLow: ThrowColors.lightContainerLow,
       surfaceContainer: ThrowColors.lightSurface,
-      surfaceContainerHigh: ThrowColors.lightSurfaceHigh,
-      surfaceContainerHighest: ThrowColors.lightSurfaceHigh,
+      surfaceContainerHigh: ThrowColors.lightContainerHigh,
+      surfaceContainerHighest: ThrowColors.lightRaised,
       outline: ThrowColors.lightBorder,
       outlineVariant: ThrowColors.lightBorder,
       error: const Color(0xFF8E4234),
@@ -364,7 +451,7 @@ abstract final class ThrowTheme {
       highlightColor: Colors.transparent,
       textTheme: _typeScale().apply(
         fontFamily: _latin,
-          fontFamilyFallback: _fallback,
+        fontFamilyFallback: _fallback,
         bodyColor: ThrowColors.lightText,
         displayColor: ThrowColors.lightText,
       ),
@@ -396,7 +483,7 @@ abstract final class ThrowTheme {
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
           textStyle: const TextStyle(
             fontFamily: _latin,
-          fontFamilyFallback: _fallback,
+            fontFamilyFallback: _fallback,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -411,7 +498,7 @@ abstract final class ThrowTheme {
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
           textStyle: const TextStyle(
             fontFamily: _latin,
-          fontFamilyFallback: _fallback,
+            fontFamilyFallback: _fallback,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -424,7 +511,7 @@ abstract final class ThrowTheme {
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
           textStyle: const TextStyle(
             fontFamily: _latin,
-          fontFamilyFallback: _fallback,
+            fontFamilyFallback: _fallback,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),

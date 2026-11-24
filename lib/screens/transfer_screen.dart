@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants.dart';
+import '../core/motion.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/transfer_provider.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/entrance.dart';
 import '../widgets/error_banner.dart';
 import '../widgets/screen_header.dart';
 import '../widgets/transfer_progress.dart';
@@ -53,9 +55,16 @@ class TransferScreen extends StatelessWidget {
                           const EdgeInsets.only(bottom: AppConstants.space4),
                       itemBuilder: (context, index) {
                         final transfer = transfers[index];
-                        return TransferProgressTile(
-                          transfer: transfer,
-                          onCancel: () => provider.cancelTransfer(transfer),
+                        return Entrance(
+                          // Only the first few stagger; later rows appear on
+                          // scroll and should not wait on a delay.
+                          delay: index < 6
+                              ? Motion.stagger * index
+                              : Duration.zero,
+                          child: TransferProgressTile(
+                            transfer: transfer,
+                            onCancel: () => provider.cancelTransfer(transfer),
+                          ),
                         );
                       },
                     ),

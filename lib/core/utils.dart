@@ -49,8 +49,18 @@ class AppUtils {
     if (delta.inHours < 24) return '${delta.inHours} hr ago';
     if (delta.inDays < 7) return '${delta.inDays} d ago';
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${time.day} ${months[time.month - 1]}';
   }

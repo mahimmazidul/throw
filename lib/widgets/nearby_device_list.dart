@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../core/constants.dart';
 import '../l10n/app_localizations.dart';
 import '../models/device_model.dart';
 import 'device_card.dart';
+import 'empty_state.dart';
 
 /// Displays the list of discovered nearby devices or an empty/searching state.
 class NearbyDeviceList extends StatelessWidget {
@@ -25,20 +27,24 @@ class NearbyDeviceList extends StatelessWidget {
     final theme = Theme.of(context);
 
     if (devices.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+      // A radar that is actually running: a still icon next to the word
+      // "Searching" claims activity it does not show.
+      if (isSearching) {
+        return Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                isSearching ? Icons.radar_rounded : Icons.devices_rounded,
-                size: 48,
-                color: theme.colorScheme.onSurfaceVariant,
+              SizedBox(
+                width: 30,
+                height: 30,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.4,
+                  color: theme.colorScheme.primary,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppConstants.space4),
               Text(
-                isSearching ? l10n.stateSearching : l10n.stateNoDevices,
+                l10n.stateSearching,
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -46,7 +52,12 @@ class NearbyDeviceList extends StatelessWidget {
               ),
             ],
           ),
-        ),
+        );
+      }
+      return EmptyState(
+        icon: Icons.radar_rounded,
+        title: l10n.stateNoDevices,
+        body: l10n.discoverIdleHint,
       );
     }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/motion.dart';
 import '../core/theme.dart';
 
 import '../core/utils.dart';
@@ -43,9 +44,8 @@ class TransferProgressTile extends StatelessWidget {
     final firstPayload =
         transfer.payloads.isNotEmpty ? transfer.payloads.first : null;
     final isFile = firstPayload?.kind == PayloadKind.file;
-    final title = isFile
-        ? (firstPayload?.name ?? 'file')
-        : (firstPayload?.text ?? '');
+    final title =
+        isFile ? (firstPayload?.name ?? 'file') : (firstPayload?.text ?? '');
     final isActive = transfer.isActive;
 
     return Card(
@@ -58,9 +58,19 @@ class TransferProgressTile extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  Icons.swap_horiz_rounded,
+                  switch (transfer.status) {
+                    TransferStatus.completed => Icons.check_circle_rounded,
+                    TransferStatus.failed => Icons.error_rounded,
+                    TransferStatus.cancelled => Icons.cancel_rounded,
+                    TransferStatus.rejected => Icons.block_rounded,
+                    _ => Icons.swap_horiz_rounded,
+                  },
                   size: 20,
-                  color: theme.colorScheme.primary,
+                  color: switch (transfer.status) {
+                    TransferStatus.completed => ThrowTheme.accentFg(context),
+                    TransferStatus.failed => theme.colorScheme.error,
+                    _ => theme.colorScheme.onSurfaceVariant,
+                  },
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -80,9 +90,19 @@ class TransferProgressTile extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: isActive ? transfer.progress : 1.0,
-              borderRadius: ThrowRadius.track,
+            // Animated, not snapped: a BLE transfer reports progress in
+            // bursts, and a bar that jumps 4% at a time reads as broken.
+            TweenAnimationBuilder<double>(
+              tween: Tween(
+                begin: 0,
+                end: isActive ? transfer.progress : 1.0,
+              ),
+              duration: Motion.adapt(context, Motion.standard),
+              curve: Motion.curve,
+              builder: (context, value, _) => LinearProgressIndicator(
+                value: value,
+                borderRadius: ThrowRadius.track,
+              ),
             ),
             const SizedBox(height: 6),
             Row(

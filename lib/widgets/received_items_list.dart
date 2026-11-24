@@ -9,8 +9,9 @@ import '../core/theme.dart';
 import '../core/utils.dart';
 import '../l10n/app_localizations.dart';
 import '../models/payload_model.dart';
-import 'accent_icon_badge.dart';
+import '../core/motion.dart';
 import 'empty_state.dart';
+import 'panel.dart';
 
 /// The receive side of the product.
 ///
@@ -39,18 +40,21 @@ class ReceivedItemsList extends StatelessWidget {
 
     final newestFirst = payloads.reversed.toList(growable: false);
 
-    return ListView.separated(
+    return ListView(
       padding: const EdgeInsets.only(bottom: AppConstants.space4),
-      itemCount: newestFirst.length,
-      separatorBuilder: (_, __) => const SizedBox(height: AppConstants.space2),
-      itemBuilder: (context, index) =>
-          _ReceivedTile(payload: newestFirst[index]),
+      children: [
+        PanelGroup(
+          children: [
+            for (final payload in newestFirst) _ReceivedRow(payload: payload),
+          ],
+        ),
+      ],
     );
   }
 }
 
-class _ReceivedTile extends StatelessWidget {
-  const _ReceivedTile({required this.payload});
+class _ReceivedRow extends StatelessWidget {
+  const _ReceivedRow({required this.payload});
 
   final PayloadModel payload;
 
@@ -111,59 +115,68 @@ class _ReceivedTile extends StatelessWidget {
       AppUtils.formatRelativeTime(payload.createdAt, DateTime.now()),
     ].join(' · ');
 
-    return Card(
-      child: InkWell(
-        borderRadius: ThrowRadius.card,
-        onTap: _isText ? () => _copy(context) : () => _openFile(context),
-        child: Padding(
-          padding: const EdgeInsets.all(AppConstants.space3),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AccentIconBadge(
-                icon: _isText
-                    ? Icons.notes_rounded
-                    : Icons.insert_drive_file_rounded,
-                size: 40,
+    return InkWell(
+      splashColor: cs.primary.withValues(alpha: 0.08),
+      onTap: _isText ? () => _copy(context) : () => _openFile(context),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppConstants.space4,
+          AppConstants.space3,
+          AppConstants.space2,
+          AppConstants.space3,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // A plain 22dp glyph, matching the settings rows: a circled badge
+            // on every item is what made these lists look like widgets on a
+            // dashboard rather than content.
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Icon(
+                _isText ? Icons.notes_rounded : Icons.insert_drive_file_rounded,
+                size: 22,
+                color: ThrowTheme.accentFg(context),
               ),
-              const SizedBox(width: AppConstants.space3),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: _isText ? 2 : 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium
-                          ?.copyWith(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(width: AppConstants.space3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: _isText ? 2 : 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    meta,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: ThrowColors.inkMuted,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      meta,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: cs.onSurfaceVariant),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(width: AppConstants.space1),
-              if (_isText)
-                IconButton(
-                  tooltip: l10n.receivedActionCopy,
-                  icon: const Icon(Icons.copy_rounded, size: 20),
-                  color: ThrowTheme.accentFg(context),
-                  onPressed: () => _copy(context),
-                )
-              else
-                IconButton(
-                  tooltip: l10n.receivedActionOpenFile,
-                  icon: const Icon(Icons.open_in_new_rounded, size: 20),
-                  color: ThrowTheme.accentFg(context),
-                  onPressed: () => _openFile(context),
+            ),
+            const SizedBox(width: AppConstants.space1),
+            Pressable(
+              child: IconButton(
+                tooltip: _isText
+                    ? l10n.receivedActionCopy
+                    : l10n.receivedActionOpenFile,
+                icon: Icon(
+                  _isText ? Icons.copy_rounded : Icons.open_in_new_rounded,
+                  size: 20,
                 ),
-            ],
-          ),
+                color: ThrowTheme.accentFg(context),
+                onPressed:
+                    _isText ? () => _copy(context) : () => _openFile(context),
+              ),
+            ),
+          ],
         ),
       ),
     );

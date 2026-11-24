@@ -5,57 +5,67 @@ All notable changes to Throw are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] — 2026-11-24
 
-UI and correctness pass benchmarked against LocalSend, Bloomee, Musify and
-Planets. Findings and reasoning: `docs/UI-AUDIT.md`.
+### Changed — the UI no longer looks like a dashboard of boxes
+
+The first pass of this audit shipped correct, but it corrected *within* the
+card stack: a header band, then three bordered 28dp cards per screen. Every
+section was a rectangle on a rectangle, which is the generic widget-kit look
+the reference apps avoid.
+
+What changed, and what it was compared against:
+
+- **The app icon is gone from inside the app.** It sat on all five headers
+  (Home, Discover, Transfers, Settings) and two of them drew a filled band
+  behind it. A logo repeated on every screen adds nothing over the window
+  chrome — neither LocalSend nor Musify does it.
+- **No more card-per-idea.** Grouping now comes from one tinted surface per
+  section with hairline separators (Musify's flush `CustomBar` runs,
+  LocalSend's `margin: EdgeInsets.zero` tiles). New `PanelGroup` + `FlatRow`
+  replace five stacked cards. Settings went from two bordered cards to two
+  flush groups; Home from four cards to one.
+- **No more nested boxes.** Home's header band held the peer picker which held
+  a form field. The band is gone; the composer is a soft writing area inside
+  the panel instead of a filled pill that read as a button.
+- **One send path.** The composer and the "Send" row below it were the same
+  action twice; the row is now the button that belongs to the composer.
+- **Transfers empty state is typographic**, not a circled glyph on a card.
+- **Surface ramp instead of outlines.** `containerLow` / `containerHigh` /
+  `raised` plus a `hairline` separator, all measured: every text token clears
+  AA on all three (muted ink 4.52–6.23:1).
+
+### Added — motion
+
+- `Pressable`: press-down scale on every actionable control, built on
+  `Listener` so it never competes with a button's own gestures.
+- `Entrance` / `StaggeredEntrance`: sections fade and lift in with a 45 ms
+  stagger, ported from LocalSend's `InitialFadeTransition`.
+- Peer pills animate between selected and unselected states and slide their
+  check in rather than popping (`AnimatedContainer` + `AnimatedSize`).
+- Device rows carry an animated connection dot; Discover shows a real spinner
+  while scanning, and visibility is a switch that states the current
+  condition instead of a button that reads "Make visible" forever.
+- Transfer progress animates to its new value instead of jumping in BLE-sized
+  steps, and its glyph reflects status.
+- Every duration collapses to zero when the OS asks for reduced motion.
 
 ### Fixed
 
-- **The entire palette was transparent.** Every token in `lib/core/theme.dart`
-  was a 6-digit literal (`Color(0x0A1214)`), which is `0x00RRGGBB` — alpha
-  zero. The dark theme rendered as the window's white default with invisible
-  white-on-white text; cards, borders, buttons, nav bar and snackbars were all
-  see-through. All 21 tokens now carry `0xFF` alpha.
-- Bengali button, tab and snackbar labels rendered as tofu boxes: component
-  themes named `Plus Jakarta Sans` (no Bengali glyphs) without the bundled
-  HindSiliguri fallback. All 14 call sites now declare it.
-- `headlineSmall`, `titleSmall` and `displaySmall` were missing from the type
-  scale, so screen titles silently fell back to the default Roboto.
-- `isNewerVersion` compared `1.0.16+3` as `1.0.16`, so a release tagged with
-  build metadata was never offered as an update.
-- Transfers empty state showed Discover's copy ("No devices nearby yet.").
-- The update checker fired `showDialog` without awaiting or acknowledging it.
-- `MaterialApp.title` was a hardcoded string; it now follows the app language.
+- A peer pill lost its 48dp touch target in the redesign: an
+  `AnimatedContainer` with `alignment` set fills the incoming constraints, so
+  a lone pill became a full-width button. Pinned by tests for intrinsic width,
+  shared row, and 48dp height.
+- `Pressable` silently never fired on content that does not paint an opaque
+  box; it now hit-tests `translucent`.
+- The composer's hint duplicated the row below it and wrapped mid-sentence.
+- A duplicate version string in the About row.
+- `AppConstants.appVersion` is now checked against `pubspec.yaml` in CI.
 
-### Added
+### Tests
 
-- **Received items view.** `TransferProvider.receivedPayloads` was collected
-  and rendered nowhere. Home now has a Received tab: newest first, tap to copy
-  text, open or save files, honest message when a saved path is gone.
-  `open_file` is finally called.
-- **Peer-first Home.** The connected-device dropdown is replaced by tappable
-  peer pills with live connection state, so the target is visible without a
-  tap — the pattern every comparable sharing app uses.
-- Persistence for language, theme and device name via `shared_preferences`;
-  preferences load before the first frame, so there is no theme flash.
-- Shared UI vocabulary: `ScreenHeader`, `EmptyState`, `AccentIconBadge`,
-  `DevicePicker` — replacing four copies of the header, three empty states and
-  a dozen inline tinted `CircleAvatar`s.
-- `AppUtils.formatRelativeTime` and public, tested `AppUtils.isNewerVersion`.
-- 23 new localized strings (EN + BN), including the 7 English strings that
-  were hardcoded in widgets.
-
-### Changed
-
-- Screenshots are now real renders — bundled fonts, MaterialIcons, the real
-  adaptive shell and a Bangla shot — regenerated by the test harness.
-- CI pins Flutter `3.50.1` instead of the moving `3.x`, and verifies goldens on
-  every push so the screenshots can never silently drift from the app again.
-- Removed seven declared-but-unimported dependencies (`flutter_animate`,
-  `animations`, `lottie`, `skeletonizer`, `flutter_slidable`,
-  `flutter_adaptive_scaffold`, `window_manager`, `flutter_window_close`).
-- Test count 27 → 88; every finding above has a regression test.
+107 total (was 88). Every new widget has behaviour tests, including the two
+layout regressions above and reduced-motion handling.
 
 ## [1.0.10]
 

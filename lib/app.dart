@@ -26,12 +26,14 @@ class ThrowApp extends StatelessWidget {
     final prefs = preferences ?? AppPreferences.inMemory();
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => LocaleProvider(preferences: prefs)..restore()),
+        ChangeNotifierProvider(
+            create: (_) => LocaleProvider(preferences: prefs)..restore()),
         ChangeNotifierProvider(
           create: (_) => DeviceProvider(preferences: prefs),
         ),
         ChangeNotifierProvider(create: (_) => TransferProvider()),
-        ChangeNotifierProvider(create: (_) => ShareInboxProvider()..initialize()),
+        ChangeNotifierProvider(
+            create: (_) => ShareInboxProvider()..initialize()),
       ],
       child: Consumer<LocaleProvider>(
         builder: (context, localeProvider, _) {
@@ -39,7 +41,8 @@ class ThrowApp extends StatelessWidget {
             // The OS task switcher can be in a different language than the
             // in-app UI; onGenerateTitle runs inside the l10n scope so the
             // label follows the user's choice instead of the hardcoded brand.
-            onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+            onGenerateTitle: (context) =>
+                AppLocalizations.of(context)!.appTitle,
             debugShowCheckedModeBanner: false,
             theme: ThrowTheme.light(),
             darkTheme: ThrowTheme.dark(),

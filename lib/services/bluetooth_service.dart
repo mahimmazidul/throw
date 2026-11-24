@@ -413,7 +413,8 @@ class BluetoothService implements TransferService {
       }
       final type = data[4];
       final metaLen = ByteData.sublistView(data, 5, 9).getUint32(0, Endian.big);
-      final dataLen = ByteData.sublistView(data, 9, 13).getUint32(0, Endian.big);
+      final dataLen =
+          ByteData.sublistView(data, 9, 13).getUint32(0, Endian.big);
       final frameLen = 13 + metaLen + dataLen;
       if (data.length < frameLen) {
         _rxBuffers[deviceId] = BytesBuilder()..add(data);
@@ -421,8 +422,7 @@ class BluetoothService implements TransferService {
       }
 
       final metaBytes = Uint8List.sublistView(data, 13, 13 + metaLen);
-      final payloadBytes =
-          Uint8List.sublistView(data, 13 + metaLen, frameLen);
+      final payloadBytes = Uint8List.sublistView(data, 13 + metaLen, frameLen);
       data = Uint8List.sublistView(data, frameLen);
 
       Map<String, dynamic> meta = const {};

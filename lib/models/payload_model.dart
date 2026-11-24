@@ -47,7 +47,8 @@ class PayloadModel {
 
   /// Short human label for lists and progress rows.
   String get label {
-    if (kind == PayloadKind.file || kind == PayloadKind.clipboard && name != null) {
+    if (kind == PayloadKind.file ||
+        kind == PayloadKind.clipboard && name != null) {
       return name ?? text ?? '';
     }
     final body = text ?? '';

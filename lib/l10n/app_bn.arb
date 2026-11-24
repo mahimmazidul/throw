@@ -35,7 +35,7 @@
   "permissionBody": "কাছাকাছি ডিভিস খুঁজে পেতে থ্রো-র ডিভিস অ্যাক্সেস দরকার।",
   "errorBluetoothOff": "ব্লুটুথ বন্ধ আছে। ডিভিস খুঁজতে এটি চালু করুন।",
   "errorLocationOff": "লোকেশন সার্ভিস বন্ধ। অ্যান্ড্রয়েডে ডিভিস খুঁজতে এটি দরকার।",
-  "sendClipboardHint": "আগে কিছু কপি করুন, তারপর পাঠান।",
+  "sendClipboardHint": "পাঠানোর জন্য কিছু লিখুন…",
   "statusConnectedCount": "{count} টি সংযুক্ত",
   "@statusConnectedCount": {
     "placeholders": {
@@ -66,7 +66,7 @@
   "shareInboxSend": "পাওয়া ফাইল পাঠান",
   "sendTextTitle": "লেখা পাঠান",
   "sendFilesTitle": "ফাইল পাঠান",
-  "sendFilesHint": "একাধিক ফাইল বেছে নিয়ে সরাসরি নির্বাচিত ডিভাইসে পাঠান।",
+  "sendFilesHint": "এক বা একাধিক ফাইল বেছে পাঠান।",
   "actionPick": "বেছে নিন",
   "visibleAs": "{name} নামে দৃশ্যমান",
   "@visibleAs": {
@@ -169,5 +169,11 @@
   "receivedOpenFailed": "সেই আইটেমটি খোলা যায়নি।",
   "receivedShareMissing": "ফাইলটির কোনো সেভ করা ঠিকানা নেই, তাই খোলা যাবে না।",
   "receivedTypeText": "টেক্সট",
-  "receivedTypeFile": "ফাইল"
+  "receivedTypeFile": "ফাইল",
+  "settingsThisDevice": "এই ডিভাইস",
+  "homeSectionThrow": "কিছু পাঠান",
+  "homeSectionRecent": "সাম্প্রতিক গৃহীত",
+  "homeNoPeersTitle": "এখনও কোনো ডিভাইস সংযুক্ত নয়",
+  "homeNoPeersBody": "Discover খুলুন, এই ডিভাইসটি দৃশ্যমান করুন, তারপর অন্যটির সাথে সংযোগ করুন।",
+  "receivedCaption": "যা আসে সব এখানেই থাকে।"
 }

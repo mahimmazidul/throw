@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:throw_app/core/constants.dart';
 import 'package:throw_app/core/theme.dart';
 import 'package:throw_app/l10n/app_localizations.dart';
 import 'package:throw_app/models/app_error.dart';
@@ -26,27 +28,30 @@ void main() {
   group('colour plate meets WCAG AA', () {
     test('dark theme', () {
       expect(contrast(ThrowColors.text, ThrowColors.bg), greaterThan(4.5));
-      expect(
-          contrast(ThrowColors.text, ThrowColors.surface), greaterThan(4.5));
-      expect(
-          contrast(ThrowColors.secondary, ThrowColors.bg), greaterThan(4.5));
+      expect(contrast(ThrowColors.text, ThrowColors.surface), greaterThan(4.5));
+      expect(contrast(ThrowColors.secondary, ThrowColors.bg), greaterThan(4.5));
       // accent used as text on the canvas
       expect(
           contrast(ThrowColors.accentText, ThrowColors.bg), greaterThan(4.5));
       // white-ish on the accent fill (buttons)
-      expect(contrast(ThrowColors.onAccent, ThrowColors.accent), greaterThan(4.5));
-      expect(contrast(ThrowColors.onAccentContainer, ThrowColors.accentContainer),
+      expect(
+          contrast(ThrowColors.onAccent, ThrowColors.accent), greaterThan(4.5));
+      expect(
+          contrast(ThrowColors.onAccentContainer, ThrowColors.accentContainer),
           greaterThan(4.5));
     });
 
     test('light theme', () {
-      expect(contrast(ThrowColors.lightText, ThrowColors.lightBg), greaterThan(4.5));
+      expect(contrast(ThrowColors.lightText, ThrowColors.lightBg),
+          greaterThan(4.5));
       expect(contrast(ThrowColors.lightText, ThrowColors.lightSurface),
           greaterThan(4.5));
       expect(contrast(ThrowColors.lightSecondary, ThrowColors.lightBg),
           greaterThan(4.5));
-      expect(contrast(ThrowColors.lightAccent, ThrowColors.lightBg), greaterThan(4.5));
-      expect(contrast(ThrowColors.onAccent, ThrowColors.lightAccent), greaterThan(4.5));
+      expect(contrast(ThrowColors.lightAccent, ThrowColors.lightBg),
+          greaterThan(4.5));
+      expect(contrast(ThrowColors.onAccent, ThrowColors.lightAccent),
+          greaterThan(4.5));
       expect(
           contrast(ThrowColors.lightOnAccentContainer,
               ThrowColors.lightAccentContainer),
@@ -60,7 +65,7 @@ void main() {
         (ThrowColors.lightAccent, ThrowColors.lightAccent, ThrowColors.lightBg),
       ]) {
         final base = tinted.$3;
-                final mixed = Color.fromARGB(
+        final mixed = Color.fromARGB(
           255,
           (255 * (0.16 * tinted.$1.r + 0.84 * base.r)).round(),
           (255 * (0.16 * tinted.$1.g + 0.84 * base.g)).round(),
@@ -130,9 +135,12 @@ void main() {
     });
 
     test('only a blocked permission offers system settings', () {
-      expect(const AppError(AppErrorCode.permissionBlocked).offerSettings, isTrue);
-      expect(const AppError(AppErrorCode.permissionDenied).offerSettings, isFalse);
-      expect(const AppError(AppErrorCode.transferFailed).offerSettings, isFalse);
+      expect(
+          const AppError(AppErrorCode.permissionBlocked).offerSettings, isTrue);
+      expect(
+          const AppError(AppErrorCode.permissionDenied).offerSettings, isFalse);
+      expect(
+          const AppError(AppErrorCode.transferFailed).offerSettings, isFalse);
       expect(const AppError(AppErrorCode.bluetoothOff).offerSettings, isFalse);
     });
 
@@ -145,7 +153,7 @@ void main() {
 
   group('localization', () {
     Future<AppLocalizations> load(Locale locale) =>
-      AppLocalizations.delegate.load(locale);
+        AppLocalizations.delegate.load(locale);
 
     test('every error code has copy in English', () async {
       final l10n = await load(const Locale('en'));
@@ -160,10 +168,14 @@ void main() {
       final en = await load(const Locale('en'));
       final bn = await load(const Locale('bn'));
       // if these ever collapse to English, the .arb wiring broke
-      expect(describeError(const AppError(AppErrorCode.permissionDenied), bn),
-          isNot(equals(describeError(const AppError(AppErrorCode.permissionDenied), en))));
-      expect(describeError(const AppError(AppErrorCode.transferFailed), bn),
-          isNot(equals(describeError(const AppError(AppErrorCode.transferFailed), en))));
+      expect(
+          describeError(const AppError(AppErrorCode.permissionDenied), bn),
+          isNot(equals(describeError(
+              const AppError(AppErrorCode.permissionDenied), en))));
+      expect(
+          describeError(const AppError(AppErrorCode.transferFailed), bn),
+          isNot(equals(
+              describeError(const AppError(AppErrorCode.transferFailed), en))));
     });
   });
 
@@ -278,12 +290,26 @@ void main() {
     });
   });
 
+  group('version consistency', () {
+    test('AppConstants.appVersion matches pubspec.yaml', () {
+      // The constant is what the update checker compares against the latest
+      // release tag; if it drifts from the built version, users are either
+      // nagged forever or never told about a real update.
+      final pubspec = File('pubspec.yaml').readAsStringSync();
+      final match = RegExp(r'^version:\s*([^+\s]+)', multiLine: true)
+          .firstMatch(pubspec);
+      expect(match, isNotNull);
+      expect(AppConstants.appVersion, match!.group(1));
+    });
+  });
+
   group('theme is actually dark', () {
     test('dark() paints an opaque dark canvas with opaque light text', () {
       final theme = ThrowTheme.dark();
       final bg = theme.scaffoldBackgroundColor;
       final fg = theme.colorScheme.onSurface;
-      expect((bg.a * 255).round(), 255, reason: 'scaffold must not be transparent');
+      expect((bg.a * 255).round(), 255,
+          reason: 'scaffold must not be transparent');
       expect(_luminance(bg), lessThan(0.05), reason: 'dark canvas expected');
       expect(_luminance(fg), greaterThan(0.5), reason: 'light text expected');
       expect(contrast(fg, bg), greaterThan(4.5));
@@ -303,7 +329,8 @@ void main() {
         final card = theme.cardTheme.color!;
         final bg = theme.scaffoldBackgroundColor;
         expect((card.a * 255).round(), 255);
-        expect(card, isNot(bg), reason: 'a card that matches the canvas is invisible');
+        expect(card, isNot(bg),
+            reason: 'a card that matches the canvas is invisible');
       }
     });
   });
@@ -316,7 +343,8 @@ void main() {
         dismissible: true,
       );
       expect(find.byType(ErrorBanner), findsOneWidget);
-      expect(find.textContaining('Scanning for devices failed'), findsOneWidget);
+      expect(
+          find.textContaining('Scanning for devices failed'), findsOneWidget);
     });
 
     testWidgets('offers system settings only when the permission is blocked',
@@ -332,25 +360,24 @@ void main() {
     });
 
     testWidgets('dismiss is optional and wired when supplied', (tester) async {
-      await _pumpBanner(
-          tester, const AppError(AppErrorCode.transferFailed));
+      await _pumpBanner(tester, const AppError(AppErrorCode.transferFailed));
       expect(find.byIcon(Icons.close_rounded), findsNothing);
 
-      await _pumpBanner(
-          tester,
-          const AppError(AppErrorCode.transferFailed),
+      await _pumpBanner(tester, const AppError(AppErrorCode.transferFailed),
           dismissible: true);
       expect(find.byIcon(Icons.close_rounded), findsOneWidget);
     });
 
     testWidgets('is announced to screen readers', (tester) async {
-      await _pumpBanner(
-          tester, const AppError(AppErrorCode.locationOff), dismissible: true);
+      await _pumpBanner(tester, const AppError(AppErrorCode.locationOff),
+          dismissible: true);
       final semantic = tester.widget<Semantics>(
-        find.descendant(
-          of: find.byType(ErrorBanner),
-          matching: find.byType(Semantics),
-        ).first,
+        find
+            .descendant(
+              of: find.byType(ErrorBanner),
+              matching: find.byType(Semantics),
+            )
+            .first,
       );
       expect(semantic.properties.label, contains('Location'));
     });

@@ -29,7 +29,7 @@ Throw is a local file and text sharing app for Android, Windows, and Linux. It c
 - **Update checker** — check for the latest GitHub release from Settings.
 - **Bilingual UI** — English and বাংলা, with a bundled Bengali typeface so Bangla renders on Windows and Linux too.
 - **Remembers your setup** — device name, language and theme survive a relaunch.
-- **Modern, dark-first design** — clean interface with Plus Jakarta Sans typography.
+- **Modern, dark-first design** — flat grouped surfaces, press feedback on every control, and staggered entrances. Plus Jakarta Sans, with Hind Siliguri bundled for বাংলা.
 
 ## How it works
 
@@ -51,6 +51,7 @@ Get the latest build from [GitHub Releases](https://github.com/mahimmazidul/thro
 
 <p align="center">
   <img src="assets/screenshots/home_with_device.png" alt="Home screen with a connected device" width="200" />
+  <img src="assets/screenshots/home.png" alt="Home screen with nothing connected" width="200" />
   <img src="assets/screenshots/discover_with_device.png" alt="Discover screen" width="200" />
   <img src="assets/screenshots/transfers.png" alt="Transfers screen" width="200" />
   <img src="assets/screenshots/settings.png" alt="Settings screen" width="200" />

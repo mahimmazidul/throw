@@ -53,8 +53,8 @@ class TransferProvider extends ChangeNotifier {
       await _service.sendText(endpointId: target.id, text: text);
     } catch (e) {
       _error = AppError.fromObject(e).code == AppErrorCode.unknown
-        ? AppError(AppErrorCode.transferFailed, detail: e.toString())
-        : AppError.fromObject(e);
+          ? AppError(AppErrorCode.transferFailed, detail: e.toString())
+          : AppError.fromObject(e);
       notifyListeners();
     }
   }
@@ -70,8 +70,8 @@ class TransferProvider extends ChangeNotifier {
       await _service.sendFile(endpointId: target.id, file: File(filePath));
     } catch (e) {
       _error = AppError.fromObject(e).code == AppErrorCode.unknown
-        ? AppError(AppErrorCode.transferFailed, detail: e.toString())
-        : AppError.fromObject(e);
+          ? AppError(AppErrorCode.transferFailed, detail: e.toString())
+          : AppError.fromObject(e);
       notifyListeners();
     }
   }
@@ -82,8 +82,8 @@ class TransferProvider extends ChangeNotifier {
       await _service.cancelTransfer(transfer.id);
     } catch (e) {
       _error = AppError.fromObject(e).code == AppErrorCode.unknown
-        ? AppError(AppErrorCode.transferFailed, detail: e.toString())
-        : AppError.fromObject(e);
+          ? AppError(AppErrorCode.transferFailed, detail: e.toString())
+          : AppError.fromObject(e);
       notifyListeners();
     }
   }

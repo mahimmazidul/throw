@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../core/constants.dart';
+import '../core/motion.dart';
 import '../core/theme.dart';
 import '../l10n/app_localizations.dart';
 import '../models/device_model.dart';
-import 'accent_icon_badge.dart';
 
 /// Peer-first target selection for the Home screen.
 ///
@@ -38,9 +38,12 @@ class DevicePicker extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.stateConnected,
-          style: theme.textTheme.labelMedium
-              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          l10n.stateConnected.toUpperCase(),
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            letterSpacing: 0.8,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: AppConstants.space2),
         Wrap(
@@ -48,10 +51,12 @@ class DevicePicker extends StatelessWidget {
           runSpacing: AppConstants.space2,
           children: [
             for (final device in devices)
-              _DevicePill(
-                device: device,
-                isSelected: selected?.id == device.id,
-                onTap: () => onSelected(device),
+              Pressable(
+                child: _DevicePill(
+                  device: device,
+                  isSelected: selected?.id == device.id,
+                  onTap: () => onSelected(device),
+                ),
               ),
           ],
         ),
@@ -86,13 +91,24 @@ class _DevicePill extends StatelessWidget {
       button: true,
       selected: isSelected,
       label: device.name,
-      child: Material(
-        color: isSelected ? cs.primary : cs.surfaceContainerHigh,
-        shape: const StadiumBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Container(
+      child: GestureDetector(
+        onTap: onTap,
+        // IntrinsicWidth, not the bare container: with `alignment` set a
+        // container grows to fill the incoming constraints, so a lone pill
+        // became a full-width button and two peers would stack full-width.
+        // Intrinsic sizing keeps each pill as wide as its label.
+        child: IntrinsicWidth(
+          child: AnimatedContainer(
+            duration: Motion.adapt(context, Motion.standard),
+            curve: Motion.curve,
+            // Without an explicit alignment the container shrink-wraps its child
+            // and the minHeight below is silently ignored — the pill ended up
+            // ~36dp tall in the render. The test that asserts 48dp catches it.
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: isSelected ? cs.primary : cs.surfaceContainerHigh,
+              borderRadius: ThrowRadius.chip,
+            ),
             // 48dp minimum target, per AppConstants.touchTargetMin.
             constraints: const BoxConstraints(minHeight: AppConstants.space7),
             padding: const EdgeInsets.symmetric(
@@ -122,10 +138,22 @@ class _DevicePill extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (isSelected) ...[
-                  const SizedBox(width: AppConstants.space2),
-                  Icon(Icons.check_rounded, size: 16, color: cs.onPrimary),
-                ],
+                AnimatedSize(
+                  duration: Motion.adapt(context, Motion.standard),
+                  curve: Motion.curve,
+                  child: isSelected
+                      ? Padding(
+                          padding: const EdgeInsets.only(
+                            left: AppConstants.space2,
+                          ),
+                          child: Icon(
+                            Icons.check_rounded,
+                            size: 16,
+                            color: cs.onPrimary,
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
               ],
             ),
           ),
@@ -135,8 +163,8 @@ class _DevicePill extends StatelessWidget {
   }
 }
 
-/// Shown in Home's send cards while no peer is selected: a quiet hint instead
-/// of four greyed-out buttons with no explanation.
+/// Shown above the send panel while nothing is connected: one quiet line of
+/// guidance instead of a container apologising for empty space.
 class NoPeerHint extends StatelessWidget {
   const NoPeerHint({super.key});
 
@@ -146,28 +174,36 @@ class NoPeerHint extends StatelessWidget {
     final cs = theme.colorScheme;
     final l10n = AppLocalizations.of(context)!;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.space4,
-        vertical: AppConstants.space3,
-      ),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHigh.withValues(alpha: 0.6),
-        borderRadius: ThrowRadius.card,
-      ),
-      child: Row(
-        children: [
-          const AccentIconBadge(icon: Icons.touch_app_rounded, size: 32),
-          const SizedBox(width: AppConstants.space3),
-          Expanded(
-            child: Text(
-              l10n.homePickDeviceFirst,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: cs.onSurfaceVariant),
-            ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.devices_other_rounded,
+          size: 18,
+          color: ThrowTheme.accentFg(context),
+        ),
+        const SizedBox(width: AppConstants.space2),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.homeNoPeersTitle,
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                l10n.homeNoPeersBody,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurfaceVariant,
+                  height: 1.45,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

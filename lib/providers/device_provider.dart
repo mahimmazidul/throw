@@ -58,7 +58,12 @@ class DeviceProvider extends ChangeNotifier {
         final info = await plugin.androidInfo;
         final model = info.model.trim();
         final brand = info.brand.trim();
-        name = model.isNotEmpty ? (brand.isNotEmpty && !model.toLowerCase().startsWith(brand.toLowerCase()) ? '$brand $model' : model) : info.device;
+        name = model.isNotEmpty
+            ? (brand.isNotEmpty &&
+                    !model.toLowerCase().startsWith(brand.toLowerCase())
+                ? '$brand $model'
+                : model)
+            : info.device;
       } else if (Platform.isWindows) {
         final info = await plugin.windowsInfo;
         name = info.computerName;
@@ -205,6 +210,7 @@ class DeviceProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
   @override
   void dispose() {
     _devicesSub?.cancel();

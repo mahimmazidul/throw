@@ -128,13 +128,15 @@ void main() {
   });
 
   group('ScreenHeader', () {
-    testWidgets('shows logo, title and subtitle', (tester) async {
+    testWidgets('shows title and subtitle, with no app icon', (tester) async {
       await tester.pumpWidget(_app(
         const ScreenHeader(title: 'Throw', subtitle: 'Nearby transfers'),
       ));
       expect(find.text('Throw'), findsOneWidget);
       expect(find.text('Nearby transfers'), findsOneWidget);
-      expect(find.byType(Image), findsOneWidget);
+      // The app icon was repeated on every screen header; it is gone by
+      // design, and this keeps it gone.
+      expect(find.byType(Image), findsNothing);
     });
 
     testWidgets('trailing action is rendered and tappable', (tester) async {

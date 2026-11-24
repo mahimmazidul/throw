@@ -43,7 +43,7 @@
   "permissionBody": "Throw needs nearby device access to find and transfer to devices around you.",
   "errorBluetoothOff": "Bluetooth is off. Turn it on to discover devices.",
   "errorLocationOff": "Location services are off. Nearby discovery needs them on Android.",
-  "sendClipboardHint": "Copy something first, then send it.",
+  "sendClipboardHint": "Write a note to send…",
   "statusConnectedCount": "{count} connected",
   "@statusConnectedCount": {
     "placeholders": {
@@ -74,7 +74,7 @@
   "shareInboxSend": "Send shared items",
   "sendTextTitle": "Send text",
   "sendFilesTitle": "Send files",
-  "sendFilesHint": "Pick multiple files and send directly to the selected device.",
+  "sendFilesHint": "Pick one or more files and send them.",
   "actionPick": "Pick",
   "visibleAs": "Visible as {name}",
   "@visibleAs": {
@@ -177,5 +177,11 @@
   "receivedOpenFailed": "Could not open that item.",
   "receivedShareMissing": "That file has no saved path, so it cannot be opened.",
   "receivedTypeText": "Text",
-  "receivedTypeFile": "File"
+  "receivedTypeFile": "File",
+  "settingsThisDevice": "This device",
+  "homeSectionThrow": "Throw something",
+  "homeSectionRecent": "Recently received",
+  "homeNoPeersTitle": "No device connected yet",
+  "homeNoPeersBody": "Open Discover, make this device visible, then connect to the other one.",
+  "receivedCaption": "Everything that arrives stays here."
 }

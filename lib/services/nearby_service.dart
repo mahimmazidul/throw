@@ -302,7 +302,8 @@ class NearbyService implements TransferService {
       );
     } else if (payload.type == PayloadType.FILE) {
       _receivedFilePayloads[payload.id] = payload;
-      _ensureIncomingFileTransfer(endpointId, payload.id, _pendingFileNames[payload.id]);
+      _ensureIncomingFileTransfer(
+          endpointId, payload.id, _pendingFileNames[payload.id]);
     }
   }
 
@@ -369,14 +370,16 @@ class NearbyService implements TransferService {
     }
   }
 
-
-  void _ensureIncomingFileTransfer(String endpointId, int payloadId, String? fileName) {
+  void _ensureIncomingFileTransfer(
+      String endpointId, int payloadId, String? fileName) {
     final id = payloadId.toString();
     if (_transfers.containsKey(id)) {
       if (fileName != null && fileName.isNotEmpty) {
         final existing = _transfers[id]!;
-        final payload = existing.payloads.isNotEmpty ? existing.payloads.first : null;
-        if (payload != null && (payload.name == null || payload.name!.isEmpty)) {
+        final payload =
+            existing.payloads.isNotEmpty ? existing.payloads.first : null;
+        if (payload != null &&
+            (payload.name == null || payload.name!.isEmpty)) {
           final updatedPayload = PayloadModel(
             id: payload.id,
             kind: payload.kind,
@@ -423,6 +426,7 @@ class NearbyService implements TransferService {
     _transfers[id] = transfer;
     _transfersController.add(transfer);
   }
+
   void _updateTransferStatus(String id, TransferStatus status) {
     final existing = _transfers[id];
     if (existing == null) return;

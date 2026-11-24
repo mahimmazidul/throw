@@ -119,7 +119,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Location services are off. Nearby discovery needs them on Android.';
 
   @override
-  String get sendClipboardHint => 'Copy something first, then send it.';
+  String get sendClipboardHint => 'Write a note to send…';
 
   @override
   String statusConnectedCount(int count) {
@@ -155,8 +155,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sendFilesTitle => 'Send files';
 
   @override
-  String get sendFilesHint =>
-      'Pick multiple files and send directly to the selected device.';
+  String get sendFilesHint => 'Pick one or more files and send them.';
 
   @override
   String get actionPick => 'Pick';
@@ -313,4 +312,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get receivedTypeFile => 'File';
+
+  @override
+  String get settingsThisDevice => 'This device';
+
+  @override
+  String get homeSectionThrow => 'Throw something';
+
+  @override
+  String get homeSectionRecent => 'Recently received';
+
+  @override
+  String get homeNoPeersTitle => 'No device connected yet';
+
+  @override
+  String get homeNoPeersBody =>
+      'Open Discover, make this device visible, then connect to the other one.';
+
+  @override
+  String get receivedCaption => 'Everything that arrives stays here.';
 }

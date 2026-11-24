@@ -1,57 +1,40 @@
 import 'package:flutter/material.dart';
 
 import '../core/constants.dart';
-import '../core/theme.dart';
 
-/// The one header row used by every screen.
+/// The one header used by every screen: a title, an optional line under it,
+/// and an optional trailing action.
 ///
-/// Home, Discover, Transfers and Settings each grew their own copy of
-/// "logo, title, subtitle, optional trailing action", with three different
-/// logo sizes and two different subtitles hardcoded in English. This is the
-/// single version; LocalSend's tabs share their headers the same way.
+/// The app icon used to sit here on all five screens — Home, Discover,
+/// Transfers and Settings each had their own copy of it, and Home and Discover
+/// additionally drew a filled band behind theirs. A logo repeated on every
+/// screen inside the app adds nothing the window chrome does not already say,
+/// and the band was the first thing that made the UI read as boxes: a big
+/// tinted container holding a small tinted container holding content.
 ///
-/// [tone] switches between the plain header (list screens) and the raised
-/// "hero" band (Discover, where the header also carries the scan action).
-enum HeaderTone { plain, raised }
-
+/// Headers are now flat type on the canvas. Separation comes from spacing and
+/// from what follows, not from a rectangle.
 class ScreenHeader extends StatelessWidget {
   const ScreenHeader({
     super.key,
     required this.title,
     this.subtitle,
     this.trailing,
-    this.showLogo = true,
-    this.tone = HeaderTone.plain,
   });
 
   final String title;
   final String? subtitle;
 
-  /// Usually a button; kept alive across rebuilds by the caller.
+  /// Usually one action; kept alive across rebuilds by the caller.
   final Widget? trailing;
-
-  final bool showLogo;
-  final HeaderTone tone;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final logoSize = tone == HeaderTone.raised ? 34.0 : 32.0;
 
-    final row = Row(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        if (showLogo) ...[
-          ClipRRect(
-            borderRadius: ThrowRadius.chip,
-            child: Image.asset(
-              'assets/logo.png',
-              width: logoSize,
-              height: logoSize,
-            ),
-          ),
-          const SizedBox(width: AppConstants.space3),
-        ],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,14 +42,20 @@ class ScreenHeader extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: theme.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w700),
+                // A tight, heavy 28 is what the reference apps use for a page
+                // title (LocalSend's tabs, Musify's pages). headlineMedium was
+                // chosen here over headlineSmall so removing the logo does not
+                // leave the screen headless.
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.4,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               if (subtitle != null)
                 Padding(
-                  padding: const EdgeInsets.only(top: 1),
+                  padding: const EdgeInsets.only(top: 2),
                   child: Text(
                     subtitle!,
                     style: theme.textTheme.bodyMedium
@@ -79,24 +68,10 @@ class ScreenHeader extends StatelessWidget {
           ),
         ),
         if (trailing != null) ...[
-          const SizedBox(width: AppConstants.space2),
+          const SizedBox(width: AppConstants.space3),
           trailing!,
         ],
       ],
-    );
-
-    if (tone == HeaderTone.plain) return row;
-
-    return Container(
-      padding: const EdgeInsets.all(AppConstants.space4),
-      decoration: BoxDecoration(
-        borderRadius: ThrowRadius.card,
-        color: theme.colorScheme.primaryContainer,
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
-        ),
-      ),
-      child: row,
     );
   }
 }

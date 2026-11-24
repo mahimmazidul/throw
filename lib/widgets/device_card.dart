@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/motion.dart';
 import '../core/theme.dart';
 
 import '../l10n/app_localizations.dart';
@@ -39,45 +40,65 @@ class DeviceCard extends StatelessWidget {
         ? l10n.speedWifi
         : l10n.speedBluetooth;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      child: ListTile(
-        onTap: onTap,
-        leading: CircleAvatar(
-          backgroundColor: device.isConnected
-              ? colorScheme.primary.withValues(alpha: 0.16)
-              : colorScheme.surfaceContainerHighest,
-          child: Icon(
+    return Pressable(
+      child: Material(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: ThrowRadius.card,
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          shape: const RoundedRectangleBorder(borderRadius: ThrowRadius.card),
+          onTap: onTap,
+          leading: Icon(
             _platformIcon(device.platform),
+            size: 26,
             color: device.isConnected
-                // accentFg, not the fill accent: the fill sits at 2.9:1 on
-                // this tint, which fails AA for this glyph.
                 ? ThrowTheme.accentFg(context)
                 : colorScheme.onSurfaceVariant,
           ),
+          title: Text(
+            device.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Text(
+            device.isConnected
+                ? '${l10n.stateConnected} · $transportLabel'
+                : transportLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: device.isConnected && onDisconnect != null
+              ? Pressable(
+                  child: IconButton(
+                    icon: const Icon(Icons.link_off_rounded),
+                    tooltip: l10n.actionClose,
+                    onPressed: onDisconnect,
+                  ),
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // An always-visible dot: connected reads at a glance down
+                    // the list, the same way LocalSend's favourite check does.
+                    AnimatedContainer(
+                      duration: Motion.adapt(context, Motion.standard),
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: device.isConnected
+                            ? ThrowTheme.accentFg(context)
+                            : colorScheme.outlineVariant,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
         ),
-        title: Text(
-          device.name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          device.isConnected
-              ? '${l10n.stateConnected} · $transportLabel'
-              : transportLabel,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: device.isConnected && onDisconnect != null
-            ? IconButton(
-                icon: const Icon(Icons.link_off_rounded),
-                tooltip: l10n.actionClose,
-                onPressed: onDisconnect,
-              )
-            : Icon(
-                Icons.chevron_right_rounded,
-                color: colorScheme.onSurfaceVariant,
-              ),
       ),
     );
   }

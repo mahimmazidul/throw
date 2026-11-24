@@ -1,8 +1,9 @@
 /// App-wide constants: layout, spacing, transfer, and desktop window rules.
 abstract final class AppConstants {
-  static const String appVersion = '1.0.15';
+  static const String appVersion = '1.1.0';
   static const String githubRepo = 'mahimmazidul/throw';
-  static const String releasesUrl = 'https://github.com/mahimmazidul/throw/releases/latest';
+  static const String releasesUrl =
+      'https://github.com/mahimmazidul/throw/releases/latest';
 
   // ── Layout ──────────────────────────────────────────────────────
 

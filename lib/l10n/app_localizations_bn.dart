@@ -119,7 +119,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'লোকেশন সার্ভিস বন্ধ। অ্যান্ড্রয়েডে ডিভিস খুঁজতে এটি দরকার।';
 
   @override
-  String get sendClipboardHint => 'আগে কিছু কপি করুন, তারপর পাঠান।';
+  String get sendClipboardHint => 'পাঠানোর জন্য কিছু লিখুন…';
 
   @override
   String statusConnectedCount(int count) {
@@ -155,8 +155,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get sendFilesTitle => 'ফাইল পাঠান';
 
   @override
-  String get sendFilesHint =>
-      'একাধিক ফাইল বেছে নিয়ে সরাসরি নির্বাচিত ডিভাইসে পাঠান।';
+  String get sendFilesHint => 'এক বা একাধিক ফাইল বেছে পাঠান।';
 
   @override
   String get actionPick => 'বেছে নিন';
@@ -314,4 +313,23 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get receivedTypeFile => 'ফাইল';
+
+  @override
+  String get settingsThisDevice => 'এই ডিভাইস';
+
+  @override
+  String get homeSectionThrow => 'কিছু পাঠান';
+
+  @override
+  String get homeSectionRecent => 'সাম্প্রতিক গৃহীত';
+
+  @override
+  String get homeNoPeersTitle => 'এখনও কোনো ডিভাইস সংযুক্ত নয়';
+
+  @override
+  String get homeNoPeersBody =>
+      'Discover খুলুন, এই ডিভাইসটি দৃশ্যমান করুন, তারপর অন্যটির সাথে সংযোগ করুন।';
+
+  @override
+  String get receivedCaption => 'যা আসে সব এখানেই থাকে।';
 }

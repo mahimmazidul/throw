@@ -7,14 +7,18 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/constants.dart';
-import '../core/utils.dart';
+import '../core/motion.dart';
 import '../core/theme.dart';
+import '../core/utils.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/device_provider.dart';
 import '../providers/locale_provider.dart';
+import '../widgets/entrance.dart';
+import '../widgets/panel.dart';
 import '../widgets/screen_header.dart';
 
-/// Settings screen for device name, language, theme, and app info.
+/// Settings, grouped the way the references group it: a run of flush rows on
+/// one tinted surface per section, not one bordered card per pair of rows.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -39,13 +43,17 @@ class SettingsScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(l10n.actionCancel),
+          Pressable(
+            child: TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.actionCancel),
+            ),
           ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: Text(l10n.actionAccept),
+          Pressable(
+            child: FilledButton(
+              onPressed: () => Navigator.pop(context, controller.text),
+              child: Text(l10n.actionAccept),
+            ),
           ),
         ],
       ),
@@ -114,19 +122,26 @@ class SettingsScreen extends StatelessWidget {
             title: Text(l10n.updateAvailableTitle),
             content: Text(l10n.updateAvailableBody(current, latestTag)),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(l10n.actionLater),
+              Pressable(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(l10n.actionLater),
+                ),
               ),
-              FilledButton(
-                onPressed: () async {
-                  Navigator.pop(ctx);
-                  final uri = Uri.parse(
-                    json['html_url'] as String? ?? AppConstants.releasesUrl,
-                  );
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                },
-                child: Text(l10n.actionOpenRelease),
+              Pressable(
+                child: FilledButton(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    final uri = Uri.parse(
+                      json['html_url'] as String? ?? AppConstants.releasesUrl,
+                    );
+                    await launchUrl(
+                      uri,
+                      mode: LaunchMode.externalApplication,
+                    );
+                  },
+                  child: Text(l10n.actionOpenRelease),
+                ),
               ),
             ],
           ),
@@ -156,92 +171,88 @@ class SettingsScreen extends StatelessWidget {
 
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.all(AppConstants.space5),
+        padding: const EdgeInsets.fromLTRB(
+          AppConstants.space5,
+          AppConstants.space5,
+          AppConstants.space5,
+          AppConstants.space6,
+        ),
         children: [
-          ScreenHeader(
-            title: l10n.navSettings,
-            subtitle: l10n.settingsSubtitle,
-          ),
-          const SizedBox(height: AppConstants.space5),
-          _SectionCard(
+          StaggeredEntrance(
             children: [
-              ListTile(
-                leading: const Icon(Icons.badge_outlined),
-                title: Text(l10n.settingsDeviceName),
-                subtitle: Text(deviceProvider.deviceName),
-                trailing: Text(
-                  l10n.settingsEditName,
-                  style: TextStyle(
-                    color: ThrowTheme.accentFg(context),
-                    fontWeight: FontWeight.w600,
+              ScreenHeader(
+                title: l10n.navSettings,
+                subtitle: l10n.settingsSubtitle,
+              ),
+              const SizedBox(height: AppConstants.space5),
+              PanelGroup(
+                header: l10n.settingsThisDevice,
+                children: [
+                  FlatRow(
+                    leading: const Icon(Icons.badge_outlined),
+                    title: l10n.settingsDeviceName,
+                    subtitle: deviceProvider.deviceName,
+                    trailingText: l10n.settingsEditName,
+                    onTap: () => _editDeviceName(context, deviceProvider, l10n),
                   ),
-                ),
-                onTap: () =>
-                    _editDeviceName(context, deviceProvider, l10n),
+                  FlatRow(
+                    leading: const Icon(Icons.language_rounded),
+                    title: l10n.settingsLanguage,
+                    subtitle: localeProvider.locale.languageCode == 'bn'
+                        ? 'বাংলা'
+                        : 'English',
+                    trailing: Pressable(
+                      child: IconButton(
+                        icon: const Icon(Icons.swap_horiz_rounded, size: 20),
+                        tooltip: l10n.settingsLanguage,
+                        onPressed: localeProvider.toggleLocale,
+                      ),
+                    ),
+                    onTap: localeProvider.toggleLocale,
+                  ),
+                  FlatRow(
+                    leading: const Icon(Icons.dark_mode_outlined),
+                    title: l10n.settingsTheme,
+                    subtitle: isDark ? 'Dark' : 'Light',
+                    onTap: () => localeProvider.setThemeMode(
+                      isDark ? ThemeMode.light : ThemeMode.dark,
+                    ),
+                    trailing: Pressable(
+                      child: Switch(
+                        value: isDark,
+                        onChanged: (value) => localeProvider.setThemeMode(
+                          value ? ThemeMode.dark : ThemeMode.light,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.language_rounded),
-                title: Text(l10n.settingsLanguage),
-                subtitle: Text(
-                  localeProvider.locale.languageCode == 'bn'
-                      ? 'বাংলা'
-                      : 'English',
-                ),
-                trailing: const Icon(Icons.swap_horiz_rounded),
-                onTap: localeProvider.toggleLocale,
-              ),
-              const Divider(height: 1),
-              SwitchListTile(
-                secondary: const Icon(Icons.dark_mode_outlined),
-                title: Text(l10n.settingsTheme),
-                subtitle: Text(isDark ? 'Dark' : 'Light'),
-                value: isDark,
-                onChanged: (value) => localeProvider.setThemeMode(
-                  value ? ThemeMode.dark : ThemeMode.light,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppConstants.space4),
-          _SectionCard(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.system_update_rounded),
-                title: Text(l10n.settingsCheckUpdates),
-                subtitle: Text(
-                  l10n.settingsCurrentVersion(AppConstants.appVersion),
-                ),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => _checkForUpdates(context),
-              ),
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.info_outline_rounded),
-                title: Text(l10n.settingsAbout),
-                subtitle: Text(
-                  l10n.settingsAboutBody(AppConstants.appVersion),
-                ),
+              const SizedBox(height: AppConstants.space4),
+              PanelGroup(
+                header: l10n.settingsAbout,
+                children: [
+                  FlatRow(
+                    leading: const Icon(Icons.system_update_rounded),
+                    title: l10n.settingsCheckUpdates,
+                    subtitle:
+                        l10n.settingsCurrentVersion(AppConstants.appVersion),
+                    trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+                    onTap: () => _checkForUpdates(context),
+                  ),
+                  // The version is already in the subtitle; a trailing copy
+                  // of the same string was pure noise.
+                  FlatRow(
+                    leading: const Icon(Icons.info_outline_rounded),
+                    title: l10n.settingsAbout,
+                    subtitle: l10n.settingsAboutBody(AppConstants.appVersion),
+                  ),
+                ],
               ),
             ],
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Card that clips its first and last [ListTile] to the shared 28dp radius.
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Column(children: children),
     );
   }
 }

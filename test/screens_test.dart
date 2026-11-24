@@ -137,9 +137,8 @@ void main() {
       await tester.pumpWidget(_home(service));
       await tester.pumpAndSettle();
 
-      expect(find.text('No devices nearby yet.'), findsOneWidget);
-      expect(
-          find.text('Pick a device above to send something.'), findsOneWidget);
+      expect(find.text('No device connected yet'), findsOneWidget);
+      expect(find.textContaining('Open Discover'), findsOneWidget);
 
       final send = tester.widget<FilledButton>(
         find

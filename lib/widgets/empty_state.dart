@@ -38,20 +38,12 @@ class EmptyState extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: cs.primary.withValues(alpha: 0.10),
-                ),
-                child: Icon(
-                  icon,
-                  size: 30,
-                  // accentFg, not the fill accent: the fill is ~3:1 on its own
-                  // tint and fails AA for a glyph this size.
-                  color: ThrowTheme.accentFg(context),
-                ),
+              Icon(
+                icon,
+                size: 34,
+                // accentFg, not the fill accent: the fill is ~3:1 on its own
+                // tint and fails AA for a glyph this size.
+                color: ThrowTheme.accentFg(context),
               ),
               const SizedBox(height: AppConstants.space4),
               Text(

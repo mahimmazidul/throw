@@ -311,7 +311,7 @@ abstract class AppLocalizations {
   /// No description provided for @sendClipboardHint.
   ///
   /// In en, this message translates to:
-  /// **'Copy something first, then send it.'**
+  /// **'Write a note to send…'**
   String get sendClipboardHint;
 
   /// No description provided for @statusConnectedCount.
@@ -371,7 +371,7 @@ abstract class AppLocalizations {
   /// No description provided for @sendFilesHint.
   ///
   /// In en, this message translates to:
-  /// **'Pick multiple files and send directly to the selected device.'**
+  /// **'Pick one or more files and send them.'**
   String get sendFilesHint;
 
   /// No description provided for @actionPick.
@@ -637,6 +637,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'File'**
   String get receivedTypeFile;
+
+  /// No description provided for @settingsThisDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'This device'**
+  String get settingsThisDevice;
+
+  /// No description provided for @homeSectionThrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Throw something'**
+  String get homeSectionThrow;
+
+  /// No description provided for @homeSectionRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently received'**
+  String get homeSectionRecent;
+
+  /// No description provided for @homeNoPeersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No device connected yet'**
+  String get homeNoPeersTitle;
+
+  /// No description provided for @homeNoPeersBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Discover, make this device visible, then connect to the other one.'**
+  String get homeNoPeersBody;
+
+  /// No description provided for @receivedCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything that arrives stays here.'**
+  String get receivedCaption;
 }
 
 class _AppLocalizationsDelegate
