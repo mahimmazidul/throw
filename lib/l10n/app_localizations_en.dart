@@ -331,4 +331,253 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get receivedCaption => 'Everything that arrives stays here.';
+
+  @override
+  String get stateSending => 'Sending…';
+
+  @override
+  String get stateReceiving => 'Receiving…';
+
+  @override
+  String transferTo(String device) {
+    return 'to $device';
+  }
+
+  @override
+  String transferFrom(String device) {
+    return 'from $device';
+  }
+
+  @override
+  String timeLeft(int seconds) {
+    return '$seconds s left';
+  }
+
+  @override
+  String get speedMeasuring => 'measuring speed…';
+
+  @override
+  String speedOf(String speed) {
+    return '$speed';
+  }
+
+  @override
+  String savedToFolder(String folder) {
+    return 'Saved in $folder';
+  }
+
+  @override
+  String fromDevice(String device) {
+    return 'from $device';
+  }
+
+  @override
+  String receivedSavedIn(String folder) {
+    return 'Files are saved in $folder';
+  }
+
+  @override
+  String receivedEmptyWhere(String folder) {
+    return 'Files that arrive are saved in $folder, newest first. You can open them from here or from your file manager.';
+  }
+
+  @override
+  String get receivedActionCopyPath => 'Copy location';
+
+  @override
+  String get receivedPathCopied => 'Location copied';
+
+  @override
+  String get actionOpenFolder => 'Open folder';
+
+  @override
+  String get folderUnavailable => 'Folder unavailable';
+
+  @override
+  String get sendTo => 'Send to';
+
+  @override
+  String get selectPeersHint => 'Pick one or more devices, then send.';
+
+  @override
+  String sendToCount(int count) {
+    return 'Send to $count';
+  }
+
+  @override
+  String sentToCount(int sent, int total) {
+    return 'Sent to $sent of $total';
+  }
+
+  @override
+  String get sendPartlyFailed =>
+      'Some devices did not receive it. Check that they are still connected.';
+
+  @override
+  String selectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get nearbyDevice => 'Nearby device';
+
+  @override
+  String nearbyDeviceToken(String token) {
+    return 'Nearby device · $token';
+  }
+
+  @override
+  String get unknownPlatform => 'Unknown device';
+
+  @override
+  String get discoverVisibleSwitch => 'Visible to nearby devices';
+
+  @override
+  String get discoverFindingSwitch => 'Looking for devices';
+
+  @override
+  String get connectTo => 'Connect';
+
+  @override
+  String get disconnectFrom => 'Disconnect';
+
+  @override
+  String connectingTo(String device) {
+    return 'Connecting to $device…';
+  }
+
+  @override
+  String get aboutTitle => 'About Throw';
+
+  @override
+  String aboutVersion(String version, String build) {
+    return 'Version $version (build $build)';
+  }
+
+  @override
+  String get aboutWhatItIs =>
+      'Throw sends files and text between devices on the same network, with no account, no server and no internet. Everything moves directly from one device to the other.';
+
+  @override
+  String get developerSection => 'Developer';
+
+  @override
+  String get developerName => 'Md. Mazidul Islam Mahim';
+
+  @override
+  String get developerRole => 'Designer and developer of Throw';
+
+  @override
+  String get developerLocation => 'Khulna, Bangladesh';
+
+  @override
+  String get linksSection => 'Links';
+
+  @override
+  String get linkGithub => 'GitHub';
+
+  @override
+  String get linkWebsite => 'Website';
+
+  @override
+  String get linkRepository => 'Source code';
+
+  @override
+  String get linkReleases => 'Releases';
+
+  @override
+  String get linkIssues => 'Report a problem';
+
+  @override
+  String get linkLicense => 'Licence';
+
+  @override
+  String get licenseName => 'MIT Licence';
+
+  @override
+  String get legalSection => 'Legal';
+
+  @override
+  String get openLinkFailed => 'Could not open that link.';
+
+  @override
+  String get aboutCredits =>
+      'Built with Flutter. Fonts: Plus Jakarta Sans and Hind Siliguri (SIL Open Font License).';
+
+  @override
+  String get settingsAboutOpen => 'About Throw';
+
+  @override
+  String get settingsAboutSummary => 'Version, developer and links';
+
+  @override
+  String get actionAttach => 'Attach a file';
+
+  @override
+  String get actionSendText => 'Send text';
+
+  @override
+  String get composerLabel => 'Message or note';
+
+  @override
+  String get composerHint => 'Type something to send…';
+
+  @override
+  String get pickFilesFirst => 'Choose files to send';
+
+  @override
+  String get noAppForFile => 'No app on this device can open this file type.';
+
+  @override
+  String get transfersActiveSection => 'In progress';
+
+  @override
+  String get transfersRecentSection => 'Recent';
+
+  @override
+  String get transfersClearHistory => 'Clear list';
+
+  @override
+  String get transfersCleared => 'History cleared';
+
+  @override
+  String get settingsNameHint => 'Shown to other devices';
+
+  @override
+  String get settingsDeviceNameHelp =>
+      'This is the name other devices see when they look for you.';
+
+  @override
+  String get settingsAppearanceSection => 'Appearance';
+
+  @override
+  String get settingsGeneralSection => 'General';
+
+  @override
+  String get settingsAboutSection => 'About';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageBangla => 'বাংলা';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get receivedSubtitle => 'Everything that arrived, newest first.';
+
+  @override
+  String get errorGeneric => 'Something went wrong. Try again.';
+
+  @override
+  String get errorGenericWithDetail =>
+      'Something went wrong. Try again — if it keeps happening, the details have been logged.';
+
+  @override
+  String get errorShowDetail => 'Show details';
 }

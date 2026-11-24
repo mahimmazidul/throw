@@ -3,42 +3,40 @@ import 'package:flutter/material.dart';
 import '../core/constants.dart';
 import '../core/theme.dart';
 
-/// A grouped surface with hairline separators — the app's replacement for
-/// "one card per idea".
+/// A titled run of rows on the bare canvas.
 ///
-/// Every reference studied groups settings and lists this way:
+/// This is the third and final answer to "why is everything in boxes". The
+/// first pass stacked bordered cards. The second replaced them with one rounded
+/// *filled* rectangle per section — better, but still a rectangle drawn around
+/// content, and every section on every screen had one. The references do not do
+/// that:
 ///
-///  * Musify's settings page is a run of `CustomBar`s at `BorderRadius.zero`
-///    sharing one `Material` surface, separated by the theme divider;
-///  * LocalSend's device grid is `Card(margin: EdgeInsets.zero, radius: 10)`
-///    tiles, flat on the canvas, no gaps and no borders;
+///  * LocalSend's device grid is flat tiles on the canvas with a hairline
+///    under each row and no container at all (`Card(margin: zero)` with the
+///    surface colour equal to the background);
+///  * Musify's settings page is rows separated by the theme divider;
+///  * Android Settings and iOS grouped lists both rely on a small caps label,
+///    whitespace, and one hairline per row.
 ///
-/// Throw previously stacked four separate 28dp-radius, bordered, gapped cards
-/// per screen. That reads as a dashboard of unrelated widgets rather than one
-/// surface, and it is the exact pattern people mean by "AI slop".
-///
-/// [PanelGroup] is one tinted surface, softly rounded, with optional upper and
-/// lower rounding. Rows inside are flush and separated by a 1px line that
-/// indents past the leading icon, the way platform settings do it.
-class PanelGroup extends StatelessWidget {
-  const PanelGroup({
+/// So [Section] draws **no surface**: an uppercase label, the rows, and a
+/// hairline between them. Grouping comes from type and rhythm. The only filled
+/// shapes left in the app are pills that are genuinely pressable (buttons,
+/// peer chips) and the progress track, which is a gauge, not a container.
+class Section extends StatelessWidget {
+  const Section({
     super.key,
     required this.children,
     this.header,
     this.footer,
-    this.rounded = true,
   });
 
   final List<Widget> children;
 
-  /// Small uppercase label above the group, e.g. "APPEARANCE".
+  /// Small uppercase label above the group, e.g. "THIS DEVICE".
   final String? header;
 
   /// Dim explanatory line below the group.
   final String? footer;
-
-  /// False for groups that sit between others with shared edges.
-  final bool rounded;
 
   @override
   Widget build(BuildContext context) {
@@ -49,15 +47,14 @@ class PanelGroup extends StatelessWidget {
     for (var i = 0; i < children.length; i++) {
       rows.add(children[i]);
       if (i != children.length - 1) {
-        // Divider indents past a leading icon so it aligns with the label, the
-        // way iOS/Android settings sheets do. A full-bleed line under an icon
-        // is the tell of a hand-rolled list.
+        // Indented past the leading glyph so the line aligns with the label,
+        // the way platform settings sheets do.
         rows.add(Padding(
           padding: const EdgeInsets.only(left: AppConstants.space5),
           child: Divider(
             height: 1,
             thickness: 1,
-            color: cs.outlineVariant.withValues(alpha: 0.45),
+            color: cs.outlineVariant.withValues(alpha: 0.35),
           ),
         ));
       }
@@ -69,28 +66,23 @@ class PanelGroup extends StatelessWidget {
         if (header != null)
           Padding(
             padding: const EdgeInsets.only(
-              left: AppConstants.space4,
+              left: AppConstants.space1,
               bottom: AppConstants.space2,
             ),
             child: Text(
               header!.toUpperCase(),
               style: theme.textTheme.labelSmall?.copyWith(
                 color: cs.onSurfaceVariant,
-                letterSpacing: 0.8,
+                letterSpacing: 0.9,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
-        Material(
-          color: cs.surfaceContainerLow,
-          borderRadius: rounded ? ThrowRadius.card : BorderRadius.zero,
-          clipBehavior: Clip.antiAlias,
-          child: Column(children: rows),
-        ),
+        ...rows,
         if (footer != null)
           Padding(
             padding: const EdgeInsets.only(
-              left: AppConstants.space4,
+              left: AppConstants.space1,
               top: AppConstants.space2,
             ),
             child: Text(
@@ -104,8 +96,15 @@ class PanelGroup extends StatelessWidget {
   }
 }
 
-/// A flush row inside a [PanelGroup]: leading glyph, title, optional subtitle,
-/// trailing widget, and press feedback that does not fight the group surface.
+/// A flush row: leading glyph, title, optional subtitle, trailing widget, and
+/// press feedback on the canvas.
+///
+/// Sizing rules that stop the overflow reported in 1.2:
+///
+///  * the text column is inside an `Expanded`, so it can shrink;
+///  * the title and subtitle both carry `maxLines` + ellipsis;
+///  * the trailing slot is capped at 40% of the width, so a long value or a
+///    switch can never push the title out of its own row.
 class FlatRow extends StatelessWidget {
   const FlatRow({
     super.key,
@@ -116,12 +115,15 @@ class FlatRow extends StatelessWidget {
     this.onTap,
     this.trailingText,
     this.minHeight = 60,
+    this.dense = false,
+    this.titleMaxLines = 1,
+    this.subtitleMaxLines = 2,
   });
 
   final String title;
   final String? subtitle;
 
-  /// A 24dp `Icon` is the norm here, not a tinted circle — the badge is
+  /// A 22dp `Icon` is the norm here, not a tinted circle — the badge is
   /// reserved for a row that genuinely needs emphasis.
   final Widget? leading;
 
@@ -132,6 +134,9 @@ class FlatRow extends StatelessWidget {
 
   final VoidCallback? onTap;
   final double minHeight;
+  final bool dense;
+  final int titleMaxLines;
+  final int subtitleMaxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -139,9 +144,9 @@ class FlatRow extends StatelessWidget {
     final cs = theme.colorScheme;
 
     final content = Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.space4,
-        vertical: AppConstants.space3,
+      padding: EdgeInsets.symmetric(
+        horizontal: dense ? AppConstants.space2 : AppConstants.space1,
+        vertical: dense ? AppConstants.space2 : AppConstants.space3,
       ),
       child: Row(
         children: [
@@ -162,9 +167,11 @@ class FlatRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: theme.textTheme.bodyLarge
+                  style: (dense
+                          ? theme.textTheme.bodyMedium
+                          : theme.textTheme.bodyLarge)
                       ?.copyWith(fontWeight: FontWeight.w500),
-                  maxLines: 2,
+                  maxLines: titleMaxLines,
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (subtitle != null)
@@ -173,8 +180,8 @@ class FlatRow extends StatelessWidget {
                     child: Text(
                       subtitle!,
                       style: theme.textTheme.bodySmall
-                          ?.copyWith(color: cs.onSurfaceVariant),
-                      maxLines: 2,
+                          ?.copyWith(color: cs.onSurfaceVariant, height: 1.35),
+                      maxLines: subtitleMaxLines,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -182,19 +189,32 @@ class FlatRow extends StatelessWidget {
             ),
           ),
           if (trailingText != null)
-            Padding(
-              padding: const EdgeInsets.only(left: AppConstants.space2),
-              child: Text(
-                trailingText!,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: ThrowTheme.accentFg(context),
-                  fontWeight: FontWeight.w600,
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 120),
+              child: Padding(
+                padding: const EdgeInsets.only(left: AppConstants.space2),
+                child: Text(
+                  trailingText!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: ThrowTheme.accentFg(context),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
           if (trailing != null) ...[
             const SizedBox(width: AppConstants.space2),
-            trailing!,
+            // Cap the trailing slot: an unbounded child (a long value, a
+            // switch row inside a Row) was what pushed titles out of the card.
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.sizeOf(context).width * 0.4,
+              ),
+              child: trailing!,
+            ),
           ],
         ],
       ),
@@ -206,10 +226,41 @@ class FlatRow extends StatelessWidget {
           ? content
           : InkWell(
               onTap: onTap,
-              // The splash belongs to this row, not the whole group.
-              splashColor: cs.primary.withValues(alpha: 0.10),
+              borderRadius: ThrowRadius.row,
+              splashColor: cs.primary.withValues(alpha: 0.08),
+              highlightColor: cs.primary.withValues(alpha: 0.04),
               child: content,
             ),
+    );
+  }
+}
+
+/// A row whose entire body is a caller-supplied widget — used by lists that are
+/// not simple label/value pairs (transfer rows, receipts). It keeps the same
+/// press behaviour and hairline rhythm as [FlatRow] without imposing a layout.
+class FlatContentRow extends StatelessWidget {
+  const FlatContentRow({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: AppConstants.space1,
+      vertical: AppConstants.space3,
+    ),
+  });
+
+  final Widget child;
+  final VoidCallback? onTap;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: ThrowRadius.row,
+      splashColor: cs.primary.withValues(alpha: 0.08),
+      child: Padding(padding: padding, child: child),
     );
   }
 }

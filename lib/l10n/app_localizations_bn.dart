@@ -328,8 +328,257 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get homeNoPeersBody =>
-      'Discover খুলুন, এই ডিভাইসটি দৃশ্যমান করুন, তারপর অন্যটির সাথে সংযোগ করুন।';
+      'খুঁজুন ট্যাব খুলুন, এই ডিভাইসটি দৃশ্যমান করুন, তারপর অন্যটির সাথে সংযোগ করুন।';
 
   @override
   String get receivedCaption => 'যা আসে সব এখানেই থাকে।';
+
+  @override
+  String get stateSending => 'পাঠানো হচ্ছে…';
+
+  @override
+  String get stateReceiving => 'গ্রহণ করা হচ্ছে…';
+
+  @override
+  String transferTo(String device) {
+    return '$device-এর কাছে';
+  }
+
+  @override
+  String transferFrom(String device) {
+    return '$device থেকে';
+  }
+
+  @override
+  String timeLeft(int seconds) {
+    return '$seconds সেকেন্ড বাকি';
+  }
+
+  @override
+  String get speedMeasuring => 'গতি মাপা হচ্ছে…';
+
+  @override
+  String speedOf(String speed) {
+    return '$speed';
+  }
+
+  @override
+  String savedToFolder(String folder) {
+    return '$folder-এ সংরক্ষিত';
+  }
+
+  @override
+  String fromDevice(String device) {
+    return '$device থেকে';
+  }
+
+  @override
+  String receivedSavedIn(String folder) {
+    return 'ফাইলগুলো $folder-এ সংরক্ষিত হচ্ছে';
+  }
+
+  @override
+  String receivedEmptyWhere(String folder) {
+    return 'যে ফাইলগুলো আসবে সেগুলো $folder-এ সংরক্ষিত হবে, সবচেয়ে নতুনটি আগে। এখান থেকেই খুলতে পারবেন।';
+  }
+
+  @override
+  String get receivedActionCopyPath => 'অবস্থান কপি';
+
+  @override
+  String get receivedPathCopied => 'অবস্থান কপি হয়েছে';
+
+  @override
+  String get actionOpenFolder => 'ফোল্ডার খুলুন';
+
+  @override
+  String get folderUnavailable => 'ফোল্ডার পাওয়া যাচ্ছে না';
+
+  @override
+  String get sendTo => 'পাঠান';
+
+  @override
+  String get selectPeersHint => 'এক বা একাধিক ডিভাইস বেছে নিন, তারপর পাঠান।';
+
+  @override
+  String sendToCount(int count) {
+    return '$countটি ডিভাইসে পাঠান';
+  }
+
+  @override
+  String sentToCount(int sent, int total) {
+    return '$totalটির মধ্যে $sentটিতে পাঠানো হয়েছে';
+  }
+
+  @override
+  String get sendPartlyFailed =>
+      'কিছু ডিভাইস পায়নি। দেখুন সেগুলো এখনও কানেক্টেড আছে কি না।';
+
+  @override
+  String selectedCount(int count) {
+    return '$countটি বাছাই করা হয়েছে';
+  }
+
+  @override
+  String get nearbyDevice => 'কাছের ডিভাইস';
+
+  @override
+  String nearbyDeviceToken(String token) {
+    return 'কাছের ডিভাইস · $token';
+  }
+
+  @override
+  String get unknownPlatform => 'অজানা ডিভাইস';
+
+  @override
+  String get discoverVisibleSwitch => 'কাছের ডিভাইসদের কাছে দৃশ্যমান';
+
+  @override
+  String get discoverFindingSwitch => 'ডিভাইস খোঁজা হচ্ছে';
+
+  @override
+  String get connectTo => 'কানেক্ট';
+
+  @override
+  String get disconnectFrom => 'কানেকশন কাটুন';
+
+  @override
+  String connectingTo(String device) {
+    return '$device-এর সাথে কানেক্ট হচ্ছে…';
+  }
+
+  @override
+  String get aboutTitle => 'Throw সম্পর্কে';
+
+  @override
+  String aboutVersion(String version, String build) {
+    return 'সংস্করণ $version (বিল্ড $build)';
+  }
+
+  @override
+  String get aboutWhatItIs =>
+      'Throw একই নেটওয়ার্কে থাকা ডিভাইসগুলোর মধ্যে ফাইল ও লেখা পাঠায় — কোনো অ্যাকাউন্ট, সার্ভার বা ইন্টারনেট লাগে না। সবকিছু সরাসরি এক ডিভাইস থেকে আরেকটিতে যায়।';
+
+  @override
+  String get developerSection => 'নির্মাতা';
+
+  @override
+  String get developerName => 'মো. মাজিদুল ইসলাম মহিম';
+
+  @override
+  String get developerRole => 'Throw-এর ডিজাইনার ও ডেভেলপার';
+
+  @override
+  String get developerLocation => 'খুলনা, বাংলাদেশ';
+
+  @override
+  String get linksSection => 'লিংক';
+
+  @override
+  String get linkGithub => 'গিটহাব';
+
+  @override
+  String get linkWebsite => 'ওয়েবসাইট';
+
+  @override
+  String get linkRepository => 'সোর্স কোড';
+
+  @override
+  String get linkReleases => 'রিলিজ';
+
+  @override
+  String get linkIssues => 'সমস্যা জানান';
+
+  @override
+  String get linkLicense => 'লাইসেন্স';
+
+  @override
+  String get licenseName => 'এমআইটি লাইসেন্স';
+
+  @override
+  String get legalSection => 'আইনি';
+
+  @override
+  String get openLinkFailed => 'লিংকটি খোলা গেল না।';
+
+  @override
+  String get aboutCredits =>
+      'ফ্লাটার দিয়ে তৈরি। ফন্ট: Plus Jakarta Sans ও Hind Siliguri (SIL ওপেন ফন্ট লাইসেন্স)।';
+
+  @override
+  String get settingsAboutOpen => 'Throw সম্পর্কে';
+
+  @override
+  String get settingsAboutSummary => 'সংস্করণ, নির্মাতা ও লিংক';
+
+  @override
+  String get actionAttach => 'ফাইল সংযুক্ত করুন';
+
+  @override
+  String get actionSendText => 'লেখা পাঠান';
+
+  @override
+  String get composerLabel => 'বার্তা বা নোট';
+
+  @override
+  String get composerHint => 'পাঠানোর জন্য কিছু লিখুন…';
+
+  @override
+  String get pickFilesFirst => 'পাঠানোর ফাইল বেছে নিন';
+
+  @override
+  String get noAppForFile => 'এই ধরনের ফাইল খোলার কোনো অ্যাপ এই ডিভাইসে নেই।';
+
+  @override
+  String get transfersActiveSection => 'চলমান';
+
+  @override
+  String get transfersRecentSection => 'সাম্প্রতিক';
+
+  @override
+  String get transfersClearHistory => 'তালিকা মুছুন';
+
+  @override
+  String get transfersCleared => 'ইতিহাস মুছে ফেলা হয়েছে';
+
+  @override
+  String get settingsNameHint => 'অন্য ডিভাইস যেভাবে দেখবে';
+
+  @override
+  String get settingsDeviceNameHelp =>
+      'অন্য ডিভাইস আপনাকে খোঁজার সময় এই নামটিই দেখবে।';
+
+  @override
+  String get settingsAppearanceSection => 'অবয়ব';
+
+  @override
+  String get settingsGeneralSection => 'সাধারণ';
+
+  @override
+  String get settingsAboutSection => 'সম্পর্কে';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageBangla => 'বাংলা';
+
+  @override
+  String get themeDark => 'ডার্ক';
+
+  @override
+  String get themeLight => 'লাইট';
+
+  @override
+  String get receivedSubtitle => 'যা কিছু এসেছে, নতুনটি আগে।';
+
+  @override
+  String get errorGeneric => 'কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।';
+
+  @override
+  String get errorGenericWithDetail =>
+      'কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন — বারবার হলে বিস্তারিত লগে রাখা হয়েছে।';
+
+  @override
+  String get errorShowDetail => 'বিস্তারিত দেখুন';
 }

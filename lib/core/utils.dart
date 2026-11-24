@@ -95,6 +95,28 @@ class AppUtils {
     return false;
   }
 
+  /// The folder part of a path, for showing "Saved in Downloads/Throw".
+  ///
+  /// Only string surgery — never touches the disk, so a widget can call it on
+  /// every build without an async hop.
+  static String folderOf(String path) {
+    final index = path.lastIndexOf(RegExp(r'[/\\]'));
+    if (index <= 0) return path;
+    return path.substring(0, index);
+  }
+
+  /// "3 s left", "1 min 20 s left" — rounded up so it never says 0 left while
+  /// the bar is still moving.
+  static String shortEta(int seconds) {
+    if (seconds < 60) return '${seconds}s';
+    final minutes = seconds ~/ 60;
+    final rest = seconds % 60;
+    if (minutes < 60) {
+      return rest == 0 ? '${minutes}m' : '${minutes}m ${rest}s';
+    }
+    return '${minutes ~/ 60}h ${minutes % 60}m';
+  }
+
   /// Sanitizes an incoming file name to prevent path traversal.
   static String sanitizeFileName(String raw) {
     final base = raw.split(RegExp(r'[/\\]')).last.trim();

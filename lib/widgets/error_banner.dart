@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/motion.dart';
 import '../core/permissions.dart';
 import '../core/theme.dart';
 import '../l10n/app_localizations.dart';
@@ -14,7 +15,7 @@ import '../models/app_error.dart';
 /// Shape follows the rest of the app — a soft 28dp panel with a circular
 /// icon badge and pill actions, so an error state never looks like a
 /// different product from the happy state.
-class ErrorBanner extends StatelessWidget {
+class ErrorBanner extends StatefulWidget {
   const ErrorBanner({super.key, required this.error, this.onDismiss});
 
   final AppError error;
@@ -24,11 +25,27 @@ class ErrorBanner extends StatelessWidget {
   final VoidCallback? onDismiss;
 
   @override
+  State<ErrorBanner> createState() => _ErrorBannerState();
+}
+
+class _ErrorBannerState extends State<ErrorBanner> {
+  bool _showDetail = false;
+
+  @override
   Widget build(BuildContext context) {
+    final error = widget.error;
+    final onDismiss = widget.onDismiss;
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final cs = theme.colorScheme;
     final message = describeError(error, l10n);
+    // A technical detail exists but is not worth shouting: it goes behind a
+    // disclosure. Before this the raw exception was concatenated into the
+    // message, so users read "Something went wrong: Bad state: No element".
+    final detail = error.detail;
+    final hasDetail = detail != null &&
+        detail.trim().isNotEmpty &&
+        error.code == AppErrorCode.unknown;
 
     return Semantics(
       liveRegion: true,
@@ -85,6 +102,45 @@ class ErrorBanner extends StatelessWidget {
                   ),
               ],
             ),
+            if (hasDetail) ...[
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Pressable(
+                  child: TextButton.icon(
+                    onPressed: () => setState(() => _showDetail = !_showDetail),
+                    icon: Icon(
+                      _showDetail
+                          ? Icons.expand_less_rounded
+                          : Icons.expand_more_rounded,
+                      size: 18,
+                      color: cs.onErrorContainer,
+                    ),
+                    label: Text(
+                      l10n.errorShowDetail,
+                      style: TextStyle(color: cs.onErrorContainer),
+                    ),
+                  ),
+                ),
+              ),
+              AnimatedSize(
+                duration: Motion.adapt(context, Motion.fast),
+                curve: Motion.curve,
+                alignment: Alignment.topCenter,
+                child: _showDetail
+                    ? Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: SelectableText(
+                          detail,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: cs.onErrorContainer.withValues(alpha: 0.8),
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      )
+                    : const SizedBox(width: double.infinity),
+              ),
+            ],
             if (error.offerSettings) ...[
               const SizedBox(height: 4),
               Align(

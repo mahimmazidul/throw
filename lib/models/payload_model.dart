@@ -22,6 +22,7 @@ class PayloadModel {
     this.text,
     this.path,
     required this.createdAt,
+    this.senderName,
   });
 
   /// Payload id assigned by the transport (Nearby payload id, local uuid, …).
@@ -45,13 +46,24 @@ class PayloadModel {
 
   final DateTime createdAt;
 
+  /// Who sent this, when the transport told us. Shown on the receipt so a list
+  /// of files from several phones is readable.
+  final String? senderName;
+
+  bool get isFile =>
+      kind == PayloadKind.file || (kind == PayloadKind.clipboard && path != null);
+
   /// Short human label for lists and progress rows.
+  ///
+  /// The precedence is deliberate: an empty file name used to fall through to
+  /// `text` and then to an empty string, leaving blank rows in the list.
   String get label {
-    if (kind == PayloadKind.file ||
-        kind == PayloadKind.clipboard && name != null) {
-      return name ?? text ?? '';
+    final fileName = name?.trim() ?? '';
+    if (isFile) {
+      return fileName.isEmpty ? 'File' : fileName;
     }
-    final body = text ?? '';
+    final body = (text ?? '').trim();
+    if (body.isEmpty) return fileName.isEmpty ? 'Text' : fileName;
     return body.length > 40 ? '${body.substring(0, 40)}…' : body;
   }
 
@@ -64,6 +76,7 @@ class PayloadModel {
     String? text,
     String? path,
     DateTime? createdAt,
+    String? senderName,
   }) {
     return PayloadModel(
       id: id ?? this.id,
@@ -74,6 +87,7 @@ class PayloadModel {
       text: text ?? this.text,
       path: path ?? this.path,
       createdAt: createdAt ?? this.createdAt,
+      senderName: senderName ?? this.senderName,
     );
   }
 
@@ -86,6 +100,7 @@ class PayloadModel {
         'text': text,
         'path': path,
         'createdAt': createdAt.toIso8601String(),
+        if (senderName != null) 'senderName': senderName,
       };
 
   factory PayloadModel.fromJson(Map<String, dynamic> json) {
@@ -98,6 +113,7 @@ class PayloadModel {
       text: json['text'] as String?,
       path: json['path'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
+      senderName: json['senderName'] as String?,
     );
   }
 

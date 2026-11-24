@@ -127,6 +127,10 @@ abstract final class ThrowRadius {
   /// a rectangle.
   static const BorderRadius card = BorderRadius.all(Radius.circular(28));
 
+  /// Ink splash on a flush row: a gentle corner, not the full card radius.
+  /// A 28dp splash inside a 56dp row paints outside the row it belongs to.
+  static const BorderRadius row = BorderRadius.all(Radius.circular(12));
+
   /// Hero cards and bottom sheets — fully rounded panels.
   static const BorderRadius sheet = BorderRadius.all(Radius.circular(36));
 

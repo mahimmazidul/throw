@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import '../models/device_model.dart';
@@ -9,6 +10,16 @@ import '../models/transfer_model.dart';
 /// Implementations: [NearbyService] on Android (WiFi Direct) and the
 /// Bluetooth service on desktop. The factory in
 /// `transfer_service_factory.dart` picks one at runtime.
+///
+/// Two contracts matter for the UI and were both missing before:
+///
+///  * [localDeviceName] — the name this install advertises. It is set before
+///    advertising starts, because a transport that advertises before the OS
+///    name resolves broadcasts the placeholder ("Throw Device") and the other
+///    phone is stuck showing it until re-discovery.
+///  * `sendFile` reports progress through [transfers] *and* writes received
+///    files through [IncomingStore], so every completed receipt has a real
+///    `savedPath` the UI can show.
 abstract class TransferService {
   /// Devices discovered so far; emits updates as they appear, change, and
   /// drop out of range.
@@ -23,6 +34,9 @@ abstract class TransferService {
   /// Payloads that arrived and are ready for the user (files are complete
   /// and readable on disk when they appear here).
   Stream<PayloadModel> get receivedPayloads;
+
+  /// The name this install is advertising right now.
+  String get localDeviceName;
 
   /// Advertises this install so nearby Throw users can find it.
   Future<void> startAdvertising({required String deviceName});
@@ -49,7 +63,15 @@ abstract class TransferService {
   Future<void> sendText({required String endpointId, required String text});
 
   /// Streams a file to a connected peer.
-  Future<void> sendFile({required String endpointId, required File file});
+  ///
+  /// [sizeBytes] is the size the UI already knows; passing it lets the service
+  /// publish a correct total before the first chunk instead of showing 0/0.
+  Future<void> sendFile({
+    required String endpointId,
+    required File file,
+    String? displayName,
+    int? sizeBytes,
+  });
 
   /// Aborts an in-flight transfer by its [TransferModel.id].
   Future<void> cancelTransfer(String transferId);

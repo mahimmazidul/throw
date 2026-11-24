@@ -673,6 +673,438 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Everything that arrives stays here.'**
   String get receivedCaption;
+
+  /// No description provided for @stateSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending…'**
+  String get stateSending;
+
+  /// No description provided for @stateReceiving.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiving…'**
+  String get stateReceiving;
+
+  /// No description provided for @transferTo.
+  ///
+  /// In en, this message translates to:
+  /// **'to {device}'**
+  String transferTo(String device);
+
+  /// No description provided for @transferFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'from {device}'**
+  String transferFrom(String device);
+
+  /// No description provided for @timeLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds} s left'**
+  String timeLeft(int seconds);
+
+  /// No description provided for @speedMeasuring.
+  ///
+  /// In en, this message translates to:
+  /// **'measuring speed…'**
+  String get speedMeasuring;
+
+  /// No description provided for @speedOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{speed}'**
+  String speedOf(String speed);
+
+  /// No description provided for @savedToFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved in {folder}'**
+  String savedToFolder(String folder);
+
+  /// No description provided for @fromDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'from {device}'**
+  String fromDevice(String device);
+
+  /// No description provided for @receivedSavedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Files are saved in {folder}'**
+  String receivedSavedIn(String folder);
+
+  /// No description provided for @receivedEmptyWhere.
+  ///
+  /// In en, this message translates to:
+  /// **'Files that arrive are saved in {folder}, newest first. You can open them from here or from your file manager.'**
+  String receivedEmptyWhere(String folder);
+
+  /// No description provided for @receivedActionCopyPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy location'**
+  String get receivedActionCopyPath;
+
+  /// No description provided for @receivedPathCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location copied'**
+  String get receivedPathCopied;
+
+  /// No description provided for @actionOpenFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Open folder'**
+  String get actionOpenFolder;
+
+  /// No description provided for @folderUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder unavailable'**
+  String get folderUnavailable;
+
+  /// No description provided for @sendTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to'**
+  String get sendTo;
+
+  /// No description provided for @selectPeersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick one or more devices, then send.'**
+  String get selectPeersHint;
+
+  /// No description provided for @sendToCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to {count}'**
+  String sendToCount(int count);
+
+  /// No description provided for @sentToCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent to {sent} of {total}'**
+  String sentToCount(int sent, int total);
+
+  /// No description provided for @sendPartlyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Some devices did not receive it. Check that they are still connected.'**
+  String get sendPartlyFailed;
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selectedCount(int count);
+
+  /// No description provided for @nearbyDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby device'**
+  String get nearbyDevice;
+
+  /// No description provided for @nearbyDeviceToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby device · {token}'**
+  String nearbyDeviceToken(String token);
+
+  /// No description provided for @unknownPlatform.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown device'**
+  String get unknownPlatform;
+
+  /// No description provided for @discoverVisibleSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible to nearby devices'**
+  String get discoverVisibleSwitch;
+
+  /// No description provided for @discoverFindingSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for devices'**
+  String get discoverFindingSwitch;
+
+  /// No description provided for @connectTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get connectTo;
+
+  /// No description provided for @disconnectFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get disconnectFrom;
+
+  /// No description provided for @connectingTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to {device}…'**
+  String connectingTo(String device);
+
+  /// No description provided for @aboutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'About Throw'**
+  String get aboutTitle;
+
+  /// No description provided for @aboutVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} (build {build})'**
+  String aboutVersion(String version, String build);
+
+  /// No description provided for @aboutWhatItIs.
+  ///
+  /// In en, this message translates to:
+  /// **'Throw sends files and text between devices on the same network, with no account, no server and no internet. Everything moves directly from one device to the other.'**
+  String get aboutWhatItIs;
+
+  /// No description provided for @developerSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer'**
+  String get developerSection;
+
+  /// No description provided for @developerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Md. Mazidul Islam Mahim'**
+  String get developerName;
+
+  /// No description provided for @developerRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Designer and developer of Throw'**
+  String get developerRole;
+
+  /// No description provided for @developerLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Khulna, Bangladesh'**
+  String get developerLocation;
+
+  /// No description provided for @linksSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Links'**
+  String get linksSection;
+
+  /// No description provided for @linkGithub.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub'**
+  String get linkGithub;
+
+  /// No description provided for @linkWebsite.
+  ///
+  /// In en, this message translates to:
+  /// **'Website'**
+  String get linkWebsite;
+
+  /// No description provided for @linkRepository.
+  ///
+  /// In en, this message translates to:
+  /// **'Source code'**
+  String get linkRepository;
+
+  /// No description provided for @linkReleases.
+  ///
+  /// In en, this message translates to:
+  /// **'Releases'**
+  String get linkReleases;
+
+  /// No description provided for @linkIssues.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a problem'**
+  String get linkIssues;
+
+  /// No description provided for @linkLicense.
+  ///
+  /// In en, this message translates to:
+  /// **'Licence'**
+  String get linkLicense;
+
+  /// No description provided for @licenseName.
+  ///
+  /// In en, this message translates to:
+  /// **'MIT Licence'**
+  String get licenseName;
+
+  /// No description provided for @legalSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Legal'**
+  String get legalSection;
+
+  /// No description provided for @openLinkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open that link.'**
+  String get openLinkFailed;
+
+  /// No description provided for @aboutCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Built with Flutter. Fonts: Plus Jakarta Sans and Hind Siliguri (SIL Open Font License).'**
+  String get aboutCredits;
+
+  /// No description provided for @settingsAboutOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'About Throw'**
+  String get settingsAboutOpen;
+
+  /// No description provided for @settingsAboutSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Version, developer and links'**
+  String get settingsAboutSummary;
+
+  /// No description provided for @actionAttach.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach a file'**
+  String get actionAttach;
+
+  /// No description provided for @actionSendText.
+  ///
+  /// In en, this message translates to:
+  /// **'Send text'**
+  String get actionSendText;
+
+  /// No description provided for @composerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Message or note'**
+  String get composerLabel;
+
+  /// No description provided for @composerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type something to send…'**
+  String get composerHint;
+
+  /// No description provided for @pickFilesFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose files to send'**
+  String get pickFilesFirst;
+
+  /// No description provided for @noAppForFile.
+  ///
+  /// In en, this message translates to:
+  /// **'No app on this device can open this file type.'**
+  String get noAppForFile;
+
+  /// No description provided for @transfersActiveSection.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get transfersActiveSection;
+
+  /// No description provided for @transfersRecentSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get transfersRecentSection;
+
+  /// No description provided for @transfersClearHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear list'**
+  String get transfersClearHistory;
+
+  /// No description provided for @transfersCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'History cleared'**
+  String get transfersCleared;
+
+  /// No description provided for @settingsNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown to other devices'**
+  String get settingsNameHint;
+
+  /// No description provided for @settingsDeviceNameHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'This is the name other devices see when they look for you.'**
+  String get settingsDeviceNameHelp;
+
+  /// No description provided for @settingsAppearanceSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsAppearanceSection;
+
+  /// No description provided for @settingsGeneralSection.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get settingsGeneralSection;
+
+  /// No description provided for @settingsAboutSection.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settingsAboutSection;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// No description provided for @languageBangla.
+  ///
+  /// In en, this message translates to:
+  /// **'বাংলা'**
+  String get languageBangla;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @receivedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything that arrived, newest first.'**
+  String get receivedSubtitle;
+
+  /// No description provided for @errorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Try again.'**
+  String get errorGeneric;
+
+  /// No description provided for @errorGenericWithDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Try again — if it keeps happening, the details have been logged.'**
+  String get errorGenericWithDetail;
+
+  /// No description provided for @errorShowDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Show details'**
+  String get errorShowDetail;
 }
 
 class _AppLocalizationsDelegate

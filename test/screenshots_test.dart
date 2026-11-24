@@ -18,6 +18,7 @@ import 'package:throw_app/providers/share_inbox_provider.dart';
 import 'package:throw_app/providers/transfer_provider.dart';
 import 'package:throw_app/screens/discover_screen.dart';
 import 'package:throw_app/screens/home_screen.dart';
+import 'package:throw_app/screens/about_screen.dart';
 import 'package:throw_app/screens/settings_screen.dart';
 import 'package:throw_app/screens/transfer_screen.dart';
 import 'package:throw_app/services/transfer_service.dart';
@@ -109,6 +110,9 @@ class _FakeTransferService implements TransferService {
   @override
   Stream<PayloadModel> get receivedPayloads => _payloadsController.stream;
   @override
+  String get localDeviceName => 'Test Device';
+
+  @override
   Future<void> startAdvertising({required String deviceName}) async {}
   @override
   Future<void> stopAdvertising() async {}
@@ -129,7 +133,10 @@ class _FakeTransferService implements TransferService {
       {required String endpointId, required String text}) async {}
   @override
   Future<void> sendFile(
-      {required String endpointId, required File file}) async {}
+      {required String endpointId,
+      required File file,
+      String? displayName,
+      int? sizeBytes}) async {}
   @override
   Future<void> cancelTransfer(String transferId) async {}
   @override
@@ -203,6 +210,7 @@ void main() {
       'discover': (const DiscoverScreen(), 1),
       'transfers': (const TransferScreen(), 2),
       'settings': (const SettingsScreen(), 3),
+      'about': (const AboutScreen(), 3),
     };
 
     for (final entry in screens.entries) {

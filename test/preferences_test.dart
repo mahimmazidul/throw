@@ -21,6 +21,9 @@ class _NullService implements TransferService {
   @override
   Stream<PayloadModel> get receivedPayloads => const Stream.empty();
   @override
+  String get localDeviceName => 'Test Device';
+
+  @override
   Future<void> startAdvertising({required String deviceName}) async {}
   @override
   Future<void> stopAdvertising() async {}
@@ -41,7 +44,10 @@ class _NullService implements TransferService {
       {required String endpointId, required String text}) async {}
   @override
   Future<void> sendFile(
-      {required String endpointId, required File file}) async {}
+      {required String endpointId,
+      required File file,
+      String? displayName,
+      int? sizeBytes}) async {}
   @override
   Future<void> cancelTransfer(String transferId) async {}
   @override
@@ -67,14 +73,35 @@ void main() {
       AppPreferences.atFile(File('${tempDir.path}/$name'));
 
   group('AppPreferences.inMemory', () {
-    test('stores nothing but never throws', () async {
+    // This used to assert that writes were discarded, which was not "in
+    // memory" so much as "nowhere": a test could not distinguish a working
+    // preference path from one that dropped every value. The contract is a
+    // process-lifetime store that never touches the disk and never throws.
+    test('keeps values for the life of the run', () async {
       final prefs = AppPreferences.inMemory();
       await prefs.setLocaleCode('bn');
       await prefs.setThemeModeIndex(2);
       await prefs.setDeviceName('Desk');
-      expect(prefs.localeCode, isNull);
-      expect(prefs.themeModeIndex, isNull);
-      expect(prefs.deviceName, isNull);
+      expect(prefs.localeCode, 'bn');
+      expect(prefs.themeModeIndex, 2);
+      expect(prefs.deviceName, 'Desk');
+    });
+
+    test('two in-memory stores are independent', () async {
+      final a = AppPreferences.inMemory();
+      final b = AppPreferences.inMemory();
+      await a.setDeviceName('A');
+      expect(a.deviceName, 'A');
+      expect(b.deviceName, isNull);
+    });
+
+    test('does not write anything to disk', () async {
+      // A sentinel: if the in-memory store ever delegated to the file store,
+      // the shared temp dir would gain an entry.
+      final before = tempDir.listSync().length;
+      final prefs = AppPreferences.inMemory();
+      await prefs.setDeviceName('Desk');
+      expect(tempDir.listSync().length, before);
     });
   });
 

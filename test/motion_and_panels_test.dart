@@ -5,7 +5,6 @@ import 'package:throw_app/core/motion.dart';
 import 'package:throw_app/core/theme.dart';
 import 'package:throw_app/l10n/app_localizations.dart';
 import 'package:throw_app/models/device_model.dart';
-import 'package:throw_app/widgets/device_picker.dart';
 import 'package:throw_app/widgets/entrance.dart';
 import 'package:throw_app/widgets/panel.dart';
 
@@ -151,11 +150,11 @@ void main() {
     });
   });
 
-  group('PanelGroup / FlatRow', () {
+  group('Section / FlatRow', () {
     testWidgets('draws separators between rows but not after the last one',
         (tester) async {
       await tester.pumpWidget(_app(
-        const PanelGroup(
+        const Section(
           children: [
             FlatRow(title: 'One'),
             FlatRow(title: 'Two'),
@@ -168,7 +167,7 @@ void main() {
 
     testWidgets('header is uppercased and footer rendered', (tester) async {
       await tester.pumpWidget(_app(
-        const PanelGroup(
+        const Section(
           header: 'This device',
           footer: 'Explained below.',
           children: [FlatRow(title: 'Only')],
@@ -182,7 +181,7 @@ void main() {
     testWidgets('a row is tappable and reports the tap', (tester) async {
       var taps = 0;
       await tester.pumpWidget(_app(
-        PanelGroup(
+        Section(
           children: [FlatRow(title: 'Rename', onTap: () => taps++)],
         ),
       ));
@@ -193,14 +192,14 @@ void main() {
     testWidgets('rows without onTap are not tappable and have no ink well',
         (tester) async {
       await tester.pumpWidget(_app(
-        const PanelGroup(children: [FlatRow(title: 'Static')]),
+        const Section(children: [FlatRow(title: 'Static')]),
       ));
       expect(find.byType(InkWell), findsNothing);
     });
 
     testWidgets('rows meet the 60dp minimum height', (tester) async {
       await tester.pumpWidget(_app(
-        const PanelGroup(children: [FlatRow(title: 'Row')]),
+        const Section(children: [FlatRow(title: 'Row')]),
       ));
       expect(tester.getSize(find.byType(FlatRow)).height,
           greaterThanOrEqualTo(60));
@@ -208,7 +207,7 @@ void main() {
 
     testWidgets('long titles do not overflow', (tester) async {
       await tester.pumpWidget(_app(
-        PanelGroup(
+        Section(
           children: [
             FlatRow(title: 'T' * 200, subtitle: 'S' * 400),
           ],
@@ -217,103 +216,106 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('the group surface is the panel tone, not the canvas',
+    testWidgets('a section draws no surface of its own', (tester) async {
+      // The 1.1 build wrapped every group in a filled 28dp rectangle, which is
+      // the "still boxes" complaint. A section must not introduce any Material
+      // with the panel tone; the rows sit on the canvas.
+      await tester.pumpWidget(_app(
+        const Section(children: [FlatRow(title: 'One')]),
+      ));
+      final panelToned = find.byWidgetPredicate(
+        (widget) =>
+            widget is Material &&
+            (widget.color == ThrowColors.containerLow ||
+                widget.color == ThrowColors.containerHigh ||
+                widget.color == ThrowColors.raised),
+      );
+      expect(panelToned, findsNothing);
+    });
+
+    testWidgets('the section header sits above the rows, not inside a box',
         (tester) async {
       await tester.pumpWidget(_app(
-        const PanelGroup(children: [FlatRow(title: 'One')]),
+        const Section(header: 'Peers', children: [FlatRow(title: 'One')]),
       ));
-      final material = tester.widget<Material>(
-        find
-            .descendant(
-              of: find.byType(PanelGroup),
-              matching: find.byType(Material),
-            )
-            .first,
-      );
-      expect(material.color, ThrowColors.containerLow);
-      expect(material.color, isNot(ThrowColors.bg));
+      final headerY = tester.getTopLeft(find.text('PEERS')).dy;
+      final rowY = tester.getTopLeft(find.text('One')).dy;
+      expect(headerY, lessThan(rowY));
     });
   });
 
-  group('DevicePicker sizing and accessibility', () {
-    testWidgets('a lone peer pill is not stretched full width', (tester) async {
-      // Regression: `alignment` on the animated container made the pill fill
-      // the row, so one device became a full-width button.
-      await tester.pumpWidget(_app(
-        DevicePicker(
-          devices: [_device('a', 'Pixel 8')],
-          selected: null,
-          onSelected: (_) {},
-        ),
-      ));
-      // Measure against the Wrap the pills live in: the picker itself is
-      // stretched to the page width by its parent, so comparing to it says
-      // nothing about whether a pill grew.
-      final wrapWidth = tester.getSize(find.byType(Wrap)).width;
-      final pillWidth = tester.getSize(find.byType(IntrinsicWidth)).width;
-      expect(pillWidth, lessThanOrEqualTo(wrapWidth + 0.5),
-          reason: 'pill ($pillWidth) should not exceed its wrap ($wrapWidth)');
-      expect(pillWidth, lessThan(390 * 0.9),
-          reason: 'a lone pill must stay intrinsic, not full-bleed');
+  group('peer selection and peer naming', () {
+    DeviceModel peer(String id, String name) => DeviceModel(
+          id: id,
+          name: name,
+          platform: DevicePlatform.android,
+          channel: TransferChannel.wifiDirect,
+          isConnected: true,
+          lastSeen: DateTime(2026, 11, 24),
+        );
+
+    test('a real name is shown as-is', () {
+      expect(peer('a', 'Pixel 8').displayName, 'Pixel 8');
+      expect(peer('a', 'Pixel 8').hasRealName, isTrue);
     });
 
-    testWidgets('two peers stay side by side, not stacked', (tester) async {
-      await tester.pumpWidget(_app(
-        DevicePicker(
-          devices: [_device('a', 'Pixel 8'), _device('b', 'ThinkPad')],
-          selected: null,
-          onSelected: (_) {},
-        ),
-      ));
-      final a = tester.getTopLeft(find.text('Pixel 8')).dy;
-      final b = tester.getTopLeft(find.text('ThinkPad')).dy;
-      expect(a, b, reason: 'peers should share a row when they fit');
+    test('a UUID is never shown to the user', () {
+      const uuid = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+      final device = peer(uuid, uuid);
+      expect(device.hasRealName, isFalse);
+      expect(device.displayName, isNot(contains('a1b2c3d4-e5f6')));
+      expect(device.displayName, 'Nearby device · 7890');
     });
 
-    testWidgets('the pill still clears the 48dp touch target', (tester) async {
-      await tester.pumpWidget(_app(
-        DevicePicker(
-          devices: [_device('a', 'Pixel 8')],
-          selected: null,
-          onSelected: (_) {},
-        ),
-      ));
-      final height = tester
-          .getSize(
-            find.ancestor(
-              of: find.text('Pixel 8'),
-              matching: find.byType(AnimatedContainer),
-            ),
-          )
-          .height;
-      expect(height, greaterThanOrEqualTo(48));
+    test('an empty name falls back to the address token', () {
+      // The token is the tail of the address, so two unnamed devices in
+      // one list are still distinguishable.
+      expect(peer('0000FE2C-1111', '').displayName, 'Nearby device · 1111');
+      expect(peer('0000FE2C-1111', '').displayName,
+          isNot(peer('0000FE2C-2222', '').displayName));
     });
 
-    testWidgets('selection swaps the fill colour', (tester) async {
-      await tester.pumpWidget(_app(
-        DevicePicker(
-          devices: [_device('a', 'Pixel 8')],
-          selected: null,
-          onSelected: (_) {},
-        ),
-      ));
-      final before = tester
-          .widget<AnimatedContainer>(find.byType(AnimatedContainer))
-          .decoration as BoxDecoration;
-      expect(before.color, ThrowColors.containerHigh);
+    test('a learned name survives a later nameless update', () {
+      final named = peer('a', 'Mahim phone');
+      final blanked = named.withLearnedName('');
+      expect(blanked.name, 'Mahim phone');
+      expect(named.withLearnedName(null).name, 'Mahim phone');
+    });
 
+    testWidgets('every connected peer is listed and selectable',
+        (tester) async {
+      final taps = <String>[];
       await tester.pumpWidget(_app(
-        DevicePicker(
-          devices: [_device('a', 'Pixel 8')],
-          selected: _device('a', 'Pixel 8'),
-          onSelected: (_) {},
+        Material(
+          child: Section(
+            header: 'Peers',
+            children: [
+              for (final device in [peer('a', 'Pixel 8'), peer('b', 'ThinkPad')])
+                FlatRow(
+                  title: device.displayName,
+                  onTap: () => taps.add(device.id),
+                ),
+            ],
+          ),
         ),
       ));
-      await tester.pumpAndSettle();
-      final after = tester
-          .widget<AnimatedContainer>(find.byType(AnimatedContainer))
-          .decoration as BoxDecoration;
-      expect(after.color, ThrowColors.accent);
+      expect(find.text('Pixel 8'), findsOneWidget);
+      expect(find.text('ThinkPad'), findsOneWidget);
+      await tester.tap(find.text('Pixel 8'));
+      await tester.tap(find.text('ThinkPad'));
+      expect(taps, ['a', 'b']);
+    });
+
+    testWidgets('a peer row with a very long name does not overflow',
+        (tester) async {
+      await tester.pumpWidget(_app(
+        Material(
+          child: Section(
+            children: [FlatRow(title: 'Peers', subtitle: 'X' * 300)],
+          ),
+        ),
+      ));
+      expect(tester.takeException(), isNull);
     });
   });
 }

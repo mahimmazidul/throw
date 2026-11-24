@@ -37,115 +37,35 @@
   "errorLocationOff": "লোকেশন সার্ভিস বন্ধ। অ্যান্ড্রয়েডে ডিভিস খুঁজতে এটি দরকার।",
   "sendClipboardHint": "পাঠানোর জন্য কিছু লিখুন…",
   "statusConnectedCount": "{count} টি সংযুক্ত",
-  "@statusConnectedCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "statusNoDevice": "কোনো ডিভাইস সংযুক্ত নেই",
   "transportBoth": "WiFi Direct / Bluetooth",
   "featureDirectSharing": "সরাসরি লোকাল শেয়ারিং",
   "shareInboxTitle": "থ্রোতে পাওয়া ফাইল ({count})",
-  "@shareInboxTitle": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "shareInboxMore": "+{count} টি আরও",
-  "@shareInboxMore": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "shareInboxSend": "পাওয়া ফাইল পাঠান",
   "sendTextTitle": "লেখা পাঠান",
   "sendFilesTitle": "ফাইল পাঠান",
   "sendFilesHint": "এক বা একাধিক ফাইল বেছে পাঠান।",
   "actionPick": "বেছে নিন",
   "visibleAs": "{name} নামে দৃশ্যমান",
-  "@visibleAs": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "makeVisible": "দৃশ্যমান করুন",
   "devicesFoundCount": "{count} টি পাওয়া গেছে",
-  "@devicesFoundCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "openSystemSettings": "সিস্টেম সেটিংস খুলুন",
   "updateChecking": "আপডেট পরীক্ষা করা হচ্ছে...",
   "updateAvailableTitle": "আপডেট পাওয়া গেছে",
   "updateAvailableBody": "বর্তমান: v{current}\nসর্বশেষ: v{latest}\n\nথ্রোর নতুন সংস্করণ এসেছে।",
-  "@updateAvailableBody": {
-    "placeholders": {
-      "current": {
-        "type": "String"
-      },
-      "latest": {
-        "type": "String"
-      }
-    }
-  },
   "actionLater": "পরে",
   "actionOpenRelease": "রিলিজ খুলুন",
   "updateUpToDate": "আপনি হালনাগাদ আছেন (v{current})।",
-  "@updateUpToDate": {
-    "placeholders": {
-      "current": {
-        "type": "String"
-      }
-    }
-  },
   "updateFailed": "আপডেট পরীক্ষা করা যায়নি: {error}",
-  "@updateFailed": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "settingsCheckUpdates": "আপডেট পরীক্ষা করুন",
   "settingsCurrentVersion": "বর্তমান সংস্করণ: v{version}",
-  "@settingsCurrentVersion": {
-    "placeholders": {
-      "version": {
-        "type": "String"
-      }
-    }
-  },
   "settingsAboutBody": "থ্রো v{version} • অফলাইন ফাইল শেয়ারিং",
-  "@settingsAboutBody": {
-    "placeholders": {
-      "version": {
-        "type": "String"
-      }
-    }
-  },
   "errorPermissionDenied": "কাছাকাছি ডিভিস খুঁজে বা পাঠানোর জন্য থ্রো-র নিকটবর্তী ডিভিস অ্যাক্সেস দরকার।",
   "errorPermissionBlocked": "থ্রোর জন্য নিকটবর্তী অ্যাক্সেস বন্ধ আছে। চালিয়ে যেতে সিস্টেম সেটিংসে অনুমতি দিন।",
   "errorDiscoveryFailed": "ডিভিস খুঁজা ব্যর্থ হয়েছে। আবার চেষ্টা করুন।",
   "errorTransferFailed": "ট্রান্সফার সম্পূর্ণ হয়নি। অন্য ডিভাইসটি কাছে আছে কিনা দেখে আবার চেষ্টা করুন।",
   "errorUnknown": "কিছু একটা সমস্যা হয়েছে: {detail}",
-  "@errorUnknown": {
-    "placeholders": {
-      "detail": {
-        "type": "String"
-      }
-    }
-  },
   "transfersSubtitle": "চলমান ও সাম্প্রতিক ট্রান্সফার দেখুন।",
   "homeTagline": "কাছাকাছি ডিভাইসে সরাসরি ফাইল ও টেক্সট পাঠান।",
   "homeChooseDevice": "ডিভাইস বেছে নিন",
@@ -174,6 +94,78 @@
   "homeSectionThrow": "কিছু পাঠান",
   "homeSectionRecent": "সাম্প্রতিক গৃহীত",
   "homeNoPeersTitle": "এখনও কোনো ডিভাইস সংযুক্ত নয়",
-  "homeNoPeersBody": "Discover খুলুন, এই ডিভাইসটি দৃশ্যমান করুন, তারপর অন্যটির সাথে সংযোগ করুন।",
-  "receivedCaption": "যা আসে সব এখানেই থাকে।"
+  "homeNoPeersBody": "খুঁজুন ট্যাব খুলুন, এই ডিভাইসটি দৃশ্যমান করুন, তারপর অন্যটির সাথে সংযোগ করুন।",
+  "receivedCaption": "যা আসে সব এখানেই থাকে।",
+  "stateSending": "পাঠানো হচ্ছে…",
+  "stateReceiving": "গ্রহণ করা হচ্ছে…",
+  "transferTo": "{device}-এর কাছে",
+  "transferFrom": "{device} থেকে",
+  "timeLeft": "{seconds} সেকেন্ড বাকি",
+  "speedMeasuring": "গতি মাপা হচ্ছে…",
+  "speedOf": "{speed}",
+  "savedToFolder": "{folder}-এ সংরক্ষিত",
+  "fromDevice": "{device} থেকে",
+  "receivedSavedIn": "ফাইলগুলো {folder}-এ সংরক্ষিত হচ্ছে",
+  "receivedEmptyWhere": "যে ফাইলগুলো আসবে সেগুলো {folder}-এ সংরক্ষিত হবে, সবচেয়ে নতুনটি আগে। এখান থেকেই খুলতে পারবেন।",
+  "receivedActionCopyPath": "অবস্থান কপি",
+  "receivedPathCopied": "অবস্থান কপি হয়েছে",
+  "actionOpenFolder": "ফোল্ডার খুলুন",
+  "folderUnavailable": "ফোল্ডার পাওয়া যাচ্ছে না",
+  "sendTo": "পাঠান",
+  "selectPeersHint": "এক বা একাধিক ডিভাইস বেছে নিন, তারপর পাঠান।",
+  "sendToCount": "{count}টি ডিভাইসে পাঠান",
+  "sentToCount": "{total}টির মধ্যে {sent}টিতে পাঠানো হয়েছে",
+  "sendPartlyFailed": "কিছু ডিভাইস পায়নি। দেখুন সেগুলো এখনও কানেক্টেড আছে কি না।",
+  "selectedCount": "{count}টি বাছাই করা হয়েছে",
+  "nearbyDevice": "কাছের ডিভাইস",
+  "nearbyDeviceToken": "কাছের ডিভাইস · {token}",
+  "unknownPlatform": "অজানা ডিভাইস",
+  "discoverVisibleSwitch": "কাছের ডিভাইসদের কাছে দৃশ্যমান",
+  "discoverFindingSwitch": "ডিভাইস খোঁজা হচ্ছে",
+  "connectTo": "কানেক্ট",
+  "disconnectFrom": "কানেকশন কাটুন",
+  "connectingTo": "{device}-এর সাথে কানেক্ট হচ্ছে…",
+  "aboutTitle": "Throw সম্পর্কে",
+  "aboutVersion": "সংস্করণ {version} (বিল্ড {build})",
+  "aboutWhatItIs": "Throw একই নেটওয়ার্কে থাকা ডিভাইসগুলোর মধ্যে ফাইল ও লেখা পাঠায় — কোনো অ্যাকাউন্ট, সার্ভার বা ইন্টারনেট লাগে না। সবকিছু সরাসরি এক ডিভাইস থেকে আরেকটিতে যায়।",
+  "developerSection": "নির্মাতা",
+  "developerName": "মো. মাজিদুল ইসলাম মহিম",
+  "developerRole": "Throw-এর ডিজাইনার ও ডেভেলপার",
+  "developerLocation": "খুলনা, বাংলাদেশ",
+  "linksSection": "লিংক",
+  "linkGithub": "গিটহাব",
+  "linkWebsite": "ওয়েবসাইট",
+  "linkRepository": "সোর্স কোড",
+  "linkReleases": "রিলিজ",
+  "linkIssues": "সমস্যা জানান",
+  "linkLicense": "লাইসেন্স",
+  "licenseName": "এমআইটি লাইসেন্স",
+  "legalSection": "আইনি",
+  "openLinkFailed": "লিংকটি খোলা গেল না।",
+  "aboutCredits": "ফ্লাটার দিয়ে তৈরি। ফন্ট: Plus Jakarta Sans ও Hind Siliguri (SIL ওপেন ফন্ট লাইসেন্স)।",
+  "settingsAboutOpen": "Throw সম্পর্কে",
+  "settingsAboutSummary": "সংস্করণ, নির্মাতা ও লিংক",
+  "actionAttach": "ফাইল সংযুক্ত করুন",
+  "actionSendText": "লেখা পাঠান",
+  "composerLabel": "বার্তা বা নোট",
+  "composerHint": "পাঠানোর জন্য কিছু লিখুন…",
+  "pickFilesFirst": "পাঠানোর ফাইল বেছে নিন",
+  "noAppForFile": "এই ধরনের ফাইল খোলার কোনো অ্যাপ এই ডিভাইসে নেই।",
+  "transfersActiveSection": "চলমান",
+  "transfersRecentSection": "সাম্প্রতিক",
+  "transfersClearHistory": "তালিকা মুছুন",
+  "transfersCleared": "ইতিহাস মুছে ফেলা হয়েছে",
+  "settingsNameHint": "অন্য ডিভাইস যেভাবে দেখবে",
+  "settingsDeviceNameHelp": "অন্য ডিভাইস আপনাকে খোঁজার সময় এই নামটিই দেখবে।",
+  "settingsAppearanceSection": "অবয়ব",
+  "settingsGeneralSection": "সাধারণ",
+  "settingsAboutSection": "সম্পর্কে",
+  "languageEnglish": "English",
+  "languageBangla": "বাংলা",
+  "themeDark": "ডার্ক",
+  "themeLight": "লাইট",
+  "receivedSubtitle": "যা কিছু এসেছে, নতুনটি আগে।",
+  "errorGeneric": "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
+  "errorGenericWithDetail": "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন — বারবার হলে বিস্তারিত লগে রাখা হয়েছে।",
+  "errorShowDetail": "বিস্তারিত দেখুন"
 }

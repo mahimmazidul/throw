@@ -28,6 +28,7 @@ class FakeTransferService implements TransferService {
 
   final sentTexts = <(String endpoint, String text)>[];
   final sentFiles = <(String endpoint, String path)>[];
+  final sentFileNames = <(String endpoint, String name)>[];
 
   @override
   Stream<DeviceModel> get devices => devicesController.stream;
@@ -46,9 +47,16 @@ class FakeTransferService implements TransferService {
 
   @override
   Future<void> sendFile(
-      {required String endpointId, required File file}) async {
+      {required String endpointId,
+      required File file,
+      String? displayName,
+      int? sizeBytes}) async {
     sentFiles.add((endpointId, file.path));
+    sentFileNames.add((endpointId, displayName ?? file.path));
   }
+
+  @override
+  String get localDeviceName => 'Test Device';
 
   @override
   Future<void> startAdvertising({required String deviceName}) async {}
@@ -138,7 +146,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('No device connected yet'), findsOneWidget);
-      expect(find.textContaining('Open Discover'), findsOneWidget);
+      // With no peer, the composer says the same thing the hint above it says,
+      // in the words for "nothing to send to yet".
+      expect(find.textContaining('Open Discover'), findsWidgets);
 
       final send = tester.widget<FilledButton>(
         find
@@ -168,20 +178,43 @@ void main() {
       await service.dispose();
     });
 
-    testWidgets('sending text goes to the selected peer and clears the field',
+    testWidgets('sending text goes to every selected peer and clears the field',
         (tester) async {
       final service = FakeTransferService();
       await tester.pumpWidget(_home(service));
       service.devicesController.add(_device('a', 'Pixel 8'));
+      service.devicesController.add(_device('b', 'ThinkPad'));
       await tester.pumpAndSettle();
 
+      // A device that just connected is selected for the user: connecting is
+      // why they are here.
       await tester.enterText(find.byType(TextField), 'hello there');
+      await tester.tap(find.widgetWithText(FilledButton, 'Send to 2'));
+      await tester.pumpAndSettle();
+
+      expect(service.sentTexts,
+          unorderedEquals([('a', 'hello there'), ('b', 'hello there')]));
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, isEmpty);
+      await service.dispose();
+    });
+
+    testWidgets('a deselected peer receives nothing', (tester) async {
+      final service = FakeTransferService();
+      await tester.pumpWidget(_home(service));
+      service.devicesController.add(_device('a', 'Pixel 8'));
+      service.devicesController.add(_device('b', 'ThinkPad'));
+      await tester.pumpAndSettle();
+
+      // Both connected devices start selected; unticking one must stick.
+      await tester.tap(find.text('ThinkPad'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'one recipient');
       await tester.tap(find.widgetWithText(FilledButton, 'Send'));
       await tester.pumpAndSettle();
 
-      expect(service.sentTexts, [('a', 'hello there')]);
-      final field = tester.widget<TextField>(find.byType(TextField));
-      expect(field.controller!.text, isEmpty);
+      expect(service.sentTexts, [('a', 'one recipient')]);
       await service.dispose();
     });
 
@@ -197,7 +230,10 @@ void main() {
       await service.dispose();
     });
 
-    testWidgets('the Received tab lists what arrived', (tester) async {
+    testWidgets('what arrived is listed on Home without changing tabs',
+        (tester) async {
+      // The separate "Received" tab is gone: a person who just received
+      // something should not have to look for it on another tab.
       final service = FakeTransferService();
       await tester.pumpWidget(_home(service));
       service.devicesController.add(_device('a', 'Pixel 8'));
@@ -210,19 +246,38 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Received'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('a note from the other phone'), findsOneWidget);
-      expect(find.byIcon(Icons.copy_rounded), findsOneWidget);
+      expect(find.byType(TabBar), findsNothing);
+      expect(find.textContaining('a note from the other phone'), findsWidgets);
       await service.dispose();
     });
 
-    testWidgets('Received tab is honest when nothing arrived', (tester) async {
+    testWidgets('a received file says which folder it is in',
+        (tester) async {
       final service = FakeTransferService();
       await tester.pumpWidget(_home(service));
+      service.payloadsController.add(PayloadModel(
+        id: 'p2',
+        kind: PayloadKind.file,
+        direction: PayloadDirection.received,
+        name: 'holiday.jpg',
+        path: '/Download/Throw/holiday.jpg',
+        sizeBytes: 2048,
+        createdAt: DateTime(2026, 11, 24, 12),
+        senderName: 'Pixel 8',
+      ));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Received'));
+
+      expect(find.text('holiday.jpg'), findsOneWidget);
+      // The complaint was "it shows received but saved where" — the receipt
+      // itself must answer that.
+      expect(find.textContaining('Download/Throw'), findsWidgets);
+      await service.dispose();
+    });
+
+    testWidgets('nothing arrived yet: the empty row names the folder',
+        (tester) async {
+      final service = FakeTransferService();
+      await tester.pumpWidget(_home(service));
       await tester.pumpAndSettle();
       expect(find.text('Nothing received yet'), findsOneWidget);
       await service.dispose();

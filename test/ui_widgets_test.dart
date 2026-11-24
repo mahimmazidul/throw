@@ -10,7 +10,7 @@ import 'package:throw_app/l10n/app_localizations.dart';
 import 'package:throw_app/models/device_model.dart';
 import 'package:throw_app/models/payload_model.dart';
 import 'package:throw_app/widgets/accent_icon_badge.dart';
-import 'package:throw_app/widgets/device_picker.dart';
+import 'package:throw_app/widgets/panel.dart';
 import 'package:throw_app/widgets/empty_state.dart';
 import 'package:throw_app/widgets/received_items_list.dart';
 import 'package:throw_app/widgets/screen_header.dart';
@@ -190,74 +190,52 @@ void main() {
     });
   });
 
-  group('DevicePicker', () {
-    testWidgets('lists every peer and marks the selected one', (tester) async {
-      final a = _device('a', 'Pixel 8');
-      final b = _device('b', 'ThinkPad');
+  group('peer rows', () {
+    testWidgets('a row with a trailing action keeps the title on one line',
+        (tester) async {
       await tester.pumpWidget(_app(
-        DevicePicker(
-          devices: [a, b],
-          selected: a,
-          onSelected: (_) {},
+        Section(
+          children: [
+            FlatRow(
+              title: 'Pixel 8',
+              subtitle: 'WiFi Direct · ~250 Mbps',
+              trailing: const Icon(Icons.check_circle_rounded),
+              onTap: () {},
+            ),
+          ],
         ),
       ));
       expect(find.text('Pixel 8'), findsOneWidget);
-      expect(find.text('ThinkPad'), findsOneWidget);
-      // One check mark, next to the selected peer only.
-      expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
-    testWidgets('reports the tapped peer', (tester) async {
-      final a = _device('a', 'Pixel 8');
-      final b = _device('b', 'ThinkPad');
-      DeviceModel? picked;
-      await tester.pumpWidget(_app(
-        DevicePicker(
-          devices: [a, b],
-          selected: a,
-          onSelected: (d) => picked = d,
-        ),
-      ));
-      await tester.tap(find.text('ThinkPad'));
-      expect(picked, b);
-    });
-
-    testWidgets('peers are announced as buttons that expose selection',
+    testWidgets('a row is announced as a button and is tappable',
         (tester) async {
       final handle = tester.ensureSemantics();
+      var taps = 0;
       await tester.pumpWidget(_app(
-        DevicePicker(
-          devices: [_device('a', 'Pixel 8')],
-          selected: null,
-          onSelected: (_) {},
+        Section(
+          children: [FlatRow(title: 'Pixel 8', onTap: () => taps++)],
         ),
       ));
       final data = tester.getSemantics(find.text('Pixel 8')).getSemanticsData();
-      expect(data.hasFlag(SemanticsFlag.isButton), isTrue);
-      expect(data.hasFlag(SemanticsFlag.hasSelectedState), isTrue);
-      expect(data.hasFlag(SemanticsFlag.isSelected), isFalse);
       expect(data.hasAction(SemanticsAction.tap), isTrue);
+      await tester.tap(find.text('Pixel 8'));
+      expect(taps, 1);
       handle.dispose();
     });
 
-    testWidgets('a peer chip meets the 48dp target', (tester) async {
+    testWidgets('a row clears the 44dp target even when dense',
+        (tester) async {
       await tester.pumpWidget(_app(
-        DevicePicker(
-          devices: [_device('a', 'Pixel 8')],
-          selected: null,
-          onSelected: (_) {},
+        Section(
+          children: [
+            FlatRow(title: 'Pixel 8', dense: true, onTap: () {}),
+          ],
         ),
       ));
-      final size = tester.getSize(find.text('Pixel 8').first.hitTestable());
-      // Text itself is smaller; the tappable pill around it must clear 48.
-      final pill = tester.getSize(find
-          .ancestor(
-            of: find.text('Pixel 8'),
-            matching: find.byType(Container),
-          )
-          .first);
-      expect(size.height, lessThanOrEqualTo(pill.height));
-      expect(pill.height, greaterThanOrEqualTo(48));
+      final size = tester.getSize(find.byType(FlatRow));
+      expect(size.height, greaterThanOrEqualTo(44));
     });
   });
 

@@ -1,11 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:nearby_connections/nearby_connections.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../core/constants.dart';
+import '../core/incoming_store.dart';
+import '../core/transfer_stats.dart';
 import '../models/device_model.dart';
 import '../models/payload_model.dart';
 import '../models/transfer_model.dart';
@@ -13,7 +15,19 @@ import 'transfer_service.dart';
 
 /// Android transfer implementation backed by Google Nearby Connections
 /// (WiFi Direct + Bluetooth LE). Only instantiated when [Platform.isAndroid].
+///
+/// The wire format carries the sender's name in a small JSON metadata blob
+/// (`THROW_META:{…}`) instead of the previous `THROW_FILE_META:<id>:<name>`
+/// string. Two consequences:
+///
+///  * the receiving phone shows "Mahim's Pixel", not "Throw", because the name
+///    travels with the payload rather than depending on advertisement;
+///  * a file name containing ':' (legal on Android) no longer breaks the parse.
 class NearbyService implements TransferService {
+  NearbyService({IncomingStore? store}) : _store = store ?? IncomingStore();
+
+  final IncomingStore _store;
+
   final Nearby _nearby = Nearby();
   final String _serviceId = AppConstants.androidServiceId;
   final Strategy _strategy = Strategy.P2P_CLUSTER;
@@ -27,10 +41,16 @@ class NearbyService implements TransferService {
 
   final Map<String, DeviceModel> _discoveredDevices = {};
   final Map<String, TransferModel> _transfers = {};
-  final Map<int, String> _pendingFileNames = {};
+  final Map<String, TransferRateTracker> _rateTrackers = {};
+
+  /// Metadata announced before a file payload, keyed by payload id.
+  final Map<int, _IncomingMeta> _pendingMeta = {};
+
+  /// File payloads whose bytes are still on disk in the Nearby cache.
   final Map<int, Payload> _receivedFilePayloads = {};
 
-  String _localDeviceName = 'Throw Android';
+  String _localDeviceName = 'Throw';
+
   bool _isAdvertising = false;
   bool _isDiscovering = false;
 
@@ -48,6 +68,9 @@ class NearbyService implements TransferService {
   Stream<PayloadModel> get receivedPayloads =>
       _receivedPayloadsController.stream;
 
+  @override
+  String get localDeviceName => _localDeviceName;
+
   void _guardPlatform() {
     if (!Platform.isAndroid) {
       throw UnsupportedError('NearbyService is only supported on Android.');
@@ -57,11 +80,11 @@ class NearbyService implements TransferService {
   @override
   Future<void> startAdvertising({required String deviceName}) async {
     _guardPlatform();
-    _localDeviceName = deviceName;
+    if (deviceName.trim().isNotEmpty) _localDeviceName = deviceName.trim();
     if (_isAdvertising) return;
 
     final started = await _nearby.startAdvertising(
-      deviceName,
+      _localDeviceName,
       _strategy,
       onConnectionInitiated: _onConnectionInitiated,
       onConnectionResult: _onConnectionResult,
@@ -93,11 +116,10 @@ class NearbyService implements TransferService {
           name: name,
           platform: DevicePlatform.android,
           channel: TransferChannel.wifiDirect,
-          isConnected: false,
+          isConnected: _discoveredDevices[id]?.isConnected ?? false,
           lastSeen: DateTime.now(),
         );
-        _discoveredDevices[id] = device;
-        _devicesController.add(device);
+        _upsertDevice(device);
       },
       onEndpointLost: (String? id) {
         if (id != null) {
@@ -158,7 +180,11 @@ class NearbyService implements TransferService {
     required String text,
   }) async {
     _guardPlatform();
-    final bytes = Uint8List.fromList(text.codeUnits);
+    // BUG FIX: `text.codeUnits` truncates every code unit to one byte, so any
+    // non-ASCII character (Bangla, emoji) arrived mangled. UTF-8 is what
+    // String.fromCharCodes on the other side expects for ASCII and what the
+    // metadata declares for everything else.
+    final bytes = Uint8List.fromList(utf8.encode(text));
     await _nearby.sendBytesPayload(endpointId, bytes);
   }
 
@@ -166,24 +192,26 @@ class NearbyService implements TransferService {
   Future<void> sendFile({
     required String endpointId,
     required File file,
+    String? displayName,
+    int? sizeBytes,
   }) async {
     _guardPlatform();
-    final target = _discoveredDevices[endpointId] ??
-        DeviceModel(
-          id: endpointId,
-          name: endpointId,
-          platform: DevicePlatform.android,
-          channel: TransferChannel.wifiDirect,
-          isConnected: true,
-          lastSeen: DateTime.now(),
-        );
+    final target = _peerFor(endpointId);
+    final fileName = displayName ?? file.path.split(RegExp(r'[/\\]')).last;
+    final size = sizeBytes ?? await file.length();
 
-    final fileName = file.path.split(RegExp(r'[/\\]')).last;
-    final sizeBytes = await file.length();
     final payloadId = await _nearby.sendFilePayload(endpointId, file.path);
-    final metaBytes =
-        Uint8List.fromList('THROW_FILE_META:$payloadId:$fileName'.codeUnits);
-    await _nearby.sendBytesPayload(endpointId, metaBytes);
+    final meta = Uint8List.fromList(
+      utf8.encode(
+        'THROW_META:${jsonEncode({
+          'id': payloadId,
+          'name': fileName,
+          'size': size,
+          'from': _localDeviceName,
+        })}',
+      ),
+    );
+    await _nearby.sendBytesPayload(endpointId, meta);
 
     final transfer = TransferModel(
       id: payloadId.toString(),
@@ -195,16 +223,18 @@ class NearbyService implements TransferService {
           direction: PayloadDirection.sent,
           name: fileName,
           path: file.path,
-          sizeBytes: sizeBytes,
+          sizeBytes: size,
           createdAt: DateTime.now(),
         ),
       ],
       status: TransferStatus.transferring,
       bytesTransferred: 0,
-      totalBytes: sizeBytes,
+      totalBytes: size,
+      direction: TransferDirection.sending,
       startedAt: DateTime.now(),
     );
     _transfers[transfer.id] = transfer;
+    _rateTrackers[transfer.id] = TransferRateTracker();
     _transfersController.add(transfer);
   }
 
@@ -228,7 +258,7 @@ class NearbyService implements TransferService {
           isConnected: false,
           lastSeen: DateTime.now(),
         );
-    _discoveredDevices[id] = device;
+    _upsertDevice(device);
     _connectionRequestsController.add(
       ConnectionRequest(
         endpointId: id,
@@ -249,44 +279,27 @@ class NearbyService implements TransferService {
   void _updateDeviceConnection(String id, bool isConnected) {
     final existing = _discoveredDevices[id];
     if (existing != null) {
-      final updated = existing.copyWith(
+      _upsertDevice(existing.copyWith(
         isConnected: isConnected,
         lastSeen: DateTime.now(),
-      );
-      _discoveredDevices[id] = updated;
-      _devicesController.add(updated);
+      ));
     }
   }
 
   void _onPayloadReceived(String endpointId, Payload payload) async {
     if (payload.type == PayloadType.BYTES && payload.bytes != null) {
-      final text = String.fromCharCodes(payload.bytes!);
-      const metaPrefix = 'THROW_FILE_META:';
-      String? metaBody;
+      final text = utf8.decode(payload.bytes!, allowMalformed: true);
+      const metaPrefix = 'THROW_META:';
       if (text.startsWith(metaPrefix)) {
-        metaBody = text.substring(metaPrefix.length);
-      } else {
-        // Backward compat with older builds that sent "<payloadId>:<fileName>".
-        final colonIdx = text.indexOf(':');
-        if (colonIdx > 0) {
-          final maybeId = int.tryParse(text.substring(0, colonIdx));
-          final rest = text.substring(colonIdx + 1);
-          if (maybeId != null && rest.isNotEmpty && !rest.contains('\n')) {
-            metaBody = text;
-          }
-        }
-      }
-      if (metaBody != null) {
-        final colonIdx = metaBody.indexOf(':');
-        if (colonIdx > 0) {
-          final maybeId = int.tryParse(metaBody.substring(0, colonIdx));
-          final fileName = metaBody.substring(colonIdx + 1);
-          if (maybeId != null && fileName.isNotEmpty) {
-            _pendingFileNames[maybeId] = fileName;
-            _ensureIncomingFileTransfer(endpointId, maybeId, fileName);
-            await _finalizeFileIfReady(maybeId);
-            return;
-          }
+        final _IncomingMeta? meta = _parseMeta(
+          text.substring(metaPrefix.length),
+          fallbackId: payload.id,
+        );
+        if (meta != null) {
+          _pendingMeta[meta.payloadId] = meta;
+          _learnName(endpointId, meta.from);
+          await _finalizeFileIfReady(meta.payloadId);
+          return;
         }
       }
 
@@ -302,8 +315,47 @@ class NearbyService implements TransferService {
       );
     } else if (payload.type == PayloadType.FILE) {
       _receivedFilePayloads[payload.id] = payload;
-      _ensureIncomingFileTransfer(
-          endpointId, payload.id, _pendingFileNames[payload.id]);
+      await _finalizeFileIfReady(payload.id);
+    }
+  }
+
+  /// Parses the metadata blob. Returns null for anything that is not ours, so
+  /// a plain text message that happens to start with the prefix is not eaten.
+  _IncomingMeta? _parseMeta(String body, {required int fallbackId}) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is! Map<String, dynamic>) return null;
+      final id = decoded['id'] as int? ?? fallbackId;
+      final name = decoded['name'] as String?;
+      if (name == null || name.isEmpty) return null;
+      return _IncomingMeta(
+        payloadId: id,
+        fileName: name,
+        sizeBytes: (decoded['size'] as int?) ?? 0,
+        from: decoded['from'] as String?,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _learnName(String endpointId, String? name) {
+    if (name == null || name.trim().isEmpty) return;
+    final existing = _discoveredDevices[endpointId];
+    if (existing == null) {
+      _upsertDevice(DeviceModel(
+        id: endpointId,
+        name: name,
+        platform: DevicePlatform.android,
+        channel: TransferChannel.wifiDirect,
+        isConnected: true,
+        lastSeen: DateTime.now(),
+      ));
+    } else {
+      _upsertDevice(existing.withLearnedName(name).copyWith(
+            isConnected: true,
+            lastSeen: DateTime.now(),
+          ));
     }
   }
 
@@ -314,12 +366,12 @@ class NearbyService implements TransferService {
     final id = update.id.toString();
     var existing = _transfers[id];
     if (existing == null) {
-      // Incoming file transfers don't have a local TransferModel yet.
-      final fileName = _pendingFileNames[update.id];
+      // Incoming transfer we have not been told about yet (metadata can arrive
+      // after the first update). Create it so progress has somewhere to go.
+      final meta = _pendingMeta[update.id];
       final payload = _receivedFilePayloads[update.id];
-      if (fileName != null || payload != null) {
-        _ensureIncomingFileTransfer(endpointId, update.id, fileName);
-        existing = _transfers[id];
+      if (meta != null || payload != null) {
+        existing = _ensureIncomingTransfer(endpointId, update.id);
       }
     }
     if (existing == null) return;
@@ -334,105 +386,164 @@ class NearbyService implements TransferService {
       nextStatus = TransferStatus.cancelled;
     }
 
+    final tracker = _rateTrackers.putIfAbsent(id, TransferRateTracker.new)
+      ..sample(update.bytesTransferred);
+
     final updated = existing.copyWith(
       bytesTransferred: update.bytesTransferred,
-      totalBytes: update.totalBytes,
+      totalBytes: update.totalBytes > 0 ? update.totalBytes : existing.totalBytes,
+      speedBytesPerSecond: tracker.bytesPerSecond,
       status: nextStatus,
     );
     _transfers[id] = updated;
     _transfersController.add(updated);
   }
 
+  /// Moves the finished Nearby cache file into the shared Incoming folder.
+  ///
+  /// This is the step that answers "saved where": the old code copied into
+  /// `getApplicationDocumentsDirectory()`, which on Android is inside the
+  /// app's private data directory — invisible to the user.
   Future<void> _finalizeFileIfReady(int payloadId) async {
     final payload = _receivedFilePayloads[payloadId];
-    final fileName = _pendingFileNames[payloadId];
-    if (payload == null || fileName == null || payload.uri == null) return;
+    final meta = _pendingMeta[payloadId];
+    if (payload == null || payload.uri == null) return;
+
+    // The real name only ever comes from our metadata blob; `Payload` has
+    // no name field.
+    final fileName = meta?.fileName ?? 'received_file';
 
     try {
-      final dir = await getApplicationDocumentsDirectory();
-      final destPath = '${dir.path}/$fileName';
-      await _nearby.copyFileAndDeleteOriginal(payload.uri!, destPath);
+      final path = await _store.pathFor(fileName);
+      await _nearby.copyFileAndDeleteOriginal(payload.uri!, path);
+
       _receivedFilePayloads.remove(payloadId);
-      _pendingFileNames.remove(payloadId);
+      _pendingMeta.remove(payloadId);
+      final id = payloadId.toString();
+      _rateTrackers.remove(id);
+
+      final existing = _transfers[id];
+      if (existing != null) {
+        _transfers[id] = existing.copyWith(
+          status: TransferStatus.completed,
+          bytesTransferred: existing.totalBytes > 0
+              ? existing.totalBytes
+              : _sizeOf(path),
+          speedBytesPerSecond: estimateRate(
+            existing.totalBytes > 0 ? existing.totalBytes : _sizeOf(path),
+            existing.duration,
+          ),
+          endedAt: DateTime.now(),
+          savedPath: path,
+        );
+        _transfersController.add(_transfers[id]!);
+      }
 
       _receivedPayloadsController.add(
-        PayloadModel(
-          id: payloadId.toString(),
-          kind: PayloadKind.file,
-          direction: PayloadDirection.received,
-          name: fileName,
-          path: destPath,
-          createdAt: DateTime.now(),
-        ),
-      );
-    } catch (_) {
-      // Keep temp uri if move fails
-    }
-  }
-
-  void _ensureIncomingFileTransfer(
-      String endpointId, int payloadId, String? fileName) {
-    final id = payloadId.toString();
-    if (_transfers.containsKey(id)) {
-      if (fileName != null && fileName.isNotEmpty) {
-        final existing = _transfers[id]!;
-        final payload =
-            existing.payloads.isNotEmpty ? existing.payloads.first : null;
-        if (payload != null &&
-            (payload.name == null || payload.name!.isEmpty)) {
-          final updatedPayload = PayloadModel(
-            id: payload.id,
-            kind: payload.kind,
-            direction: payload.direction,
-            name: fileName,
-            path: payload.path,
-            text: payload.text,
-            sizeBytes: payload.sizeBytes,
-            createdAt: payload.createdAt,
-          );
-          _transfers[id] = existing.copyWith(payloads: [updatedPayload]);
-          _transfersController.add(_transfers[id]!);
-        }
-      }
-      return;
-    }
-    final peer = _discoveredDevices[endpointId] ??
-        DeviceModel(
-          id: endpointId,
-          name: endpointId,
-          platform: DevicePlatform.android,
-          channel: TransferChannel.wifiDirect,
-          isConnected: true,
-          lastSeen: DateTime.now(),
-        );
-    final transfer = TransferModel(
-      id: id,
-      peer: peer,
-      payloads: [
         PayloadModel(
           id: id,
           kind: PayloadKind.file,
           direction: PayloadDirection.received,
           name: fileName,
-          sizeBytes: 0,
+          path: path,
+          sizeBytes: existing?.totalBytes ?? _sizeOf(path),
           createdAt: DateTime.now(),
+          senderName: meta?.from,
+        ),
+      );
+    } catch (e) {
+      // The file is still in the Nearby cache and, depending on the OEM,
+      // readable. Report the fallback path rather than nothing.
+      _pendingMeta.remove(payloadId);
+      _receivedFilePayloads.remove(payloadId);
+      _fail(payloadId.toString(), e);
+    }
+  }
+
+  int _sizeOf(String path) {
+    try {
+      return File(path).lengthSync();
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  TransferModel _ensureIncomingTransfer(String endpointId, int payloadId) {
+    final id = payloadId.toString();
+    final existing = _transfers[id];
+    if (existing != null) return existing;
+
+    final meta = _pendingMeta[payloadId];
+    final transfer = TransferModel(
+      id: id,
+      peer: _peerFor(endpointId, senderName: meta?.from),
+      payloads: [
+        PayloadModel(
+          id: id,
+          kind: PayloadKind.file,
+          direction: PayloadDirection.received,
+          name: meta?.fileName,
+          sizeBytes: meta?.sizeBytes ?? 0,
+          createdAt: DateTime.now(),
+          senderName: meta?.from,
         ),
       ],
       status: TransferStatus.transferring,
-      bytesTransferred: 0,
-      totalBytes: 0,
+      totalBytes: meta?.sizeBytes ?? 0,
+      direction: TransferDirection.receiving,
       startedAt: DateTime.now(),
     );
     _transfers[id] = transfer;
+    _rateTrackers[id] = TransferRateTracker();
     _transfersController.add(transfer);
+    return transfer;
+  }
+
+  DeviceModel _peerFor(String endpointId, {String? senderName}) {
+    final known = _discoveredDevices[endpointId];
+    if (known != null) {
+      return senderName == null ? known : known.withLearnedName(senderName);
+    }
+    return DeviceModel(
+      id: endpointId,
+      name: senderName ?? '',
+      platform: DevicePlatform.android,
+      channel: TransferChannel.wifiDirect,
+      isConnected: true,
+      lastSeen: DateTime.now(),
+    );
   }
 
   void _updateTransferStatus(String id, TransferStatus status) {
     final existing = _transfers[id];
     if (existing == null) return;
-    final updated = existing.copyWith(status: status);
-    _transfers[id] = updated;
-    _transfersController.add(updated);
+    _rateTrackers.remove(id);
+    _transfers[id] = existing.copyWith(
+      status: status,
+      speedBytesPerSecond: estimateRate(
+        existing.bytesTransferred,
+        existing.duration,
+      ),
+      endedAt: DateTime.now(),
+    );
+    _transfersController.add(_transfers[id]!);
+  }
+
+  void _fail(String id, Object error) {
+    final existing = _transfers[id];
+    if (existing == null) return;
+    _rateTrackers.remove(id);
+    _transfers[id] = existing.copyWith(
+      status: TransferStatus.failed,
+      error: error.toString(),
+      endedAt: DateTime.now(),
+    );
+    _transfersController.add(_transfers[id]!);
+  }
+
+  void _upsertDevice(DeviceModel device) {
+    _discoveredDevices[device.id] = device;
+    _devicesController.add(device);
   }
 
   @override
@@ -444,4 +555,18 @@ class NearbyService implements TransferService {
     await _connectionRequestsController.close();
     await _receivedPayloadsController.close();
   }
+}
+
+class _IncomingMeta {
+  const _IncomingMeta({
+    required this.payloadId,
+    required this.fileName,
+    required this.sizeBytes,
+    this.from,
+  });
+
+  final int payloadId;
+  final String fileName;
+  final int sizeBytes;
+  final String? from;
 }

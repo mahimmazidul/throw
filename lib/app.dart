@@ -68,6 +68,17 @@ class _MainShell extends StatefulWidget {
 class _MainShellState extends State<_MainShell> {
   int _selectedIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    // Deferred to after the first frame: a runtime permission dialog
+    // interrupting the very first paint looks like a crash to a new user.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<DeviceProvider>().autoStart();
+    });
+  }
+
   static const List<Widget> _screens = [
     HomeScreen(),
     DiscoverScreen(),

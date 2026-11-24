@@ -183,5 +183,181 @@
   "homeSectionRecent": "Recently received",
   "homeNoPeersTitle": "No device connected yet",
   "homeNoPeersBody": "Open Discover, make this device visible, then connect to the other one.",
-  "receivedCaption": "Everything that arrives stays here."
+  "receivedCaption": "Everything that arrives stays here.",
+  "stateSending": "Sending…",
+  "stateReceiving": "Receiving…",
+  "transferTo": "to {device}",
+  "@transferTo": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "transferFrom": "from {device}",
+  "@transferFrom": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "timeLeft": "{seconds} s left",
+  "@timeLeft": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "speedMeasuring": "measuring speed…",
+  "speedOf": "{speed}",
+  "@speedOf": {
+    "placeholders": {
+      "speed": {
+        "type": "String"
+      }
+    }
+  },
+  "savedToFolder": "Saved in {folder}",
+  "@savedToFolder": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "fromDevice": "from {device}",
+  "@fromDevice": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "receivedSavedIn": "Files are saved in {folder}",
+  "@receivedSavedIn": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "receivedEmptyWhere": "Files that arrive are saved in {folder}, newest first. You can open them from here or from your file manager.",
+  "@receivedEmptyWhere": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "receivedActionCopyPath": "Copy location",
+  "receivedPathCopied": "Location copied",
+  "actionOpenFolder": "Open folder",
+  "folderUnavailable": "Folder unavailable",
+  "sendTo": "Send to",
+  "selectPeersHint": "Pick one or more devices, then send.",
+  "sendToCount": "Send to {count}",
+  "@sendToCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sentToCount": "Sent to {sent} of {total}",
+  "@sentToCount": {
+    "placeholders": {
+      "sent": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sendPartlyFailed": "Some devices did not receive it. Check that they are still connected.",
+  "selectedCount": "{count} selected",
+  "@selectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "nearbyDevice": "Nearby device",
+  "nearbyDeviceToken": "Nearby device · {token}",
+  "@nearbyDeviceToken": {
+    "placeholders": {
+      "token": {
+        "type": "String"
+      }
+    }
+  },
+  "unknownPlatform": "Unknown device",
+  "discoverVisibleSwitch": "Visible to nearby devices",
+  "discoverFindingSwitch": "Looking for devices",
+  "connectTo": "Connect",
+  "disconnectFrom": "Disconnect",
+  "connectingTo": "Connecting to {device}…",
+  "@connectingTo": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutTitle": "About Throw",
+  "aboutVersion": "Version {version} (build {build})",
+  "@aboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutWhatItIs": "Throw sends files and text between devices on the same network, with no account, no server and no internet. Everything moves directly from one device to the other.",
+  "developerSection": "Developer",
+  "developerName": "Md. Mazidul Islam Mahim",
+  "developerRole": "Designer and developer of Throw",
+  "developerLocation": "Khulna, Bangladesh",
+  "linksSection": "Links",
+  "linkGithub": "GitHub",
+  "linkWebsite": "Website",
+  "linkRepository": "Source code",
+  "linkReleases": "Releases",
+  "linkIssues": "Report a problem",
+  "linkLicense": "Licence",
+  "licenseName": "MIT Licence",
+  "legalSection": "Legal",
+  "openLinkFailed": "Could not open that link.",
+  "aboutCredits": "Built with Flutter. Fonts: Plus Jakarta Sans and Hind Siliguri (SIL Open Font License).",
+  "settingsAboutOpen": "About Throw",
+  "settingsAboutSummary": "Version, developer and links",
+  "actionAttach": "Attach a file",
+  "actionSendText": "Send text",
+  "composerLabel": "Message or note",
+  "composerHint": "Type something to send…",
+  "pickFilesFirst": "Choose files to send",
+  "noAppForFile": "No app on this device can open this file type.",
+  "transfersActiveSection": "In progress",
+  "transfersRecentSection": "Recent",
+  "transfersClearHistory": "Clear list",
+  "transfersCleared": "History cleared",
+  "settingsNameHint": "Shown to other devices",
+  "settingsDeviceNameHelp": "This is the name other devices see when they look for you.",
+  "settingsAppearanceSection": "Appearance",
+  "settingsGeneralSection": "General",
+  "settingsAboutSection": "About",
+  "languageEnglish": "English",
+  "languageBangla": "বাংলা",
+  "themeDark": "Dark",
+  "themeLight": "Light",
+  "receivedSubtitle": "Everything that arrived, newest first.",
+  "errorGeneric": "Something went wrong. Try again.",
+  "errorGenericWithDetail": "Something went wrong. Try again — if it keeps happening, the details have been logged.",
+  "errorShowDetail": "Show details"
 }

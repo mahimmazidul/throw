@@ -16,9 +16,10 @@ import '../providers/locale_provider.dart';
 import '../widgets/entrance.dart';
 import '../widgets/panel.dart';
 import '../widgets/screen_header.dart';
+import 'about_screen.dart';
 
-/// Settings, grouped the way the references group it: a run of flush rows on
-/// one tinted surface per section, not one bordered card per pair of rows.
+/// Settings: three flat sections on the canvas — this device, appearance,
+/// about. Every row is a hairline apart; no surface is drawn.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -31,16 +32,29 @@ class SettingsScreen extends StatelessWidget {
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: const RoundedRectangleBorder(borderRadius: ThrowRadius.card),
         title: Text(l10n.settingsDeviceName),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (value) => Navigator.pop(context, value),
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: ThrowRadius.card),
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: controller,
+              autofocus: true,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (value) => Navigator.pop(context, value),
+              decoration: InputDecoration(
+                hintText: l10n.settingsNameHint,
+                border: OutlineInputBorder(borderRadius: ThrowRadius.button),
+              ),
+            ),
+            const SizedBox(height: AppConstants.space3),
+            Text(
+              l10n.settingsDeviceNameHelp,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ],
         ),
         actions: [
           Pressable(
@@ -71,7 +85,6 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        shape: const RoundedRectangleBorder(borderRadius: ThrowRadius.card),
         content: Row(
           children: [
             const SizedBox(
@@ -118,7 +131,6 @@ class SettingsScreen extends StatelessWidget {
         unawaited(showDialog<void>(
           context: context,
           builder: (ctx) => AlertDialog(
-            shape: const RoundedRectangleBorder(borderRadius: ThrowRadius.card),
             title: Text(l10n.updateAvailableTitle),
             content: Text(l10n.updateAvailableBody(current, latestTag)),
             actions: [
@@ -168,90 +180,105 @@ class SettingsScreen extends StatelessWidget {
     final deviceProvider = context.watch<DeviceProvider>();
     final localeProvider = context.watch<LocaleProvider>();
     final isDark = localeProvider.themeMode == ThemeMode.dark;
+    final isBangla = localeProvider.locale.languageCode == 'bn';
 
     return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppConstants.space5,
-          AppConstants.space5,
-          AppConstants.space5,
-          AppConstants.space6,
-        ),
-        children: [
-          StaggeredEntrance(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: AppConstants.contentMax),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              AppConstants.space5,
+              AppConstants.space5,
+              AppConstants.space5,
+              AppConstants.space6,
+            ),
             children: [
-              ScreenHeader(
-                title: l10n.navSettings,
-                subtitle: l10n.settingsSubtitle,
-              ),
-              const SizedBox(height: AppConstants.space5),
-              PanelGroup(
-                header: l10n.settingsThisDevice,
+              StaggeredEntrance(
                 children: [
-                  FlatRow(
-                    leading: const Icon(Icons.badge_outlined),
-                    title: l10n.settingsDeviceName,
-                    subtitle: deviceProvider.deviceName,
-                    trailingText: l10n.settingsEditName,
-                    onTap: () => _editDeviceName(context, deviceProvider, l10n),
+                  ScreenHeader(
+                    title: l10n.navSettings,
+                    subtitle: l10n.settingsSubtitle,
                   ),
-                  FlatRow(
-                    leading: const Icon(Icons.language_rounded),
-                    title: l10n.settingsLanguage,
-                    subtitle: localeProvider.locale.languageCode == 'bn'
-                        ? 'বাংলা'
-                        : 'English',
-                    trailing: Pressable(
-                      child: IconButton(
-                        icon: const Icon(Icons.swap_horiz_rounded, size: 20),
-                        tooltip: l10n.settingsLanguage,
-                        onPressed: localeProvider.toggleLocale,
+                  const SizedBox(height: AppConstants.space5),
+                  Section(
+                    header: l10n.settingsThisDevice,
+                    children: [
+                      FlatRow(
+                        leading: const Icon(Icons.badge_outlined),
+                        title: l10n.settingsDeviceName,
+                        subtitle: deviceProvider.deviceName,
+                        trailingText: l10n.settingsEditName,
+                        onTap: () =>
+                            _editDeviceName(context, deviceProvider, l10n),
                       ),
-                    ),
-                    onTap: localeProvider.toggleLocale,
+                      FlatRow(
+                        leading: const Icon(Icons.tune_rounded),
+                        title: l10n.settingsCheckUpdates,
+                        subtitle: l10n.settingsCurrentVersion(
+                          AppConstants.appVersion,
+                        ),
+                        trailing:
+                            const Icon(Icons.chevron_right_rounded, size: 20),
+                        onTap: () => _checkForUpdates(context),
+                      ),
+                    ],
                   ),
-                  FlatRow(
-                    leading: const Icon(Icons.dark_mode_outlined),
-                    title: l10n.settingsTheme,
-                    subtitle: isDark ? 'Dark' : 'Light',
-                    onTap: () => localeProvider.setThemeMode(
-                      isDark ? ThemeMode.light : ThemeMode.dark,
-                    ),
-                    trailing: Pressable(
-                      child: Switch(
-                        value: isDark,
-                        onChanged: (value) => localeProvider.setThemeMode(
-                          value ? ThemeMode.dark : ThemeMode.light,
+                  const SizedBox(height: AppConstants.space5),
+                  Section(
+                    header: l10n.settingsAppearanceSection,
+                    children: [
+                      FlatRow(
+                        leading: const Icon(Icons.language_rounded),
+                        title: l10n.settingsLanguage,
+                        subtitle: isBangla
+                            ? l10n.languageBangla
+                            : l10n.languageEnglish,
+                        trailing:
+                            const Icon(Icons.swap_horiz_rounded, size: 20),
+                        onTap: localeProvider.toggleLocale,
+                      ),
+                      FlatRow(
+                        leading: const Icon(Icons.dark_mode_outlined),
+                        title: l10n.settingsTheme,
+                        subtitle: isDark ? l10n.themeDark : l10n.themeLight,
+                        trailing: Pressable(
+                          child: Switch(
+                            value: isDark,
+                            onChanged: (value) => localeProvider.setThemeMode(
+                              value ? ThemeMode.dark : ThemeMode.light,
+                            ),
+                          ),
+                        ),
+                        onTap: () => localeProvider.setThemeMode(
+                          isDark ? ThemeMode.light : ThemeMode.dark,
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: AppConstants.space4),
-              PanelGroup(
-                header: l10n.settingsAbout,
-                children: [
-                  FlatRow(
-                    leading: const Icon(Icons.system_update_rounded),
-                    title: l10n.settingsCheckUpdates,
-                    subtitle:
-                        l10n.settingsCurrentVersion(AppConstants.appVersion),
-                    trailing: const Icon(Icons.chevron_right_rounded, size: 20),
-                    onTap: () => _checkForUpdates(context),
-                  ),
-                  // The version is already in the subtitle; a trailing copy
-                  // of the same string was pure noise.
-                  FlatRow(
-                    leading: const Icon(Icons.info_outline_rounded),
-                    title: l10n.settingsAbout,
-                    subtitle: l10n.settingsAboutBody(AppConstants.appVersion),
+                  const SizedBox(height: AppConstants.space5),
+                  Section(
+                    header: l10n.settingsAboutSection,
+                    children: [
+                      FlatRow(
+                        leading: const Icon(Icons.info_outline_rounded),
+                        title: l10n.settingsAboutOpen,
+                        subtitle: l10n.settingsAboutSummary,
+                        trailing:
+                            const Icon(Icons.chevron_right_rounded, size: 20),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const AboutScreen(),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

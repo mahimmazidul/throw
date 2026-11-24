@@ -335,6 +335,73 @@ void main() {
     });
   });
 
+  group('error copy never exposes a raw exception', () {
+    // The running Linux build showed "Something went wrong: Bad state: No
+    // element" to the user when the BLE radio could not start. Nobody should
+    // read a Dart exception on a phone.
+    test('an unknown error with a detail gets human copy', () {
+      const error = AppError(
+        AppErrorCode.unknown,
+        detail: 'Bad state: No element',
+      );
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      final message = describeError(error, l10n);
+      expect(message, isNot(contains('Bad state')));
+      expect(message, isNot(contains('No element')));
+      expect(message.trim(), isNotEmpty);
+    });
+
+    test('the detail is preserved on the object for logging', () {
+      const error = AppError(
+        AppErrorCode.unknown,
+        detail: 'PlatformException(foo)',
+      );
+      expect(error.detail, 'PlatformException(foo)');
+    });
+
+    test('a fallback code is used when the message is unrecognisable', () {
+      final error = AppError.fromObject(
+        StateError('Bad state: No element'),
+        fallback: AppErrorCode.discoveryFailed,
+      );
+      expect(error.code, AppErrorCode.discoveryFailed);
+    });
+
+    test('a recognisable message still wins over the fallback', () {
+      final error = AppError.fromObject(
+        Exception('Missing permission: BLUETOOTH_SCAN'),
+        fallback: AppErrorCode.discoveryFailed,
+      );
+      expect(error.code, AppErrorCode.permissionDenied);
+    });
+
+    testWidgets('the banner hides the raw detail behind a disclosure',
+        (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        theme: ThrowTheme.dark(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const Scaffold(
+          body: ErrorBanner(
+            error: AppError(
+              AppErrorCode.unknown,
+              detail: 'Bad state: No element',
+            ),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // Not visible until asked for.
+      expect(find.text('Bad state: No element'), findsNothing);
+      expect(find.textContaining('Bad state'), findsNothing);
+
+      await tester.tap(find.text('Show details'));
+      await tester.pumpAndSettle();
+      expect(find.text('Bad state: No element'), findsOneWidget);
+    });
+  });
+
   group('ErrorBanner', () {
     testWidgets('renders the message for the code', (tester) async {
       await _pumpBanner(

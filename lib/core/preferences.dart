@@ -22,15 +22,19 @@ import 'package:path_provider/path_provider.dart';
 class AppPreferences {
   AppPreferences._(this._store);
 
-  /// JSON-backed store, or `null` for the in-memory variant.
-  final _FileStore? _store;
+  /// The backing store. An in-memory map when no file could be opened — a
+  /// value written and read back within one run still behaves, which is what
+  /// tests and the file-unavailable fallback both need. Before this was
+  /// nullable, `inMemory()` silently discarded every write, so a test could
+  /// not tell a working preference path from a broken one.
+  final _Store _store;
 
   static const String _kLocale = 'locale';
   static const String _kThemeMode = 'themeMode';
   static const String _kDeviceName = 'deviceName';
 
-  /// A store that persists nothing. Default for tests and as a fallback.
-  factory AppPreferences.inMemory() => AppPreferences._(null);
+  /// A store that keeps values for the life of the process only.
+  factory AppPreferences.inMemory() => AppPreferences._(_MemoryStore());
 
   /// Loads the platform store. Falls back to [inMemory] instead of throwing, so
   /// an unwritable data directory never blocks startup.
@@ -54,24 +58,43 @@ class AppPreferences {
   }
 
   /// Two-letter language code, or `null` when the user never chose one.
-  String? get localeCode => _store?.read(_kLocale) as String?;
+  String? get localeCode => _store.read(_kLocale) as String?;
 
   /// [ThemeMode.index] of the saved mode, or `null` when unset.
-  int? get themeModeIndex => _store?.read(_kThemeMode) as int?;
+  int? get themeModeIndex => _store.read(_kThemeMode) as int?;
 
   /// Saved device name, or `null` when the user never renamed this device.
-  String? get deviceName => _store?.read(_kDeviceName) as String?;
+  String? get deviceName => _store.read(_kDeviceName) as String?;
 
   Future<void> setLocaleCode(String code) async {
-    await _store?.write(_kLocale, code);
+    await _store.write(_kLocale, code);
   }
 
   Future<void> setThemeModeIndex(int index) async {
-    await _store?.write(_kThemeMode, index);
+    await _store.write(_kThemeMode, index);
   }
 
   Future<void> setDeviceName(String name) async {
-    await _store?.write(_kDeviceName, name);
+    await _store.write(_kDeviceName, name);
+  }
+}
+
+/// The two implementations behind [AppPreferences].
+abstract class _Store {
+  dynamic read(String key);
+  Future<void> write(String key, Object? value);
+}
+
+/// Process-lifetime store: values written here come back within the same run.
+class _MemoryStore implements _Store {
+  final Map<String, dynamic> _data = {};
+
+  @override
+  dynamic read(String key) => _data[key];
+
+  @override
+  Future<void> write(String key, Object? value) async {
+    _data[key] = value;
   }
 }
 
@@ -81,7 +104,7 @@ class AppPreferences {
 /// mid-write cannot leave a truncated file that fails to parse on next launch.
 /// A file that is unreadable or not a JSON map is treated as empty rather than
 /// throwing — corrupt preferences should reset settings, not brick the app.
-class _FileStore {
+class _FileStore implements _Store {
   _FileStore(this._file);
 
   final File _file;
@@ -99,8 +122,10 @@ class _FileStore {
     }
   }
 
+  @override
   dynamic read(String key) => _data[key];
 
+  @override
   Future<void> write(String key, Object? value) async {
     _data[key] = value;
     await _flush();

@@ -1,9 +1,34 @@
 /// App-wide constants: layout, spacing, transfer, and desktop window rules.
 abstract final class AppConstants {
-  static const String appVersion = '1.1.0';
+  static const String appVersion = '1.2.0';
+
+  /// Build number, kept next to [appVersion] because the About screen shows
+  /// both and `pubspec.yaml`'s `+N` is not readable at runtime.
+  static const String appBuild = '17';
+
+  /// The version with its `v` prefix, as GitHub tags it.
+  static const String versionTag = 'v$appVersion';
+
   static const String githubRepo = 'mahimmazidul/throw';
   static const String releasesUrl =
       'https://github.com/mahimmazidul/throw/releases/latest';
+
+  // ── Developer links (shown on About) ─────────────────────────────
+  //
+  // Plain data, not copy: a handle and a domain do not get translated, and
+  // keeping them here means the About screen has no string literals for the
+  // localization guard to flag.
+  static const String developerHandle = 'mahimmazidul';
+  static const String developerDomain = 'mahim.dev';
+  static const String developerGithubUrl =
+      'https://github.com/mahimmazidul';
+  static const String developerWebsiteUrl = 'https://mahim.dev';
+  static const String repoUrl =
+      'https://github.com/mahimmazidul/throw';
+  static const String issuesUrl =
+      'https://github.com/mahimmazidul/throw/issues';
+  static const String licenseUrl =
+      'https://github.com/mahimmazidul/throw/blob/main/LICENSE';
 
   // ── Layout ──────────────────────────────────────────────────────
 
@@ -20,6 +45,12 @@ abstract final class AppConstants {
   static const double space6 = 32;
   static const double space7 = 48;
   static const double space8 = 64;
+
+  /// Maximum width of a content column. Beyond this, prose lines get too long
+  /// to read comfortably and controls drift away from the thing they act on.
+  /// 720dp is the widest single column that still holds a 60–75 character
+  /// measure at this type scale.
+  static const double contentMax = 720;
 
   // ── Desktop window ──────────────────────────────────────────────
 

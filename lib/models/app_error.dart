@@ -60,7 +60,15 @@ class AppError {
       code == AppErrorCode.discoveryFailed;
 
   /// Classify a thrown object once, here, rather than in every `catch`.
-  factory AppError.fromObject(Object e) {
+  ///
+  /// [fallback] is the code to use when nothing about the message is
+  /// recognisable. Callers know what they were doing — a discovery failure and
+  /// a transfer failure are both "unknown exception" at this level but mean
+  /// completely different things to the person reading the banner.
+  factory AppError.fromObject(
+    Object e, {
+    AppErrorCode fallback = AppErrorCode.unknown,
+  }) {
     final msg = e.toString();
     final m = msg.toLowerCase();
     if (m.contains('missing_permission') ||
@@ -79,7 +87,7 @@ class AppError {
     if (m.contains('location')) {
       return AppError(AppErrorCode.locationOff, detail: msg);
     }
-    return AppError(AppErrorCode.unknown, detail: msg);
+    return AppError(fallback, detail: msg);
   }
 
   @override
@@ -104,5 +112,12 @@ String describeError(AppError error, AppLocalizations l10n) =>
       AppErrorCode.discoveryFailed => l10n.errorDiscoveryFailed,
       AppErrorCode.transferFailed => l10n.errorTransferFailed,
       AppErrorCode.updateFailed => l10n.updateFailed(error.detail ?? ''),
-      AppErrorCode.unknown => l10n.errorUnknown(error.detail ?? ''),
+      // The raw exception text is a debugging aid, not copy. Showing
+      // "Bad state: No element" to someone who tried to find their phone is
+      // worse than saying nothing useful at all; it reads like the app is
+      // broken rather than that the scan failed. The detail stays on the
+      // object for logs and for the copy button in the banner.
+      AppErrorCode.unknown => error.detail == null
+          ? l10n.errorGeneric
+          : l10n.errorGenericWithDetail,
     };

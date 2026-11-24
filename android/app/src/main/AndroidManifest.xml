@@ -29,6 +29,19 @@
     <!-- Internet is used only for optional update checks (GitHub releases). -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!--
+      Received files are written to the public Downloads/Throw folder so the
+      user can actually find them; before this the app wrote into its own
+      private data directory and the files were unreachable from any file
+      manager. WRITE_EXTERNAL_STORAGE covers Android 9 and below, where
+      scoped storage does not exist. On Android 10+ the app writes through
+      MediaStore-free direct IO, which the platform allows for Downloads
+      without a runtime grant.
+    -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"
