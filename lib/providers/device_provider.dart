@@ -5,6 +5,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 
 import '../core/permissions.dart';
+import '../core/preferences.dart';
 import '../models/app_error.dart';
 import '../models/device_model.dart';
 import '../models/transfer_model.dart';
@@ -14,6 +15,7 @@ import '../services/transfer_service_factory.dart';
 /// Manages nearby device discovery, advertising, and connections.
 class DeviceProvider extends ChangeNotifier {
   final TransferService _service;
+  final AppPreferences _preferences;
 
   final Map<String, DeviceModel> _devicesMap = {};
   final List<ConnectionRequest> _pendingRequests = [];
@@ -25,8 +27,9 @@ class DeviceProvider extends ChangeNotifier {
   StreamSubscription<DeviceModel>? _devicesSub;
   StreamSubscription<ConnectionRequest>? _requestsSub;
 
-  DeviceProvider({TransferService? service})
-      : _service = service ?? TransferServiceFactory.instance {
+  DeviceProvider({TransferService? service, AppPreferences? preferences})
+      : _service = service ?? TransferServiceFactory.instance,
+        _preferences = preferences ?? AppPreferences.inMemory() {
     _devicesSub = _service.devices.listen((device) {
       _devicesMap[device.id] = device;
       notifyListeners();
@@ -41,6 +44,13 @@ class DeviceProvider extends ChangeNotifier {
   }
 
   Future<void> _initializeDeviceName() async {
+    // A name the user typed wins over whatever the OS reports.
+    final saved = _preferences.deviceName;
+    if (saved != null && saved.trim().isNotEmpty) {
+      _deviceName = saved.trim();
+      notifyListeners();
+      return;
+    }
     try {
       final plugin = DeviceInfoPlugin();
       String? name;
@@ -83,6 +93,7 @@ class DeviceProvider extends ChangeNotifier {
     if (trimmed.isEmpty || trimmed == _deviceName) return;
     _deviceName = trimmed;
     notifyListeners();
+    _preferences.setDeviceName(trimmed);
   }
 
   void clearError() {
