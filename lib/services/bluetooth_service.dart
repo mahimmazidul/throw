@@ -5,7 +5,6 @@ import 'dart:typed_data';
 
 import 'package:bluetooth_low_energy/bluetooth_low_energy.dart';
 
-import '../core/constants.dart';
 import '../models/device_model.dart';
 import '../models/payload_model.dart';
 import '../models/transfer_model.dart';
@@ -20,18 +19,19 @@ class BluetoothService implements TransferService {
   final PeripheralManager? _peripheral =
       Platform.isLinux ? null : PeripheralManager();
 
-  static final UUID _serviceUuid = UUID.fromString(AppConstants.bleServiceUuid);
+  static final UUID _serviceUuid =
+      UUID.fromString('0000fe2c-0000-1000-8000-00805f9b34fb');
   static final UUID _txCharUuid =
-      UUID.fromString(AppConstants.bleTxCharacteristicUuid);
+      UUID.fromString('0000fe2d-0000-1000-8000-00805f9b34fb');
   static final UUID _rxCharUuid =
-      UUID.fromString(AppConstants.bleRxCharacteristicUuid);
+      UUID.fromString('0000fe2e-0000-1000-8000-00805f9b34fb');
 
-  final _devicesController = StreamController<List<DeviceModel>>.broadcast();
-  final _transfersController =
-      StreamController<List<TransferModel>>.broadcast();
-  final _incomingController = StreamController<TransferModel>.broadcast();
+  final _devicesController = StreamController<DeviceModel>.broadcast();
+  final _transfersController = StreamController<TransferModel>.broadcast();
   final _connectionRequestsController =
-      StreamController<DeviceModel>.broadcast();
+      StreamController<ConnectionRequest>.broadcast();
+  final _receivedPayloadsController =
+      StreamController<PayloadModel>.broadcast();
 
   final Map<String, DeviceModel> _discoveredDevices = {};
   final Map<String, Peripheral> _peripherals = {};
@@ -47,28 +47,22 @@ class BluetoothService implements TransferService {
   bool _isDiscovering = false;
 
   @override
-  Stream<List<DeviceModel>> get discoveredDevices => _devicesController.stream;
+  Stream<DeviceModel> get devices => _devicesController.stream;
 
   @override
-  Stream<List<TransferModel>> get transfers => _transfersController.stream;
+  Stream<TransferModel> get transfers => _transfersController.stream;
 
   @override
-  Stream<TransferModel> get incomingTransfers => _incomingController.stream;
-
-  @override
-  Stream<DeviceModel> get connectionRequests =>
+  Stream<ConnectionRequest> get connectionRequests =>
       _connectionRequestsController.stream;
 
   @override
-  bool get isAdvertising => _isAdvertising;
+  Stream<PayloadModel> get receivedPayloads =>
+      _receivedPayloadsController.stream;
 
   @override
-  bool get isDiscovering => _isDiscovering;
-
-  @override
-  Future<void> startAdvertising(String deviceName) async {
+  Future<void> startAdvertising({required String deviceName}) async {
     if (_peripheral == null) {
-      // Linux does not support BLE peripheral/advertising in bluetooth_low_energy.
       _isAdvertising = false;
       return;
     }
@@ -146,11 +140,12 @@ class BluetoothService implements TransferService {
         id: id,
         name: (name != null && name.isNotEmpty) ? name : id,
         platform: DevicePlatform.windows,
-        channel: TransferChannel.bluetooth, lastSeen: DateTime.now(),
+        channel: TransferChannel.bluetooth,
         isConnected: _discoveredDevices[id]?.isConnected ?? false,
+        lastSeen: DateTime.now(),
       );
       _discoveredDevices[id] = device;
-      _devicesController.add(_discoveredDevices.values.toList());
+      _devicesController.add(device);
     });
 
     _connSub ??= _central.connectionStateChanged.listen((event) {
@@ -158,8 +153,12 @@ class BluetoothService implements TransferService {
       final connected = event.state == ConnectionState.connected;
       final existing = _discoveredDevices[id];
       if (existing != null) {
-        _discoveredDevices[id] = existing.copyWith(isConnected: connected);
-        _devicesController.add(_discoveredDevices.values.toList());
+        final updated = existing.copyWith(
+          isConnected: connected,
+          lastSeen: DateTime.now(),
+        );
+        _discoveredDevices[id] = updated;
+        _devicesController.add(updated);
       }
     });
 
@@ -205,57 +204,89 @@ class BluetoothService implements TransferService {
   }
 
   @override
-  Future<void> disconnect(DeviceModel device) async {
-    final peripheral = _peripherals[device.id];
+  Future<void> disconnect(String endpointId) async {
+    final peripheral = _peripherals[endpointId];
     if (peripheral != null) {
       await _central.disconnect(peripheral);
     }
-    _txCharacteristics.remove(device.id);
+    _txCharacteristics.remove(endpointId);
   }
 
   @override
-  Future<void> acceptConnection(DeviceModel device) async {
+  Future<void> acceptConnection(String endpointId) async {
     // BLE connections are accepted at the GATT layer.
   }
 
   @override
-  Future<void> rejectConnection(DeviceModel device) async {
-    await disconnect(device);
+  Future<void> rejectConnection(String endpointId) async {
+    await disconnect(endpointId);
   }
 
   @override
-  Future<TransferModel> sendPayload(
-    DeviceModel target,
+  Future<void> sendText({
+    required String endpointId,
+    required String text,
+  }) async {
+    final data = Uint8List.fromList(utf8.encode(text));
+    final payload = PayloadModel(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      type: PayloadType.text,
+      text: text,
+      sizeBytes: data.length,
+    );
+    await _sendBytes(endpointId, payload, data);
+  }
+
+  @override
+  Future<void> sendFile({
+    required String endpointId,
+    required File file,
+  }) async {
+    final data = await file.readAsBytes();
+    final fileName = file.path.split(RegExp(r'[/\\]')).last;
+    final payload = PayloadModel(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      type: PayloadType.file,
+      filePath: file.path,
+      fileName: fileName,
+      sizeBytes: data.length,
+    );
+    await _sendBytes(endpointId, payload, data);
+  }
+
+  Future<void> _sendBytes(
+    String endpointId,
     PayloadModel payload,
+    Uint8List data,
   ) async {
-    final peripheral = _peripherals[target.id];
-    final txChar = _txCharacteristics[target.id];
+    final peripheral = _peripherals[endpointId];
+    final txChar = _txCharacteristics[endpointId];
     if (peripheral == null || txChar == null) {
-      throw StateError('Device ${target.id} is not connected.');
+      throw StateError('Device $endpointId is not connected.');
     }
 
-    final Uint8List data;
-    if (payload.type == PayloadType.text && payload.text != null) {
-      data = Uint8List.fromList(utf8.encode(payload.text!));
-    } else if (payload.filePath != null) {
-      data = await File(payload.filePath!).readAsBytes();
-    } else {
-      throw ArgumentError('Payload has neither text nor filePath.');
-    }
+    final target = _discoveredDevices[endpointId] ??
+        DeviceModel(
+          id: endpointId,
+          name: endpointId,
+          platform: DevicePlatform.windows,
+          channel: TransferChannel.bluetooth,
+          isConnected: true,
+          lastSeen: DateTime.now(),
+        );
 
     final transferId = DateTime.now().microsecondsSinceEpoch.toString();
     var transfer = TransferModel(
       id: transferId,
       peer: target,
       payloads: [payload],
-      
       status: TransferStatus.transferring,
       bytesTransferred: 0,
       totalBytes: data.length,
       startedAt: DateTime.now(),
     );
     _transfers[transferId] = transfer;
-    _transfersController.add(_transfers.values.toList());
+    _transfersController.add(transfer);
 
     try {
       final maxLen = await _central.getMaximumWriteLength(
@@ -277,58 +308,50 @@ class BluetoothService implements TransferService {
         );
         transfer = transfer.copyWith(bytesTransferred: end);
         _transfers[transferId] = transfer;
-        _transfersController.add(_transfers.values.toList());
+        _transfersController.add(transfer);
       }
 
       transfer = transfer.copyWith(
         status: TransferStatus.completed,
         bytesTransferred: data.length,
+        endedAt: DateTime.now(),
       );
       _transfers[transferId] = transfer;
-      _transfersController.add(_transfers.values.toList());
-      return transfer;
+      _transfersController.add(transfer);
     } catch (e) {
-      transfer = transfer.copyWith(state: TransferStatus.failed);
+      transfer = transfer.copyWith(
+        status: TransferStatus.failed,
+        error: e.toString(),
+        endedAt: DateTime.now(),
+      );
       _transfers[transferId] = transfer;
-      _transfersController.add(_transfers.values.toList());
+      _transfersController.add(transfer);
       rethrow;
     }
   }
 
   @override
-  Future<void> cancelTransfer(TransferModel transfer) async {
-    final existing = _transfers[transfer.id];
+  Future<void> cancelTransfer(String transferId) async {
+    final existing = _transfers[transferId];
     if (existing != null) {
-      _transfers[transfer.id] =
-          existing.copyWith(state: TransferStatus.cancelled);
-      _transfersController.add(_transfers.values.toList());
+      final updated = existing.copyWith(
+        status: TransferStatus.cancelled,
+        endedAt: DateTime.now(),
+      );
+      _transfers[transferId] = updated;
+      _transfersController.add(updated);
     }
   }
 
   void _handleIncomingBytes(String deviceId, Uint8List bytes) {
-    final device = _discoveredDevices[deviceId] ??
-        DeviceModel(
-          id: deviceId,
-          name: deviceId,
-          platform: DevicePlatform.windows,
-          channel: TransferChannel.bluetooth, lastSeen: DateTime.now(),
-          isConnected: true,
-        );
-
     final text = utf8.decode(bytes, allowMalformed: true);
-    final transfer = TransferModel(
+    final payload = PayloadModel(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
-      peer: device,
-      payload: PayloadModel(id: DateTime.now().microsecondsSinceEpoch.toString(), type: PayloadType.text, text: text, sizeBytes: text.length),
-      
-      status: TransferStatus.completed,
-      bytesTransferred: bytes.length,
-      totalBytes: bytes.length,
-      startedAt: DateTime.now(),
+      type: PayloadType.text,
+      text: text,
+      sizeBytes: bytes.length,
     );
-    _transfers[transfer.id] = transfer;
-    _transfersController.add(_transfers.values.toList());
-    _incomingController.add(transfer);
+    _receivedPayloadsController.add(payload);
   }
 
   @override
@@ -341,7 +364,7 @@ class BluetoothService implements TransferService {
     await _writeReqSub?.cancel();
     await _devicesController.close();
     await _transfersController.close();
-    await _incomingController.close();
     await _connectionRequestsController.close();
+    await _receivedPayloadsController.close();
   }
 }
