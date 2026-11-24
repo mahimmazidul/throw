@@ -43,7 +43,7 @@ class AdaptiveNav extends StatelessWidget {
       ),
     ];
 
-    if (size == ScreenSize.compact) {
+    if (size == WindowClass.compact) {
       return Scaffold(
         body: body,
         bottomNavigationBar: NavigationBar(

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../models/device_model.dart';
+import '../models/transfer_model.dart';
 import '../services/transfer_service.dart';
 import '../services/transfer_service_factory.dart';
 

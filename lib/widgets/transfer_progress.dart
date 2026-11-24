@@ -18,6 +18,8 @@ class TransferProgressTile extends StatelessWidget {
 
   String _stateLabel(AppLocalizations l10n, TransferStatus status) {
     switch (status) {
+      case TransferStatus.connecting:
+        return l10n.stateConnecting;
       case TransferStatus.pending:
       case TransferStatus.transferring:
         return l10n.stateTransferring;
@@ -38,9 +40,9 @@ class TransferProgressTile extends StatelessWidget {
     final theme = Theme.of(context);
     final firstPayload =
         transfer.payloads.isNotEmpty ? transfer.payloads.first : null;
-    final isFile = firstPayload?.type == PayloadType.file;
+    final isFile = firstPayload?.kind == PayloadKind.file;
     final title = isFile
-        ? (firstPayload?.fileName ?? 'file')
+        ? (firstPayload?.name ?? 'file')
         : (firstPayload?.text ?? '');
     final isActive = transfer.isActive;
 

@@ -230,9 +230,11 @@ class BluetoothService implements TransferService {
     final data = Uint8List.fromList(utf8.encode(text));
     final payload = PayloadModel(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
-      type: PayloadType.text,
+      kind: PayloadKind.text,
+      direction: PayloadDirection.sent,
       text: text,
       sizeBytes: data.length,
+      createdAt: DateTime.now(),
     );
     await _sendBytes(endpointId, payload, data);
   }
@@ -246,10 +248,12 @@ class BluetoothService implements TransferService {
     final fileName = file.path.split(RegExp(r'[/\\]')).last;
     final payload = PayloadModel(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
-      type: PayloadType.file,
-      filePath: file.path,
-      fileName: fileName,
+      kind: PayloadKind.file,
+      direction: PayloadDirection.sent,
+      path: file.path,
+      name: fileName,
       sizeBytes: data.length,
+      createdAt: DateTime.now(),
     );
     await _sendBytes(endpointId, payload, data);
   }
@@ -347,9 +351,11 @@ class BluetoothService implements TransferService {
     final text = utf8.decode(bytes, allowMalformed: true);
     final payload = PayloadModel(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
-      type: PayloadType.text,
+      kind: PayloadKind.text,
+      direction: PayloadDirection.received,
       text: text,
       sizeBytes: bytes.length,
+      createdAt: DateTime.now(),
     );
     _receivedPayloadsController.add(payload);
   }
