@@ -22,6 +22,7 @@ abstract final class Permissions {
       Permission.locationWhenInUse,
       Permission.bluetoothScan,
       Permission.bluetoothConnect,
+      Permission.bluetoothAdvertise,
       Permission.bluetooth,
     ].request();
 
@@ -31,10 +32,12 @@ abstract final class Permissions {
     // WiFi Direct gate: NEARBY_WIFI_DEVICES on Android 13+, location before.
     final wifiReady = granted(Permission.nearbyWifiDevices) ||
         granted(Permission.locationWhenInUse);
-    // BLE gate: scan/connect on Android 12+, legacy Bluetooth before.
-    final bleReady = granted(Permission.bluetoothScan) ||
-        granted(Permission.bluetoothConnect) ||
-        granted(Permission.bluetooth);
+    // BLE gate: scan/connect/advertise on Android 12+, legacy Bluetooth before.
+    final bleReady = (granted(Permission.bluetoothScan) ||
+            granted(Permission.bluetoothConnect) ||
+            granted(Permission.bluetooth)) &&
+        (granted(Permission.bluetoothAdvertise) ||
+            granted(Permission.bluetooth));
 
     return wifiReady && bleReady;
   }
@@ -45,9 +48,11 @@ abstract final class Permissions {
 
     final wifiReady = await Permission.nearbyWifiDevices.isGranted ||
         await Permission.locationWhenInUse.isGranted;
-    final bleReady = await Permission.bluetoothScan.isGranted ||
-        await Permission.bluetoothConnect.isGranted ||
-        await Permission.bluetooth.isGranted;
+    final bleReady = (await Permission.bluetoothScan.isGranted ||
+            await Permission.bluetoothConnect.isGranted ||
+            await Permission.bluetooth.isGranted) &&
+        (await Permission.bluetoothAdvertise.isGranted ||
+            await Permission.bluetooth.isGranted);
     return wifiReady && bleReady;
   }
 
@@ -61,6 +66,7 @@ abstract final class Permissions {
       Permission.locationWhenInUse,
       Permission.bluetoothScan,
       Permission.bluetoothConnect,
+      Permission.bluetoothAdvertise,
     ]) {
       if (await p.isPermanentlyDenied) return true;
     }

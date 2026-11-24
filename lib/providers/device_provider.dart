@@ -194,6 +194,14 @@ class DeviceProvider extends ChangeNotifier {
     }
   }
 
+
+  String _friendlyError(Object e) {
+    final msg = e.toString();
+    if (msg.contains('MISSING_PERMISSION') || msg.contains('SECURITY_EXCEPTION') || msg.contains('permission')) {
+      return 'Nearby permission is required. Please allow Bluetooth, nearby devices, and location access, then try again. Open system settings if you previously denied it.';
+    }
+    return msg;
+  }
   @override
   void dispose() {
     _devicesSub?.cancel();
