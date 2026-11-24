@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../core/theme.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
@@ -25,7 +27,7 @@ class TransferScreen extends StatelessWidget {
             Row(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: ThrowRadius.chip,
                   child: Image.asset('assets/logo.png', width: 32, height: 32),
                 ),
                 const SizedBox(width: 10),

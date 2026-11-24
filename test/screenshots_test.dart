@@ -9,6 +9,7 @@ import '../lib/models/payload_model.dart';
 import '../lib/models/transfer_model.dart';
 import '../lib/providers/device_provider.dart';
 import '../lib/providers/locale_provider.dart';
+import '../lib/providers/share_inbox_provider.dart';
 import '../lib/providers/transfer_provider.dart';
 import '../lib/screens/discover_screen.dart';
 import '../lib/screens/home_screen.dart';
@@ -62,6 +63,11 @@ Widget _wrapScreen(Widget child, ThemeData theme) {
       ChangeNotifierProvider(
         create: (_) => TransferProvider(service: fakeService),
       ),
+
+      // HomeScreen watches this. It was added to app.dart when share-in
+      // landing landed, but never here, so this test has been failing ever
+      // since — invisible, because CI only runs on pull requests.
+      ChangeNotifierProvider(create: (_) => ShareInboxProvider()),
     ],
     child: MaterialApp(
       debugShowCheckedModeBanner: false,

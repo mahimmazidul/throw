@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../core/theme.dart';
 import 'package:provider/provider.dart';
 
 import '../core/permissions.dart';
@@ -25,7 +27,7 @@ class DiscoverScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: ThrowRadius.card,
                 // Flat tint, no gradient — matches the home header.
                 color: theme.colorScheme.primaryContainer,
                 border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4)),
@@ -36,7 +38,7 @@ class DiscoverScreen extends StatelessWidget {
                   Row(
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: ThrowRadius.chip,
                         child: Image.asset('assets/logo.png', width: 32, height: 32),
                       ),
                       const SizedBox(width: 10),
@@ -72,12 +74,14 @@ class DiscoverScreen extends StatelessWidget {
                           provider.isAdvertising ? Icons.wifi_tethering_rounded : Icons.wifi_tethering_off_rounded,
                           size: 18,
                         ),
-                        label: Text(provider.isAdvertising ? 'Visible as ${provider.deviceName}' : 'Make visible'),
+                        label: Text(provider.isAdvertising
+                              ? l10n.visibleAs(provider.deviceName)
+                              : l10n.makeVisible),
                         onPressed: provider.isAdvertising ? provider.stopAdvertising : provider.startAdvertising,
                       ),
                       Chip(
                         avatar: const Icon(Icons.devices_rounded, size: 18),
-                        label: Text('${provider.devices.length} found'),
+                        label: Text(l10n.devicesFoundCount(provider.devices.length)),
                       ),
                     ],
                   ),
@@ -106,6 +110,7 @@ class DiscoverScreen extends StatelessWidget {
                           ),
                           IconButton(
                             icon: const Icon(Icons.close_rounded),
+                            tooltip: l10n.actionClose,
                             onPressed: provider.clearError,
                             color: theme.colorScheme.onErrorContainer,
                           ),
@@ -115,7 +120,7 @@ class DiscoverScreen extends StatelessWidget {
                         const SizedBox(height: 8),
                         FilledButton.tonal(
                           onPressed: () => Permissions.openSettings(),
-                          child: const Text('Open system settings'),
+                          child: Text(l10n.openSystemSettings),
                         ),
                       ],
                     ],

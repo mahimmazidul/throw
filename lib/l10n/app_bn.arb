@@ -35,5 +35,103 @@
   "permissionBody": "কাছাকাছি ডিভিস খুঁজে পেতে থ্রো-র ডিভিস অ্যাক্সেস দরকার।",
   "errorBluetoothOff": "ব্লুটুথ বন্ধ আছে। ডিভিস খুঁজতে এটি চালু করুন।",
   "errorLocationOff": "লোকেশন সার্ভিস বন্ধ। অ্যান্ড্রয়েডে ডিভিস খুঁজতে এটি দরকার।",
-  "sendClipboardHint": "আগে কিছু কপি করুন, তারপর পাঠান।"
+  "sendClipboardHint": "আগে কিছু কপি করুন, তারপর পাঠান।",
+  "statusConnectedCount": "{count} টি সংযুক্ত",
+  "@statusConnectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statusNoDevice": "কোনো ডিভাইস সংযুক্ত নেই",
+  "transportBoth": "WiFi Direct / Bluetooth",
+  "featureDirectSharing": "সরাসরি লোকাল শেয়ারিং",
+  "shareInboxTitle": "থ্রোতে পাওয়া ফাইল ({count})",
+  "@shareInboxTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareInboxMore": "+{count} টি আরও",
+  "@shareInboxMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareInboxSend": "পাওয়া ফাইল পাঠান",
+  "sendTextTitle": "লেখা পাঠান",
+  "sendFilesTitle": "ফাইল পাঠান",
+  "sendFilesHint": "একাধিক ফাইল বেছে নিয়ে সরাসরি নির্বাচিত ডিভাইসে পাঠান।",
+  "actionPick": "বেছে নিন",
+  "visibleAs": "{name} নামে দৃশ্যমান",
+  "@visibleAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "makeVisible": "দৃশ্যমান করুন",
+  "devicesFoundCount": "{count} টি পাওয়া গেছে",
+  "@devicesFoundCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "openSystemSettings": "সিস্টেম সেটিংস খুলুন",
+  "updateChecking": "আপডেট পরীক্ষা করা হচ্ছে...",
+  "updateAvailableTitle": "আপডেট পাওয়া গেছে",
+  "updateAvailableBody": "বর্তমান: v{current}\nসর্বশেষ: v{latest}\n\nথ্রোর নতুন সংস্করণ এসেছে।",
+  "@updateAvailableBody": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      }
+    }
+  },
+  "actionLater": "পরে",
+  "actionOpenRelease": "রিলিজ খুলুন",
+  "updateUpToDate": "আপনি হালনাগাদ আছেন (v{current})।",
+  "@updateUpToDate": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      }
+    }
+  },
+  "updateFailed": "আপডেট পরীক্ষা করা যায়নি: {error}",
+  "@updateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsCheckUpdates": "আপডেট পরীক্ষা করুন",
+  "settingsCurrentVersion": "বর্তমান সংস্করণ: v{version}",
+  "@settingsCurrentVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAboutBody": "থ্রো v{version} • অফলাইন ফাইল শেয়ারিং",
+  "@settingsAboutBody": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  }
 }

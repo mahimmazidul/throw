@@ -120,4 +120,100 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get sendClipboardHint => 'আগে কিছু কপি করুন, তারপর পাঠান।';
+
+  @override
+  String statusConnectedCount(int count) {
+    return '$count টি সংযুক্ত';
+  }
+
+  @override
+  String get statusNoDevice => 'কোনো ডিভাইস সংযুক্ত নেই';
+
+  @override
+  String get transportBoth => 'WiFi Direct / Bluetooth';
+
+  @override
+  String get featureDirectSharing => 'সরাসরি লোকাল শেয়ারিং';
+
+  @override
+  String shareInboxTitle(int count) {
+    return 'থ্রোতে পাওয়া ফাইল ($count)';
+  }
+
+  @override
+  String shareInboxMore(int count) {
+    return '+$count টি আরও';
+  }
+
+  @override
+  String get shareInboxSend => 'পাওয়া ফাইল পাঠান';
+
+  @override
+  String get sendTextTitle => 'লেখা পাঠান';
+
+  @override
+  String get sendFilesTitle => 'ফাইল পাঠান';
+
+  @override
+  String get sendFilesHint =>
+      'একাধিক ফাইল বেছে নিয়ে সরাসরি নির্বাচিত ডিভাইসে পাঠান।';
+
+  @override
+  String get actionPick => 'বেছে নিন';
+
+  @override
+  String visibleAs(String name) {
+    return '$name নামে দৃশ্যমান';
+  }
+
+  @override
+  String get makeVisible => 'দৃশ্যমান করুন';
+
+  @override
+  String devicesFoundCount(int count) {
+    return '$count টি পাওয়া গেছে';
+  }
+
+  @override
+  String get openSystemSettings => 'সিস্টেম সেটিংস খুলুন';
+
+  @override
+  String get updateChecking => 'আপডেট পরীক্ষা করা হচ্ছে...';
+
+  @override
+  String get updateAvailableTitle => 'আপডেট পাওয়া গেছে';
+
+  @override
+  String updateAvailableBody(String current, String latest) {
+    return 'বর্তমান: v$current\nসর্বশেষ: v$latest\n\nথ্রোর নতুন সংস্করণ এসেছে।';
+  }
+
+  @override
+  String get actionLater => 'পরে';
+
+  @override
+  String get actionOpenRelease => 'রিলিজ খুলুন';
+
+  @override
+  String updateUpToDate(String current) {
+    return 'আপনি হালনাগাদ আছেন (v$current)।';
+  }
+
+  @override
+  String updateFailed(String error) {
+    return 'আপডেট পরীক্ষা করা যায়নি: $error';
+  }
+
+  @override
+  String get settingsCheckUpdates => 'আপডেট পরীক্ষা করুন';
+
+  @override
+  String settingsCurrentVersion(String version) {
+    return 'বর্তমান সংস্করণ: v$version';
+  }
+
+  @override
+  String settingsAboutBody(String version) {
+    return 'থ্রো v$version • অফলাইন ফাইল শেয়ারিং';
+  }
 }

@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+
+import '../core/theme.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -115,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: ThrowRadius.sheet,
               // Flat tint, no gradient — one token, one edge, no radiant wash.
               color: theme.colorScheme.primaryContainer,
               border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35)),
@@ -126,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: ThrowRadius.button,
                       child: Image.asset('assets/logo.png', width: 44, height: 44),
                     ),
                     const SizedBox(width: 12),
@@ -134,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Throw', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
+                          Text(l10n.appTitle, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
                           Text(
                             'Send files and text directly to nearby devices.',
                             style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
@@ -151,11 +153,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     _StatusChip(
                       icon: connected.isNotEmpty ? Icons.link_rounded : Icons.link_off_rounded,
-                      label: connected.isNotEmpty ? '${connected.length} connected' : 'No device connected',
+                      label: connected.isNotEmpty
+                          ? l10n.statusConnectedCount(connected.length)
+                          : l10n.statusNoDevice,
                       active: connected.isNotEmpty,
                     ),
-                    const _StatusChip(icon: Icons.wifi_tethering_rounded, label: 'WiFi Direct / Bluetooth', active: true),
-                    const _StatusChip(icon: Icons.shield_outlined, label: 'Direct local sharing', active: true),
+                    _StatusChip(icon: Icons.wifi_tethering_rounded, label: l10n.transportBoth, active: true),
+                    _StatusChip(icon: Icons.shield_outlined, label: l10n.featureDirectSharing, active: true),
                   ],
                 ),
               ],
@@ -170,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     CircleAvatar(
                       backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.14),
-                      child: Icon(Icons.devices_rounded, color: theme.colorScheme.primary),
+                      child: Icon(Icons.devices_rounded, color: ThrowTheme.accentFg(context)),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -189,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: InputDecoration(
                 labelText: l10n.stateConnected,
                 prefixIcon: const Icon(Icons.devices_rounded),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(borderRadius: ThrowRadius.button),
               ),
               items: connected.map((d) => DropdownMenuItem(value: d, child: Text(d.name))).toList(),
               onChanged: (value) => setState(() => _selectedDevice = value),
@@ -206,7 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Icon(Icons.inbox_rounded, color: theme.colorScheme.primary),
                         const SizedBox(width: 8),
-                        Expanded(child: Text('Shared to Throw (${shareInbox.sharedFiles.length})', style: theme.textTheme.titleMedium)),
+                        Expanded(child: Text(l10n.shareInboxTitle(shareInbox.sharedFiles.length), style: theme.textTheme.titleMedium)),
                         IconButton(tooltip: 'Clear', onPressed: shareInbox.clear, icon: const Icon(Icons.close_rounded)),
                       ],
                     ),
@@ -221,13 +225,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     }),
                     if (shareInbox.sharedFiles.length > 3)
-                      Text('+${shareInbox.sharedFiles.length - 3} more',
+                      Text(l10n.shareInboxMore(shareInbox.sharedFiles.length - 3),
                           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
                     const SizedBox(height: 12),
                     FilledButton.icon(
                       onPressed: _selectedDevice == null ? null : () => _sendSharedInbox(transferProvider, shareInbox),
                       icon: const Icon(Icons.send_rounded),
-                      label: const Text('Send shared items'),
+                      label: Text(l10n.shareInboxSend),
                     ),
                   ],
                 ),
@@ -241,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Send text', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                  Text(l10n.sendTextTitle, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _textController,
@@ -249,7 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     decoration: InputDecoration(
                       hintText: l10n.sendClipboardHint,
                       filled: true,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(borderRadius: ThrowRadius.button),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.paste_rounded),
                         tooltip: l10n.actionPaste,
@@ -276,16 +280,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   CircleAvatar(
                     radius: 24,
                     backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.14),
-                    child: Icon(Icons.insert_drive_file_rounded, color: theme.colorScheme.primary),
+                    child: Icon(Icons.insert_drive_file_rounded, color: ThrowTheme.accentFg(context)),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Send files', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                        Text(l10n.sendFilesTitle, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                         const SizedBox(height: 2),
-                        Text('Pick multiple files and send directly to the selected device.',
+                        Text(l10n.sendFilesHint,
                             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
                       ],
                     ),
@@ -294,7 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   FilledButton.tonalIcon(
                     onPressed: _selectedDevice == null ? null : () => _pickAndSendFiles(transferProvider),
                     icon: const Icon(Icons.attach_file_rounded),
-                    label: const Text('Pick'),
+                    label: Text(l10n.actionPick),
                   ),
                 ],
               ),
@@ -318,7 +322,8 @@ class _StatusChip extends StatelessWidget {
     final bg = active
         ? theme.colorScheme.primary.withValues(alpha: 0.14)
         : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5);
-    final fg = active ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant;
+    // accentFg: the fill accent is 3.2:1 on this tint and fails AA.
+    final fg = active ? ThrowTheme.accentFg(context) : theme.colorScheme.onSurfaceVariant;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
@@ -327,7 +332,17 @@ class _StatusChip extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: fg),
           const SizedBox(width: 6),
-          Text(label, style: theme.textTheme.labelMedium?.copyWith(color: fg, fontWeight: FontWeight.w600)),
+          // Flexible + ellipsis: this chip used to overflow by 22px at 390dp
+          // when the label ran long, because a plain Text has no way to shrink.
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelMedium
+                  ?.copyWith(color: fg, fontWeight: FontWeight.w600),
+            ),
+          ),
         ],
       ),
     );

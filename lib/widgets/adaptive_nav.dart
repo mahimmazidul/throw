@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme.dart';
+
 import '../core/breakpoints.dart';
 import '../l10n/app_localizations.dart';
 
@@ -75,7 +77,7 @@ class AdaptiveNav extends StatelessWidget {
             leading: Padding(
               padding: const EdgeInsets.only(top: 8, bottom: 8),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: ThrowRadius.button,
                 child: Image.asset('assets/logo.png', width: 36, height: 36),
               ),
             ),

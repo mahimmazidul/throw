@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme.dart';
+
 import '../l10n/app_localizations.dart';
 import '../models/device_model.dart';
 
@@ -48,7 +50,9 @@ class DeviceCard extends StatelessWidget {
           child: Icon(
             _platformIcon(device.platform),
             color: device.isConnected
-                ? colorScheme.primary
+                // accentFg, not the fill accent: the fill sits at 2.9:1 on
+                // this tint, which fails AA for this glyph.
+                ? ThrowTheme.accentFg(context)
                 : colorScheme.onSurfaceVariant,
           ),
         ),

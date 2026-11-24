@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme.dart';
+
 import '../core/utils.dart';
 import '../l10n/app_localizations.dart';
 import '../models/payload_model.dart';
@@ -80,7 +82,7 @@ class TransferProgressTile extends StatelessWidget {
             const SizedBox(height: 8),
             LinearProgressIndicator(
               value: isActive ? transfer.progress : 1.0,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: ThrowRadius.track,
             ),
             const SizedBox(height: 6),
             Row(

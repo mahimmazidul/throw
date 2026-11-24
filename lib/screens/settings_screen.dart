@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+
+import '../core/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -49,15 +51,16 @@ class SettingsScreen extends StatelessWidget {
   Future<void> _checkForUpdates(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const AlertDialog(
+      builder: (_) => AlertDialog(
         content: Row(
           children: [
-            SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
-            SizedBox(width: 16),
-            Expanded(child: Text('Checking for updates...')),
+            const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
+            const SizedBox(width: 16),
+            Expanded(child: Text(l10n.updateChecking)),
           ],
         ),
       ),
@@ -91,17 +94,17 @@ class SettingsScreen extends StatelessWidget {
         showDialog<void>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Update available'),
-            content: Text('Current: v$current\nLatest: $latestTag\n\nA newer version of Throw is available.'),
+            title: Text(l10n.updateAvailableTitle),
+            content: Text(l10n.updateAvailableBody(current, latestTag)),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Later')),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.actionLater)),
               FilledButton(
                 onPressed: () async {
                   Navigator.pop(ctx);
                   final uri = Uri.parse(json['html_url'] as String? ?? AppConstants.releasesUrl);
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
                 },
-                child: const Text('Open release'),
+                child: Text(l10n.actionOpenRelease),
               ),
             ],
           ),
@@ -109,7 +112,7 @@ class SettingsScreen extends StatelessWidget {
       } else {
         messenger.showSnackBar(
           SnackBar(
-            content: Text('You are up to date (v$current).'),
+            content: Text(l10n.updateUpToDate(current)),
             backgroundColor: theme.colorScheme.surfaceContainerHigh,
           ),
         );
@@ -117,7 +120,7 @@ class SettingsScreen extends StatelessWidget {
     } catch (e) {
       if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
       messenger.showSnackBar(
-        SnackBar(content: Text('Could not check updates: $e')),
+        SnackBar(content: Text(l10n.updateFailed(e.toString()))),
       );
     }
   }
@@ -152,7 +155,7 @@ class SettingsScreen extends StatelessWidget {
           Row(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: ThrowRadius.chip,
                 child: Image.asset('assets/logo.png', width: 32, height: 32),
               ),
               const SizedBox(width: 10),
@@ -211,8 +214,8 @@ class SettingsScreen extends StatelessWidget {
               children: [
                 ListTile(
                   leading: const Icon(Icons.system_update_rounded),
-                  title: const Text('Check for updates'),
-                  subtitle: Text('Current version: v${AppConstants.appVersion}'),
+                  title: Text(l10n.settingsCheckUpdates),
+                  subtitle: Text(l10n.settingsCurrentVersion(AppConstants.appVersion)),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => _checkForUpdates(context),
                 ),
@@ -220,7 +223,7 @@ class SettingsScreen extends StatelessWidget {
                 ListTile(
                   leading: const Icon(Icons.info_outline_rounded),
                   title: Text(l10n.settingsAbout),
-                  subtitle: const Text('Throw v1.0.10 • Offline file sharing'),
+                  subtitle: Text(l10n.settingsAboutBody(AppConstants.appVersion)),
                 ),
               ],
             ),

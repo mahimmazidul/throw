@@ -29,7 +29,6 @@ dependencies:
   lottie: ^3.1.0
   skeletonizer: ^1.4.0
   flutter_slidable: ^3.1.0
-  google_fonts: ^6.2.1
 
   # Responsive & adaptive
   flutter_adaptive_scaffold: ^0.1.9 # Google's official adaptive scaffold
@@ -57,6 +56,22 @@ flutter:
     - family: Plus Jakarta Sans
       fonts:
         - asset: assets/fonts/PlusJakartaSans/PlusJakartaSans-wght.ttf
+
+      # Latin-only. Declared so Bangla text has an in-app fallback instead of
+      # relying on whatever the host OS ships — Windows and Linux give no
+      # guarantee, and Plus Jakarta Sans has no Bengali glyphs at all.
+    - family: HindSiliguri
+      fonts:
+        - asset: assets/fonts/HindSiliguri-Light.ttf
+          weight: 300
+        - asset: assets/fonts/HindSiliguri-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/HindSiliguri-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/HindSiliguri-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/HindSiliguri-Bold.ttf
+          weight: 700
 
   assets:
     - assets/logo.png

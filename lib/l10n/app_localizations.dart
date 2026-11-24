@@ -313,6 +313,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copy something first, then send it.'**
   String get sendClipboardHint;
+
+  /// No description provided for @statusConnectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} connected'**
+  String statusConnectedCount(int count);
+
+  /// No description provided for @statusNoDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'No device connected'**
+  String get statusNoDevice;
+
+  /// No description provided for @transportBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'WiFi Direct / Bluetooth'**
+  String get transportBoth;
+
+  /// No description provided for @featureDirectSharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct local sharing'**
+  String get featureDirectSharing;
+
+  /// No description provided for @shareInboxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared to Throw ({count})'**
+  String shareInboxTitle(int count);
+
+  /// No description provided for @shareInboxMore.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} more'**
+  String shareInboxMore(int count);
+
+  /// No description provided for @shareInboxSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send shared items'**
+  String get shareInboxSend;
+
+  /// No description provided for @sendTextTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send text'**
+  String get sendTextTitle;
+
+  /// No description provided for @sendFilesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send files'**
+  String get sendFilesTitle;
+
+  /// No description provided for @sendFilesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick multiple files and send directly to the selected device.'**
+  String get sendFilesHint;
+
+  /// No description provided for @actionPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick'**
+  String get actionPick;
+
+  /// No description provided for @visibleAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible as {name}'**
+  String visibleAs(String name);
+
+  /// No description provided for @makeVisible.
+  ///
+  /// In en, this message translates to:
+  /// **'Make visible'**
+  String get makeVisible;
+
+  /// No description provided for @devicesFoundCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} found'**
+  String devicesFoundCount(int count);
+
+  /// No description provided for @openSystemSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open system settings'**
+  String get openSystemSettings;
+
+  /// No description provided for @updateChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for updates...'**
+  String get updateChecking;
+
+  /// No description provided for @updateAvailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update available'**
+  String get updateAvailableTitle;
+
+  /// No description provided for @updateAvailableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Current: v{current}\nLatest: v{latest}\n\nA newer version of Throw is available.'**
+  String updateAvailableBody(String current, String latest);
+
+  /// No description provided for @actionLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get actionLater;
+
+  /// No description provided for @actionOpenRelease.
+  ///
+  /// In en, this message translates to:
+  /// **'Open release'**
+  String get actionOpenRelease;
+
+  /// No description provided for @updateUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'You are up to date (v{current}).'**
+  String updateUpToDate(String current);
+
+  /// No description provided for @updateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not check updates: {error}'**
+  String updateFailed(String error);
+
+  /// No description provided for @settingsCheckUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
+  String get settingsCheckUpdates;
+
+  /// No description provided for @settingsCurrentVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Current version: v{version}'**
+  String settingsCurrentVersion(String version);
+
+  /// No description provided for @settingsAboutBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Throw v{version} • Offline file sharing'**
+  String settingsAboutBody(String version);
 }
 
 class _AppLocalizationsDelegate

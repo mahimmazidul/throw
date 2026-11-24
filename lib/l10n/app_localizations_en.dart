@@ -120,4 +120,100 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sendClipboardHint => 'Copy something first, then send it.';
+
+  @override
+  String statusConnectedCount(int count) {
+    return '$count connected';
+  }
+
+  @override
+  String get statusNoDevice => 'No device connected';
+
+  @override
+  String get transportBoth => 'WiFi Direct / Bluetooth';
+
+  @override
+  String get featureDirectSharing => 'Direct local sharing';
+
+  @override
+  String shareInboxTitle(int count) {
+    return 'Shared to Throw ($count)';
+  }
+
+  @override
+  String shareInboxMore(int count) {
+    return '+$count more';
+  }
+
+  @override
+  String get shareInboxSend => 'Send shared items';
+
+  @override
+  String get sendTextTitle => 'Send text';
+
+  @override
+  String get sendFilesTitle => 'Send files';
+
+  @override
+  String get sendFilesHint =>
+      'Pick multiple files and send directly to the selected device.';
+
+  @override
+  String get actionPick => 'Pick';
+
+  @override
+  String visibleAs(String name) {
+    return 'Visible as $name';
+  }
+
+  @override
+  String get makeVisible => 'Make visible';
+
+  @override
+  String devicesFoundCount(int count) {
+    return '$count found';
+  }
+
+  @override
+  String get openSystemSettings => 'Open system settings';
+
+  @override
+  String get updateChecking => 'Checking for updates...';
+
+  @override
+  String get updateAvailableTitle => 'Update available';
+
+  @override
+  String updateAvailableBody(String current, String latest) {
+    return 'Current: v$current\nLatest: v$latest\n\nA newer version of Throw is available.';
+  }
+
+  @override
+  String get actionLater => 'Later';
+
+  @override
+  String get actionOpenRelease => 'Open release';
+
+  @override
+  String updateUpToDate(String current) {
+    return 'You are up to date (v$current).';
+  }
+
+  @override
+  String updateFailed(String error) {
+    return 'Could not check updates: $error';
+  }
+
+  @override
+  String get settingsCheckUpdates => 'Check for updates';
+
+  @override
+  String settingsCurrentVersion(String version) {
+    return 'Current version: v$version';
+  }
+
+  @override
+  String settingsAboutBody(String version) {
+    return 'Throw v$version • Offline file sharing';
+  }
 }

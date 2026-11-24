@@ -48,7 +48,7 @@ abstract final class ThrowColors {
   static const Color text = Color(0xFFDFE5DD);
   static const Color secondary = Color(0xFF96A095);
   static const Color accent = Color(0xFF5A7A55);
-  static const Color onAccent = Color(0xFFFFFFFF);
+  static const Color onAccent = Color(0xFFF4F8F1);
   static const Color accentContainer = Color(0xFF2C3A2A);
   static const Color onAccentContainer = Color(0xFFDCE7D9);
 
@@ -69,6 +69,32 @@ abstract final class ThrowColors {
   static const Color lightAccent = Color(0xFF3E5A3B);
 }
 
+/// One corner scale for the whole app.
+///
+/// These numbers used to be re-typed inline across the screens — 4, 10, 12,
+/// 14, 16 and 20 within a few hundred lines — so neighbouring cards rounded
+/// differently for no reason. Everything reads from here.
+abstract final class ThrowRadius {
+  /// Progress-bar tracks and other thin elements.
+  static const BorderRadius track = BorderRadius.all(Radius.circular(4));
+
+  /// Small inline chips and badges.
+  static const BorderRadius chip = BorderRadius.all(Radius.circular(10));
+
+  /// Buttons, text fields, small clipped images.
+  static const BorderRadius button = BorderRadius.all(Radius.circular(12));
+
+  /// Cards and section headers.
+  static const BorderRadius card = BorderRadius.all(Radius.circular(14));
+
+  /// Hero cards and bottom sheets.
+  static const BorderRadius sheet = BorderRadius.all(Radius.circular(20));
+
+  /// Bottom sheets are only rounded on their top edge.
+  static const BorderRadius sheetTop =
+      BorderRadius.vertical(top: Radius.circular(20));
+}
+
 /// Material 3 themes for Throw.
 ///
 /// Dark is the product default ([ThemeMode.dark] in the app); light exists
@@ -80,25 +106,36 @@ abstract final class ThrowColors {
 abstract final class ThrowTheme {
   /// Plus Jakarta Sans type scale — clean, modern, readable.
   static TextTheme _typeScale() => const TextTheme(
-        displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w700, height: 1.1),
-        displayMedium: TextStyle(fontSize: 45, fontWeight: FontWeight.w700, height: 1.1),
-        headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, height: 1.2),
-        headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w600, height: 1.25),
-        titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, height: 1.3),
-        titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, height: 1.4),
-        bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, height: 1.5),
-        bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, height: 1.5),
-        bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, height: 1.4),
-        labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.3),
-        labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, height: 1.3),
-        labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, height: 1.3),
+        displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w700, height: 1.1, fontFamilyFallback: ['HindSiliguri']),
+        displayMedium: TextStyle(fontSize: 45, fontWeight: FontWeight.w700, height: 1.1, fontFamilyFallback: ['HindSiliguri']),
+        headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, height: 1.2, fontFamilyFallback: ['HindSiliguri']),
+        headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w600, height: 1.25, fontFamilyFallback: ['HindSiliguri']),
+        titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, height: 1.3, fontFamilyFallback: ['HindSiliguri']),
+        titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, height: 1.4, fontFamilyFallback: ['HindSiliguri']),
+        bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, height: 1.5, fontFamilyFallback: ['HindSiliguri']),
+        bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, height: 1.5, fontFamilyFallback: ['HindSiliguri']),
+        bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, height: 1.4, fontFamilyFallback: ['HindSiliguri']),
+        labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.3, fontFamilyFallback: ['HindSiliguri']),
+        labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, height: 1.3, fontFamilyFallback: ['HindSiliguri']),
+        labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, height: 1.3, fontFamilyFallback: ['HindSiliguri']),
       );
 
   /// Corners are softened from the original 6/8dp: biophilic guidance is to
   /// replace rigid right angles with gentle radii, and a rounder silhouette
   /// reads as calmer at the same information density.
-  static const BorderRadius _cardRadius = BorderRadius.all(Radius.circular(14));
-  static const BorderRadius _buttonRadius = BorderRadius.all(Radius.circular(12));
+  static const BorderRadius _cardRadius = ThrowRadius.card;
+  static const BorderRadius _buttonRadius = ThrowRadius.button;
+
+  /// Accent colour for *foreground* use — icons and labels sitting on an
+  /// accent tint.
+  ///
+  /// The fill accent (#5A7A55) lands at ~2.9–3.2:1 on its own 14–16% tint in
+  /// dark mode, which fails AA for the small text and glyphs that sit on
+  /// those tints. These brightness-aware cuts clear 4.5:1 in both.
+  static Color accentFg(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? ThrowColors.accentText
+          : ThrowColors.lightAccent;
 
   /// Flat hover/focus washes for the desktop build — alpha only, no glow.
   static const Color _hoverWash = Color(0x145A7A55);
@@ -216,7 +253,7 @@ abstract final class ThrowTheme {
         surfaceTintColor: Colors.transparent,
         showDragHandle: false,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: ThrowRadius.sheetTop,
         ),
       ),
       navigationBarTheme: const NavigationBarThemeData(
@@ -353,7 +390,7 @@ abstract final class ThrowTheme {
         surfaceTintColor: Colors.transparent,
         showDragHandle: false,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: ThrowRadius.sheetTop,
         ),
       ),
       navigationBarTheme: const NavigationBarThemeData(
