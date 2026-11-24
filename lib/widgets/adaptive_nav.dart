@@ -27,19 +27,19 @@ class AdaptiveNav extends StatelessWidget {
     final size = Breakpoints.of(width);
 
     final destinations = [
-      (icon: Icons.home_outlined, activeIcon: Icons.home, label: l10n.navHome),
+      (icon: Icons.home_rounded, activeIcon: Icons.home, label: l10n.navHome),
       (
-        icon: Icons.radar_outlined,
+        icon: Icons.radar_rounded,
         activeIcon: Icons.radar,
         label: l10n.navDiscover
       ),
       (
-        icon: Icons.swap_horiz_outlined,
+        icon: Icons.sync_alt_rounded,
         activeIcon: Icons.swap_horiz,
         label: l10n.navTransfers
       ),
       (
-        icon: Icons.settings_outlined,
+        icon: Icons.tune_rounded,
         activeIcon: Icons.settings,
         label: l10n.navSettings
       ),

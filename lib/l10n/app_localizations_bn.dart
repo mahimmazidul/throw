@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -216,4 +217,28 @@ class AppLocalizationsBn extends AppLocalizations {
   String settingsAboutBody(String version) {
     return 'থ্রো v$version • অফলাইন ফাইল শেয়ারিং';
   }
+
+  @override
+  String get errorPermissionDenied =>
+      'কাছাকাছি ডিভিস খুঁজে বা পাঠানোর জন্য থ্রো-র নিকটবর্তী ডিভিস অ্যাক্সেস দরকার।';
+
+  @override
+  String get errorPermissionBlocked =>
+      'থ্রোর জন্য নিকটবর্তী অ্যাক্সেস বন্ধ আছে। চালিয়ে যেতে সিস্টেম সেটিংসে অনুমতি দিন।';
+
+  @override
+  String get errorDiscoveryFailed =>
+      'ডিভিস খুঁজা ব্যর্থ হয়েছে। আবার চেষ্টা করুন।';
+
+  @override
+  String get errorTransferFailed =>
+      'ট্রান্সফার সম্পূর্ণ হয়নি। অন্য ডিভাইসটি কাছে আছে কিনা দেখে আবার চেষ্টা করুন।';
+
+  @override
+  String errorUnknown(String detail) {
+    return 'কিছু একটা সমস্যা হয়েছে: $detail';
+  }
+
+  @override
+  String get transfersSubtitle => 'চলমান ও সাম্প্রতিক ট্রান্সফার দেখুন।';
 }

@@ -13,6 +13,7 @@ import '../models/device_model.dart';
 import '../providers/device_provider.dart';
 import '../providers/share_inbox_provider.dart';
 import '../providers/transfer_provider.dart';
+import '../widgets/error_banner.dart';
 
 /// Home screen for quick text/clipboard and file sharing.
 class HomeScreen extends StatefulWidget {
@@ -166,6 +167,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
+          if (transferProvider.error != null) ...[
+            ErrorBanner(error: transferProvider.error!, onDismiss: transferProvider.clearError),
+            const SizedBox(height: 12),
+          ],
           if (connected.isEmpty)
             Card(
               child: Padding(

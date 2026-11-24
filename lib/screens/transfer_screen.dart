@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../providers/transfer_provider.dart';
+import '../widgets/error_banner.dart';
 import '../widgets/transfer_progress.dart';
 
 /// Transfers screen showing active and completed file/text transfers.
@@ -40,7 +41,7 @@ class TransferScreen extends StatelessWidget {
                         style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
                       ),
                       Text(
-                        'Track active and recent transfers.',
+                        l10n.transfersSubtitle,
                         style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                       ),
                     ],
@@ -49,6 +50,10 @@ class TransferScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
+            if (provider.error != null) ...[
+              ErrorBanner(error: provider.error!, onDismiss: provider.clearError),
+              const SizedBox(height: 12),
+            ],
             Expanded(
               child: transfers.isEmpty
                   ? Center(

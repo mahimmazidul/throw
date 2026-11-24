@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -216,4 +217,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String settingsAboutBody(String version) {
     return 'Throw v$version • Offline file sharing';
   }
+
+  @override
+  String get errorPermissionDenied =>
+      'Throw needs nearby device access to find and send to the devices around you.';
+
+  @override
+  String get errorPermissionBlocked =>
+      'Nearby access is turned off for Throw. Allow it in system settings to continue.';
+
+  @override
+  String get errorDiscoveryFailed => 'Scanning for devices failed. Try again.';
+
+  @override
+  String get errorTransferFailed =>
+      'That transfer didn\'t finish. Check the other device is nearby, then try again.';
+
+  @override
+  String errorUnknown(String detail) {
+    return 'Something went wrong: $detail';
+  }
+
+  @override
+  String get transfersSubtitle => 'Track active and recent transfers.';
 }

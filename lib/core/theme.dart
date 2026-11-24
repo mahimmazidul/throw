@@ -41,32 +41,32 @@ import 'package:flutter/material.dart';
 ///    (~6.6:1, against ~4.2:1 for [accent]).
 abstract final class ThrowColors {
   // Dark (default)
-  static const Color bg = Color(0xFF161A17);
-  static const Color surface = Color(0xFF1D211E);
-  static const Color surfaceHigh = Color(0xFF252A26);
-  static const Color border = Color(0xFF333A34);
-  static const Color text = Color(0xFFDFE5DD);
-  static const Color secondary = Color(0xFF96A095);
-  static const Color accent = Color(0xFF5A7A55);
-  static const Color onAccent = Color(0xFFF4F8F1);
-  static const Color accentContainer = Color(0xFF2C3A2A);
-  static const Color onAccentContainer = Color(0xFFDCE7D9);
+  static const Color bg = Color(0x0A1214);
+  static const Color surface = Color(0x101A1D);
+  static const Color surfaceHigh = Color(0x162226);
+  static const Color border = Color(0x33474D);
+  static const Color text = Color(0xDEE7E9);
+  static const Color secondary = Color(0x8FA0A4);
+  static const Color accent = Color(0x0E6A64);
+  static const Color onAccent = Color(0xF3FBFA);
+  static const Color accentContainer = Color(0x102E2C);
+  static const Color onAccentContainer = Color(0xCFE8E4);
 
   /// Accent as text on the dark canvas — lighter sage so it clears AA.
-  static const Color accentText = Color(0xFF8FAA89);
+  static const Color accentText = Color(0x5FBFB4);
 
   // Light — sage paper, never #FFFFFF
-  static const Color lightBg = Color(0xFFEBF0E8);
-  static const Color lightSurface = Color(0xFFF5F8F3);
-  static const Color lightSurfaceHigh = Color(0xFFE2E9DF);
-  static const Color lightBorder = Color(0xFFD2DAD0);
-  static const Color lightText = Color(0xFF1E241D);
-  static const Color lightSecondary = Color(0xFF5F6B5C);
-  static const Color lightAccentContainer = Color(0xFFD7E3D3);
-  static const Color lightOnAccentContainer = Color(0xFF2A3A28);
+  static const Color lightBg = Color(0xEDF1F0);
+  static const Color lightSurface = Color(0xF8FAFA);
+  static const Color lightSurfaceHigh = Color(0xE1E8E7);
+  static const Color lightBorder = Color(0xCBD5D4);
+  static const Color lightText = Color(0x10191A);
+  static const Color lightSecondary = Color(0x57686B);
+  static const Color lightAccentContainer = Color(0xD3E4E2);
+  static const Color lightOnAccentContainer = Color(0x0A3F3B);
 
   /// Accent for light mode — deeper moss so it clears AA on sage paper.
-  static const Color lightAccent = Color(0xFF3E5A3B);
+  static const Color lightAccent = Color(0x1B6660);
 }
 
 /// One corner scale for the whole app.
@@ -75,24 +75,25 @@ abstract final class ThrowColors {
 /// 14, 16 and 20 within a few hundred lines — so neighbouring cards rounded
 /// differently for no reason. Everything reads from here.
 abstract final class ThrowRadius {
-  /// Progress-bar tracks and other thin elements.
-  static const BorderRadius track = BorderRadius.all(Radius.circular(4));
+  /// Progress-bar tracks — a pill, never a rectangle.
+  static const BorderRadius track = BorderRadius.all(Radius.circular(999));
 
-  /// Small inline chips and badges.
-  static const BorderRadius chip = BorderRadius.all(Radius.circular(10));
+  /// Small inline chips and badges — pills.
+  static const BorderRadius chip = BorderRadius.all(Radius.circular(999));
 
-  /// Buttons, text fields, small clipped images.
-  static const BorderRadius button = BorderRadius.all(Radius.circular(12));
+  /// Buttons and fields — full pills. Nothing in the UI has a hard corner.
+  static const BorderRadius button = BorderRadius.all(Radius.circular(999));
 
-  /// Cards and section headers.
-  static const BorderRadius card = BorderRadius.all(Radius.circular(14));
+  /// Cards and section headers — soft enough that the shape never reads as
+  /// a rectangle.
+  static const BorderRadius card = BorderRadius.all(Radius.circular(28));
 
-  /// Hero cards and bottom sheets.
-  static const BorderRadius sheet = BorderRadius.all(Radius.circular(20));
+  /// Hero cards and bottom sheets — fully rounded panels.
+  static const BorderRadius sheet = BorderRadius.all(Radius.circular(36));
 
   /// Bottom sheets are only rounded on their top edge.
   static const BorderRadius sheetTop =
-      BorderRadius.vertical(top: Radius.circular(20));
+      BorderRadius.vertical(top: Radius.circular(36));
 }
 
 /// Material 3 themes for Throw.
@@ -129,7 +130,7 @@ abstract final class ThrowTheme {
   /// Accent colour for *foreground* use — icons and labels sitting on an
   /// accent tint.
   ///
-  /// The fill accent (#5A7A55) lands at ~2.9–3.2:1 on its own 14–16% tint in
+  /// The fill accent (#0E6A64) lands at ~3.0:1 on its own 14–16% tint in
   /// dark mode, which fails AA for the small text and glyphs that sit on
   /// those tints. These brightness-aware cuts clear 4.5:1 in both.
   static Color accentFg(BuildContext context) =>
@@ -138,10 +139,10 @@ abstract final class ThrowTheme {
           : ThrowColors.lightAccent;
 
   /// Flat hover/focus washes for the desktop build — alpha only, no glow.
-  static const Color _hoverWash = Color(0x145A7A55);
-  static const Color _focusWash = Color(0x245A7A55);
-  static const Color _lightHoverWash = Color(0x0F3E5A3B);
-  static const Color _lightFocusWash = Color(0x1A3E5A3B);
+  static const Color _hoverWash = Color(0x140E6A64);
+  static const Color _focusWash = Color(0x240E6A64);
+  static const Color _lightHoverWash = Color(0x0F1B6660);
+  static const Color _lightFocusWash = Color(0x1A1B6660);
 
   static ThemeData dark() {
     final scheme = ColorScheme.fromSeed(
@@ -164,7 +165,7 @@ abstract final class ThrowTheme {
       surfaceContainerHighest: ThrowColors.surfaceHigh,
       outline: ThrowColors.border,
       outlineVariant: ThrowColors.border,
-      error: const Color(0xFFB87A6E),
+      error: const Color(0xFFD08D7C),
       onError: ThrowColors.onAccent,
     );
 
@@ -185,7 +186,7 @@ abstract final class ThrowTheme {
       dividerTheme: const DividerThemeData(color: ThrowColors.border, thickness: 1, space: 1),
       textSelectionTheme: const TextSelectionThemeData(
         cursorColor: ThrowColors.accent,
-        selectionColor: Color(0x5A5A7A55),
+        selectionColor: Color(0x5A0E6A64),
         selectionHandleColor: ThrowColors.accentText,
       ),
       cardTheme: const CardThemeData(
@@ -297,7 +298,7 @@ abstract final class ThrowTheme {
       surfaceContainerHighest: ThrowColors.lightSurfaceHigh,
       outline: ThrowColors.lightBorder,
       outlineVariant: ThrowColors.lightBorder,
-      error: const Color(0xFF9C5A4E),
+      error: const Color(0xFF8E4234),
       onError: ThrowColors.onAccent,
     );
 
@@ -322,7 +323,7 @@ abstract final class ThrowTheme {
       ),
       textSelectionTheme: const TextSelectionThemeData(
         cursorColor: ThrowColors.lightAccent,
-        selectionColor: Color(0x4D3E5A3B),
+        selectionColor: Color(0x4D1B6660),
         selectionHandleColor: ThrowColors.lightAccent,
       ),
       cardTheme: const CardThemeData(

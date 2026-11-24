@@ -22,11 +22,11 @@ class DeviceCard extends StatelessWidget {
   IconData _platformIcon(DevicePlatform platform) {
     switch (platform) {
       case DevicePlatform.android:
-        return Icons.android_rounded;
+        return Icons.phone_android_rounded;
       case DevicePlatform.windows:
         return Icons.desktop_windows_rounded;
       case DevicePlatform.linux:
-        return Icons.laptop_rounded;
+        return Icons.laptop_mac_rounded;
     }
   }
 

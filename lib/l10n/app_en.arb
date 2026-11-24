@@ -141,5 +141,18 @@
         "type": "String"
       }
     }
-  }
+  },
+  "errorPermissionDenied": "Throw needs nearby device access to find and send to the devices around you.",
+  "errorPermissionBlocked": "Nearby access is turned off for Throw. Allow it in system settings to continue.",
+  "errorDiscoveryFailed": "Scanning for devices failed. Try again.",
+  "errorTransferFailed": "That transfer didn't finish. Check the other device is nearby, then try again.",
+  "errorUnknown": "Something went wrong: {detail}",
+  "@errorUnknown": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "transfersSubtitle": "Track active and recent transfers."
 }

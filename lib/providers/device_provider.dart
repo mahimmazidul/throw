@@ -5,6 +5,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 
 import '../core/permissions.dart';
+import '../models/app_error.dart';
 import '../models/device_model.dart';
 import '../models/transfer_model.dart';
 import '../services/transfer_service.dart';
@@ -19,7 +20,7 @@ class DeviceProvider extends ChangeNotifier {
   String _deviceName = 'Throw Device';
   bool _isAdvertising = false;
   bool _isDiscovering = false;
-  String? _error;
+  AppError? _error;
 
   StreamSubscription<DeviceModel>? _devicesSub;
   StreamSubscription<ConnectionRequest>? _requestsSub;
@@ -75,7 +76,7 @@ class DeviceProvider extends ChangeNotifier {
   String get deviceName => _deviceName;
   bool get isAdvertising => _isAdvertising;
   bool get isDiscovering => _isDiscovering;
-  String? get error => _error;
+  AppError? get error => _error;
 
   void setDeviceName(String name) {
     final trimmed = name.trim();
@@ -95,8 +96,8 @@ class DeviceProvider extends ChangeNotifier {
     final granted = await Permissions.ensureNearbyAccess();
     if (!granted) {
       _error = await Permissions.isPermanentlyDenied()
-          ? 'Nearby permission is required. Open system settings to allow it.'
-          : 'Nearby permission is required to make this device visible.';
+          ? const AppError(AppErrorCode.permissionBlocked)
+          : const AppError(AppErrorCode.permissionDenied);
       _isAdvertising = false;
       notifyListeners();
       return;
@@ -105,7 +106,7 @@ class DeviceProvider extends ChangeNotifier {
       await _service.startAdvertising(deviceName: _deviceName);
       _isAdvertising = true;
     } catch (e) {
-      _error = _friendlyError(e);
+      _error = AppError.fromObject(e);
       _isAdvertising = false;
     }
     notifyListeners();
@@ -116,7 +117,7 @@ class DeviceProvider extends ChangeNotifier {
       await _service.stopAdvertising();
       _isAdvertising = false;
     } catch (e) {
-      _error = _friendlyError(e);
+      _error = AppError.fromObject(e);
     }
     notifyListeners();
   }
@@ -126,8 +127,8 @@ class DeviceProvider extends ChangeNotifier {
     final granted = await Permissions.ensureNearbyAccess();
     if (!granted) {
       _error = await Permissions.isPermanentlyDenied()
-          ? 'Nearby permission is required. Open system settings to allow it.'
-          : 'Nearby permission is required to discover nearby devices.';
+          ? const AppError(AppErrorCode.permissionBlocked)
+          : const AppError(AppErrorCode.permissionDenied);
       _isDiscovering = false;
       notifyListeners();
       return;
@@ -136,7 +137,7 @@ class DeviceProvider extends ChangeNotifier {
       await _service.startDiscovery();
       _isDiscovering = true;
     } catch (e) {
-      _error = _friendlyError(e);
+      _error = AppError.fromObject(e);
       _isDiscovering = false;
     }
     notifyListeners();
@@ -147,7 +148,7 @@ class DeviceProvider extends ChangeNotifier {
       await _service.stopDiscovery();
       _isDiscovering = false;
     } catch (e) {
-      _error = _friendlyError(e);
+      _error = AppError.fromObject(e);
     }
     notifyListeners();
   }
@@ -157,7 +158,7 @@ class DeviceProvider extends ChangeNotifier {
     try {
       await _service.connect(device);
     } catch (e) {
-      _error = _friendlyError(e);
+      _error = AppError.fromObject(e);
       notifyListeners();
     }
   }
@@ -167,7 +168,7 @@ class DeviceProvider extends ChangeNotifier {
     try {
       await _service.disconnect(device.id);
     } catch (e) {
-      _error = _friendlyError(e);
+      _error = AppError.fromObject(e);
       notifyListeners();
     }
   }
@@ -178,7 +179,7 @@ class DeviceProvider extends ChangeNotifier {
     try {
       await _service.acceptConnection(request.endpointId);
     } catch (e) {
-      _error = _friendlyError(e);
+      _error = AppError.fromObject(e);
       notifyListeners();
     }
   }
@@ -189,18 +190,9 @@ class DeviceProvider extends ChangeNotifier {
     try {
       await _service.rejectConnection(request.endpointId);
     } catch (e) {
-      _error = _friendlyError(e);
+      _error = AppError.fromObject(e);
       notifyListeners();
     }
-  }
-
-
-  String _friendlyError(Object e) {
-    final msg = e.toString();
-    if (msg.contains('MISSING_PERMISSION') || msg.contains('SECURITY_EXCEPTION') || msg.contains('permission')) {
-      return 'Nearby permission is required. Please allow Bluetooth, nearby devices, and location access, then try again. Open system settings if you previously denied it.';
-    }
-    return msg;
   }
   @override
   void dispose() {

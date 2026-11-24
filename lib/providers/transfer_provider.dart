@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../models/app_error.dart';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -15,7 +16,7 @@ class TransferProvider extends ChangeNotifier {
 
   final Map<String, TransferModel> _transfersMap = {};
   final List<PayloadModel> _receivedPayloads = [];
-  String? _error;
+  AppError? _error;
 
   StreamSubscription<TransferModel>? _transfersSub;
   StreamSubscription<PayloadModel>? _payloadsSub;
@@ -37,7 +38,7 @@ class TransferProvider extends ChangeNotifier {
       _transfersMap.values.where((t) => t.isActive).toList(growable: false);
   List<PayloadModel> get receivedPayloads =>
       List.unmodifiable(_receivedPayloads);
-  String? get error => _error;
+  AppError? get error => _error;
 
   void clearError() {
     if (_error == null) return;
@@ -51,7 +52,9 @@ class TransferProvider extends ChangeNotifier {
     try {
       await _service.sendText(endpointId: target.id, text: text);
     } catch (e) {
-      _error = e.toString();
+      _error = AppError.fromObject(e).code == AppErrorCode.unknown
+        ? AppError(AppErrorCode.transferFailed, detail: e.toString())
+        : AppError.fromObject(e);
       notifyListeners();
     }
   }
@@ -66,7 +69,9 @@ class TransferProvider extends ChangeNotifier {
     try {
       await _service.sendFile(endpointId: target.id, file: File(filePath));
     } catch (e) {
-      _error = e.toString();
+      _error = AppError.fromObject(e).code == AppErrorCode.unknown
+        ? AppError(AppErrorCode.transferFailed, detail: e.toString())
+        : AppError.fromObject(e);
       notifyListeners();
     }
   }
@@ -76,7 +81,9 @@ class TransferProvider extends ChangeNotifier {
     try {
       await _service.cancelTransfer(transfer.id);
     } catch (e) {
-      _error = e.toString();
+      _error = AppError.fromObject(e).code == AppErrorCode.unknown
+        ? AppError(AppErrorCode.transferFailed, detail: e.toString())
+        : AppError.fromObject(e);
       notifyListeners();
     }
   }

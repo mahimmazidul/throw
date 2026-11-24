@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/theme.dart';
 import 'package:provider/provider.dart';
 
-import '../core/permissions.dart';
+import '../widgets/error_banner.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/device_provider.dart';
 import '../widgets/nearby_device_list.dart';
@@ -90,43 +90,7 @@ class DiscoverScreen extends StatelessWidget {
             ),
             if (provider.error != null) ...[
               const SizedBox(height: 12),
-              Card(
-                color: theme.colorScheme.errorContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.error_outline_rounded, color: theme.colorScheme.onErrorContainer),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              provider.error!,
-                              style: TextStyle(color: theme.colorScheme.onErrorContainer),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close_rounded),
-                            tooltip: l10n.actionClose,
-                            onPressed: provider.clearError,
-                            color: theme.colorScheme.onErrorContainer,
-                          ),
-                        ],
-                      ),
-                      if (provider.error!.toLowerCase().contains('settings')) ...[
-                        const SizedBox(height: 8),
-                        FilledButton.tonal(
-                          onPressed: () => Permissions.openSettings(),
-                          child: Text(l10n.openSystemSettings),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
+              ErrorBanner(error: provider.error!, onDismiss: provider.clearError),
             ],
             if (provider.pendingRequests.isNotEmpty) ...[
               const SizedBox(height: 12),

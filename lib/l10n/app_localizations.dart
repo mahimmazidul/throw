@@ -63,7 +63,7 @@ import 'app_localizations_en.dart';
 /// property.
 abstract class AppLocalizations {
   AppLocalizations(String locale)
-      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -86,16 +86,16 @@ abstract class AppLocalizations {
   /// of delegates is preferred or required.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
       <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('bn'),
-    Locale('en')
+    Locale('en'),
   ];
 
   /// No description provided for @appTitle.
@@ -463,6 +463,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Throw v{version} • Offline file sharing'**
   String settingsAboutBody(String version);
+
+  /// No description provided for @errorPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Throw needs nearby device access to find and send to the devices around you.'**
+  String get errorPermissionDenied;
+
+  /// No description provided for @errorPermissionBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby access is turned off for Throw. Allow it in system settings to continue.'**
+  String get errorPermissionBlocked;
+
+  /// No description provided for @errorDiscoveryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning for devices failed. Try again.'**
+  String get errorDiscoveryFailed;
+
+  /// No description provided for @errorTransferFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'That transfer didn\'t finish. Check the other device is nearby, then try again.'**
+  String get errorTransferFailed;
+
+  /// No description provided for @errorUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong: {detail}'**
+  String errorUnknown(String detail);
+
+  /// No description provided for @transfersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track active and recent transfers.'**
+  String get transfersSubtitle;
 }
 
 class _AppLocalizationsDelegate
@@ -492,8 +528,9 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   }
 
   throw FlutterError(
-      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-      'an issue with the localizations generation tool. Please file an issue '
-      'on GitHub with a reproducible sample app and the gen-l10n configuration '
-      'that was used.');
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
 }
