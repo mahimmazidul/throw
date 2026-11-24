@@ -24,10 +24,10 @@ class ResponsiveLayout extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = Breakpoints.of(constraints.maxWidth);
-        if (size.index >= WindowClass.expanded.index && expanded != null) {
+        if (size.index >= ScreenClass.expanded.index && expanded != null) {
           return expanded!(context, constraints);
         }
-        if (size.index >= WindowClass.medium.index && medium != null) {
+        if (size.index >= ScreenClass.medium.index && medium != null) {
           return medium!(context, constraints);
         }
         return compact(context, constraints);
