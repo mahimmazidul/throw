@@ -94,7 +94,7 @@ jobs:
       - run: flutter gen-l10n
       - run: flutter config --enable-windows-desktop
       - run: flutter build windows --release
-      - run: dart run msix:create
+      - run: dart run msix:create --install-certificate false
 
       - name: Zip Windows build
         run: |
