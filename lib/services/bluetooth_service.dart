@@ -4,7 +4,9 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluetooth_low_energy/bluetooth_low_energy.dart';
+import 'package:path_provider/path_provider.dart';
 
+import '../core/utils.dart';
 import '../models/device_model.dart';
 import '../models/payload_model.dart';
 import '../models/transfer_model.dart';
@@ -26,6 +28,10 @@ class BluetoothService implements TransferService {
   static final UUID _rxCharUuid =
       UUID.fromString('0000fe2e-0000-1000-8000-00805f9b34fb');
 
+  static const List<int> _magic = [0x54, 0x48, 0x52, 0x57]; // THRW
+  static const int _typeText = 1;
+  static const int _typeFile = 2;
+
   final _devicesController = StreamController<DeviceModel>.broadcast();
   final _transfersController = StreamController<TransferModel>.broadcast();
   final _connectionRequestsController =
@@ -37,6 +43,7 @@ class BluetoothService implements TransferService {
   final Map<String, Peripheral> _peripherals = {};
   final Map<String, GATTCharacteristic> _txCharacteristics = {};
   final Map<String, TransferModel> _transfers = {};
+  final Map<String, BytesBuilder> _rxBuffers = {};
 
   StreamSubscription<DiscoveredEventArgs>? _discoveredSub;
   StreamSubscription<PeripheralConnectionStateChangedEventArgs>? _connSub;
@@ -139,7 +146,7 @@ class BluetoothService implements TransferService {
       final device = DeviceModel(
         id: id,
         name: (name != null && name.isNotEmpty) ? name : id,
-        platform: DevicePlatform.windows,
+        platform: _guessPlatform(),
         channel: TransferChannel.bluetooth,
         isConnected: _discoveredDevices[id]?.isConnected ?? false,
         lastSeen: DateTime.now(),
@@ -168,6 +175,12 @@ class BluetoothService implements TransferService {
 
     await _central.startDiscovery(serviceUUIDs: [_serviceUuid]);
     _isDiscovering = true;
+  }
+
+  DevicePlatform _guessPlatform() {
+    if (Platform.isWindows) return DevicePlatform.windows;
+    if (Platform.isLinux) return DevicePlatform.linux;
+    return DevicePlatform.android;
   }
 
   @override
@@ -236,7 +249,8 @@ class BluetoothService implements TransferService {
       sizeBytes: data.length,
       createdAt: DateTime.now(),
     );
-    await _sendBytes(endpointId, payload, data);
+    final frame = _buildFrame(_typeText, {'name': 'text'}, data);
+    await _sendBytes(endpointId, payload, frame);
   }
 
   @override
@@ -245,7 +259,9 @@ class BluetoothService implements TransferService {
     required File file,
   }) async {
     final data = await file.readAsBytes();
-    final fileName = file.path.split(RegExp(r'[/\\]')).last;
+    final fileName = AppUtils.sanitizeFileName(
+      file.path.split(RegExp(r'[/\\]')).last,
+    );
     final payload = PayloadModel(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       kind: PayloadKind.file,
@@ -255,7 +271,26 @@ class BluetoothService implements TransferService {
       sizeBytes: data.length,
       createdAt: DateTime.now(),
     );
-    await _sendBytes(endpointId, payload, data);
+    final frame = _buildFrame(
+      _typeFile,
+      {'name': fileName, 'size': data.length},
+      data,
+    );
+    await _sendBytes(endpointId, payload, frame);
+  }
+
+  Uint8List _buildFrame(int type, Map<String, dynamic> meta, Uint8List data) {
+    final metaBytes = utf8.encode(jsonEncode(meta));
+    final builder = BytesBuilder();
+    builder.add(_magic);
+    builder.add([type]);
+    final metaLen = ByteData(4)..setUint32(0, metaBytes.length, Endian.big);
+    builder.add(metaLen.buffer.asUint8List());
+    final dataLen = ByteData(4)..setUint32(0, data.length, Endian.big);
+    builder.add(dataLen.buffer.asUint8List());
+    builder.add(metaBytes);
+    builder.add(data);
+    return builder.toBytes();
   }
 
   Future<void> _sendBytes(
@@ -273,7 +308,7 @@ class BluetoothService implements TransferService {
         DeviceModel(
           id: endpointId,
           name: endpointId,
-          platform: DevicePlatform.windows,
+          platform: _guessPlatform(),
           channel: TransferChannel.bluetooth,
           isConnected: true,
           lastSeen: DateTime.now(),
@@ -348,16 +383,121 @@ class BluetoothService implements TransferService {
   }
 
   void _handleIncomingBytes(String deviceId, Uint8List bytes) {
-    final text = utf8.decode(bytes, allowMalformed: true);
-    final payload = PayloadModel(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
-      kind: PayloadKind.text,
-      direction: PayloadDirection.received,
-      text: text,
-      sizeBytes: bytes.length,
-      createdAt: DateTime.now(),
+    final buffer = _rxBuffers.putIfAbsent(deviceId, () => BytesBuilder());
+    buffer.add(bytes);
+    _tryParseFrames(deviceId);
+  }
+
+  Future<void> _tryParseFrames(String deviceId) async {
+    final buffer = _rxBuffers[deviceId];
+    if (buffer == null) return;
+    var data = buffer.toBytes();
+
+    while (true) {
+      // Find magic
+      final magicIndex = _indexOfMagic(data);
+      if (magicIndex < 0) {
+        // Keep tail bytes in case magic is split across chunks.
+        final keep = data.length > 3 ? 3 : data.length;
+        _rxBuffers[deviceId] = BytesBuilder()
+          ..add(Uint8List.sublistView(data, data.length - keep));
+        return;
+      }
+      if (magicIndex > 0) {
+        data = Uint8List.sublistView(data, magicIndex);
+      }
+      // Minimum header: 4 magic + 1 type + 4 metaLen + 4 dataLen = 13
+      if (data.length < 13) {
+        _rxBuffers[deviceId] = BytesBuilder()..add(data);
+        return;
+      }
+      final type = data[4];
+      final metaLen = ByteData.sublistView(data, 5, 9).getUint32(0, Endian.big);
+      final dataLen = ByteData.sublistView(data, 9, 13).getUint32(0, Endian.big);
+      final frameLen = 13 + metaLen + dataLen;
+      if (data.length < frameLen) {
+        _rxBuffers[deviceId] = BytesBuilder()..add(data);
+        return;
+      }
+
+      final metaBytes = Uint8List.sublistView(data, 13, 13 + metaLen);
+      final payloadBytes =
+          Uint8List.sublistView(data, 13 + metaLen, frameLen);
+      data = Uint8List.sublistView(data, frameLen);
+
+      Map<String, dynamic> meta = const {};
+      try {
+        meta = jsonDecode(utf8.decode(metaBytes)) as Map<String, dynamic>;
+      } catch (_) {}
+
+      await _emitReceived(deviceId, type, meta, payloadBytes);
+    }
+  }
+
+  int _indexOfMagic(Uint8List data) {
+    for (var i = 0; i <= data.length - 4; i++) {
+      if (data[i] == _magic[0] &&
+          data[i + 1] == _magic[1] &&
+          data[i + 2] == _magic[2] &&
+          data[i + 3] == _magic[3]) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  Future<void> _emitReceived(
+    String deviceId,
+    int type,
+    Map<String, dynamic> meta,
+    Uint8List payloadBytes,
+  ) async {
+    final id = DateTime.now().microsecondsSinceEpoch.toString();
+    if (type == _typeFile) {
+      final rawName = (meta['name'] as String?) ?? 'received_file';
+      final fileName = AppUtils.sanitizeFileName(rawName);
+      try {
+        final dir = await getApplicationDocumentsDirectory();
+        final dest = File('${dir.path}/$fileName');
+        await dest.writeAsBytes(payloadBytes, flush: true);
+        _receivedPayloadsController.add(
+          PayloadModel(
+            id: id,
+            kind: PayloadKind.file,
+            direction: PayloadDirection.received,
+            name: fileName,
+            path: dest.path,
+            sizeBytes: payloadBytes.length,
+            createdAt: DateTime.now(),
+          ),
+        );
+      } catch (e) {
+        _receivedPayloadsController.add(
+          PayloadModel(
+            id: id,
+            kind: PayloadKind.file,
+            direction: PayloadDirection.received,
+            name: fileName,
+            sizeBytes: payloadBytes.length,
+            createdAt: DateTime.now(),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Text (or unknown treated as text)
+    final text = utf8.decode(payloadBytes, allowMalformed: true);
+    _receivedPayloadsController.add(
+      PayloadModel(
+        id: id,
+        kind: PayloadKind.text,
+        direction: PayloadDirection.received,
+        text: text,
+        sizeBytes: payloadBytes.length,
+        createdAt: DateTime.now(),
+      ),
     );
-    _receivedPayloadsController.add(payload);
   }
 
   @override

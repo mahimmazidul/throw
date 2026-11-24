@@ -5,6 +5,13 @@ All notable changes to Throw are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9]
+
+- Fix Android release build by enforcing compileSdk 37 across app/plugins and consolidating Gradle config.
+- Fix Bluetooth file sharing: add framed transfer protocol with file metadata, reassembly, and disk save on receive.
+- Add Android share-sheet intake (SEND/SEND_MULTIPLE) via receive_sharing_intent, with pending shared-items UI in Home.
+- Stabilize screenshot smoke test to avoid CI flakiness from late font/system callbacks.
+
 ## [1.0.8]
 
 - Restore the Android app label resource and align the app version with the release tag.

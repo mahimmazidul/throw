@@ -5,6 +5,7 @@ import 'core/theme.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/device_provider.dart';
 import 'providers/locale_provider.dart';
+import 'providers/share_inbox_provider.dart';
 import 'providers/transfer_provider.dart';
 import 'screens/discover_screen.dart';
 import 'screens/home_screen.dart';
@@ -22,6 +23,7 @@ class ThrowApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => DeviceProvider()),
         ChangeNotifierProvider(create: (_) => TransferProvider()),
+        ChangeNotifierProvider(create: (_) => ShareInboxProvider()..initialize()),
       ],
       child: Consumer<LocaleProvider>(
         builder: (context, localeProvider, _) {

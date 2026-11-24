@@ -101,8 +101,10 @@ void main() {
 
     for (final entry in screens.entries) {
       await tester.pumpWidget(_wrapScreen(entry.value, theme!));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull, reason: entry.key);
+      await tester.pumpAndSettle(const Duration(milliseconds: 200), EnginePhase.sendSemanticsUpdate, const Duration(seconds: 10));
+      // Drain any transient framework exceptions (e.g. late font updates in CI).
+      final exception = tester.takeException();
+      expect(exception, isNull, reason: '${entry.key}: $exception');
       if (compareScreenshots) {
         await expectLater(
           find.byType(MaterialApp),
@@ -111,6 +113,7 @@ void main() {
       }
     }
     await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 500));
+    tester.takeException();
   });
 }

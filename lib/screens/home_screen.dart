@@ -1,11 +1,15 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/device_model.dart';
 import '../providers/device_provider.dart';
+import '../providers/share_inbox_provider.dart';
 import '../providers/transfer_provider.dart';
 
 /// Home screen for quick text/clipboard and file sharing.
@@ -60,12 +64,45 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _sendSharedInbox(
+    TransferProvider transferProvider,
+    ShareInboxProvider shareInbox,
+  ) async {
+    final target = _selectedDevice;
+    if (target == null || !shareInbox.hasPending) return;
+
+    final items = List<SharedMediaFile>.from(shareInbox.sharedFiles);
+    for (final item in items) {
+      if (item.type == SharedMediaType.text ||
+          item.type == SharedMediaType.url) {
+        final text = item.path.trim();
+        if (text.isNotEmpty) {
+          await transferProvider.sendText(target, text);
+        }
+        continue;
+      }
+
+      final file = File(item.path);
+      if (!await file.exists()) continue;
+      final size = await file.length();
+      final name = item.path.split(RegExp(r'[/\\]')).last;
+      await transferProvider.sendFile(
+        target,
+        filePath: file.path,
+        fileName: name,
+        sizeBytes: size,
+      );
+    }
+    shareInbox.clear();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final deviceProvider = context.watch<DeviceProvider>();
     final transferProvider = context.watch<TransferProvider>();
+    final shareInbox = context.watch<ShareInboxProvider>();
     final connected = deviceProvider.connectedDevices;
 
     if (_selectedDevice != null && !connected.contains(_selectedDevice)) {
@@ -137,6 +174,71 @@ class _HomeScreenState extends State<HomeScreen> {
                   .toList(),
               onChanged: (value) => setState(() => _selectedDevice = value),
             ),
+          if (shareInbox.hasPending) ...[
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.inbox_rounded,
+                            color: theme.colorScheme.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Shared to Throw (${shareInbox.sharedFiles.length})',
+                            style: theme.textTheme.titleMedium,
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Clear',
+                          onPressed: shareInbox.clear,
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ...shareInbox.sharedFiles.take(3).map((f) {
+                      final isText = f.type == SharedMediaType.text ||
+                          f.type == SharedMediaType.url;
+                      final label = isText
+                          ? f.path
+                          : f.path.split(RegExp(r'[/\\]')).last;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      );
+                    }),
+                    if (shareInbox.sharedFiles.length > 3)
+                      Text(
+                        '+${shareInbox.sharedFiles.length - 3} more',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    FilledButton.icon(
+                      onPressed: _selectedDevice == null
+                          ? null
+                          : () => _sendSharedInbox(transferProvider, shareInbox),
+                      icon: const Icon(Icons.send_rounded),
+                      label: const Text('Send shared items'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           Card(
             child: Padding(
