@@ -15,14 +15,13 @@ dependencies:
 
   # Core transfer stack
   nearby_connections: ^4.3.0 # Android only (WiFi Direct, ~250 Mbps)
-  bluetooth_low_energy: ^6.2.1 # Desktop + Android fallback (BLE)
+  bluetooth_low_energy: ^6.2.1 # Desktop BLE (Android uses nearby_connections)
   file_picker: ^8.1.2
   permission_handler: ^11.0.0
   open_file: ^3.3.2
   receive_sharing_intent: ^1.8.0 # Android only
   path_provider: ^2.1.0
   provider: ^6.1.0
-  shared_preferences: ^2.3.0 # language, theme, device name survive relaunch
 
   # Utilities
   url_launcher: ^6.3.2

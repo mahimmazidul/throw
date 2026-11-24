@@ -23,11 +23,11 @@ subprojects {
         // Some plugins ship with an older compileSdk, which breaks dependency
         // metadata checks (e.g. file_picker vs flutter_plugin_android_lifecycle).
         //
-        // The threshold must be 37, not 36: shared_preferences_android declares
-        // exactly 36 and depends on androidx.jni, which requires its consumers
-        // to compile against API 37 or later. A `< 36` guard let it through and
-        // failed :shared_preferences_android:checkReleaseAarMetadata on the
-        // v1.1.0 release build while Linux and Windows went green.
+        // The floor is deliberately 37, not 36: bluetooth_low_energy_android's
+        // Kotlin does not type-check against API 37 (nullable scanner and
+        // advertiser), so pinning plugins *up* is what keeps this build green.
+        // Anything that needs a different SDK is a dependency-level decision,
+        // not something to paper over here.
         extensions.findByType(LibraryExtension::class.java)?.apply {
             if (compileSdk == null || (compileSdk ?: 0) < 37) {
                 compileSdk = 37

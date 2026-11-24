@@ -3,8 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:throw_app/core/preferences.dart';
 import 'package:throw_app/models/device_model.dart';
 import 'package:throw_app/models/payload_model.dart';
@@ -53,6 +51,21 @@ class _NullService implements TransferService {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  // Every test gets its own file in a temp directory; nothing touches the real
+  // app-support path.
+  late Directory tempDir;
+
+  setUp(() async {
+    tempDir = await Directory.systemTemp.createTemp('throw_prefs_test');
+  });
+
+  tearDown(() async {
+    if (tempDir.existsSync()) await tempDir.delete(recursive: true);
+  });
+
+  Future<AppPreferences> store({String name = 'prefs.json'}) =>
+      AppPreferences.atFile(File('${tempDir.path}/$name'));
+
   group('AppPreferences.inMemory', () {
     test('stores nothing but never throws', () async {
       final prefs = AppPreferences.inMemory();
@@ -65,41 +78,64 @@ void main() {
     });
   });
 
-  group('AppPreferences on the platform store', () {
-    setUp(() => SharedPreferences.setMockInitialValues({}));
-
+  group('AppPreferences on the file store', () {
     test('round-trips language, theme and device name', () async {
-      final prefs = await AppPreferences.load();
+      final prefs = await store();
       await prefs.setLocaleCode('bn');
       await prefs.setThemeModeIndex(ThemeMode.light.index);
       await prefs.setDeviceName('Mahim Desk');
 
-      final reopened = await AppPreferences.load();
+      // A second store over the same file simulates a relaunch.
+      final reopened = await store();
       expect(reopened.localeCode, 'bn');
       expect(reopened.themeModeIndex, ThemeMode.light.index);
       expect(reopened.deviceName, 'Mahim Desk');
     });
 
-    test('reads values saved by a previous run', () async {
-      SharedPreferences.setMockInitialValues({
-        'locale': 'bn',
-        'themeMode': ThemeMode.light.index,
-        'deviceName': 'Old Name',
-      });
-      final prefs = await AppPreferences.load();
-      expect(prefs.localeCode, 'bn');
-      expect(prefs.themeModeIndex, ThemeMode.light.index);
-      expect(prefs.deviceName, 'Old Name');
+    test('missing file reads as empty rather than throwing', () async {
+      final prefs = await store(name: 'never-written.json');
+      expect(prefs.localeCode, isNull);
+      expect(prefs.themeModeIndex, isNull);
+      expect(prefs.deviceName, isNull);
+    });
+
+    test('a corrupt file resets settings instead of breaking startup', () async {
+      final file = File('${tempDir.path}/corrupt.json');
+      await file.writeAsString('{not json at all');
+      final prefs = await AppPreferences.atFile(file);
+      expect(prefs.localeCode, isNull);
+
+      // And the store still works afterwards.
+      await prefs.setDeviceName('Recovered');
+      expect((await AppPreferences.atFile(file)).deviceName, 'Recovered');
+    });
+
+    test('writes are atomic: no .tmp file is left behind', () async {
+      final prefs = await store();
+      await prefs.setDeviceName('A');
+      await prefs.setDeviceName('B');
+      final leftovers = tempDir
+          .listSync()
+          .where((e) => e.path.endsWith('.tmp'))
+          .toList();
+      expect(leftovers, isEmpty);
+      expect((await store()).deviceName, 'B');
+    });
+
+    test('creates the parent directory when it does not exist', () async {
+      final nested = '${tempDir.path}/a/b/c/prefs.json';
+      final prefs = await AppPreferences.atFile(File(nested));
+      await prefs.setLocaleCode('bn');
+      expect(File(nested).existsSync(), isTrue);
     });
   });
 
   group('LocaleProvider persistence', () {
     test('restore() applies a saved locale and theme', () async {
-      SharedPreferences.setMockInitialValues({
-        'locale': 'bn',
-        'themeMode': ThemeMode.light.index,
-      });
-      final prefs = await AppPreferences.load();
+      final seed = await store();
+      await seed.setLocaleCode('bn');
+      await seed.setThemeModeIndex(ThemeMode.light.index);
+      final prefs = await store();
       final provider = LocaleProvider(preferences: prefs);
       expect(provider.locale.languageCode, 'en');
       expect(provider.themeMode, ThemeMode.dark);
@@ -110,8 +146,7 @@ void main() {
     });
 
     test('changes write through to the store', () async {
-      SharedPreferences.setMockInitialValues({});
-      final prefs = await AppPreferences.load();
+      final prefs = await store();
       final provider = LocaleProvider(preferences: prefs);
 
       provider.toggleLocale();
@@ -121,11 +156,10 @@ void main() {
     });
 
     test('restore() ignores corrupt or unsupported saved values', () async {
-      SharedPreferences.setMockInitialValues({
-        'locale': 'xx',
-        'themeMode': 99,
-      });
-      final prefs = await AppPreferences.load();
+      final seed = await store();
+      await seed.setLocaleCode('xx');
+      await seed.setThemeModeIndex(99);
+      final prefs = await store();
       final provider = LocaleProvider(preferences: prefs);
 
       provider.restore();
@@ -151,8 +185,9 @@ void main() {
 
   group('DeviceProvider name persistence', () {
     test('a saved name wins over the platform-reported one', () async {
-      SharedPreferences.setMockInitialValues({'deviceName': 'Work Laptop'});
-      final prefs = await AppPreferences.load();
+      final seed = await store();
+      await seed.setDeviceName('Work Laptop');
+      final prefs = await store();
       final provider = DeviceProvider(
         service: _NullService(),
         preferences: prefs,
@@ -164,8 +199,7 @@ void main() {
     });
 
     test('renaming persists', () async {
-      SharedPreferences.setMockInitialValues({});
-      final prefs = await AppPreferences.load();
+      final prefs = await store();
       final provider = DeviceProvider(
         service: _NullService(),
         preferences: prefs,
