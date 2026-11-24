@@ -62,7 +62,7 @@ abstract final class ThrowColors {
 /// omitted the text button, navigation bar and navigation rail themes from
 /// [light], so light mode silently fell back to stock Material shapes.
 abstract final class ThrowTheme {
-  /// Hind Siliguri type scale — weights carry hierarchy, sizes follow M3.
+  /// Plus Jakarta Sans type scale — clean, modern, readable.
   static TextTheme _typeScale() => const TextTheme(
         displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w700, height: 1.1),
         displayMedium: TextStyle(fontSize: 45, fontWeight: FontWeight.w700, height: 1.1),
@@ -124,7 +124,7 @@ abstract final class ThrowTheme {
       focusColor: _focusWash,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
-      textTheme: GoogleFonts.hindSiliguriTextTheme(_typeScale()).apply(
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(_typeScale()).apply(
         bodyColor: ThrowColors.text,
         displayColor: ThrowColors.text,
       ),
@@ -150,7 +150,7 @@ abstract final class ThrowTheme {
           minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
-          textStyle: GoogleFonts.hindSiliguri(
+          textStyle: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -163,7 +163,7 @@ abstract final class ThrowTheme {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           side: const BorderSide(color: ThrowColors.border),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
-          textStyle: GoogleFonts.hindSiliguri(
+          textStyle: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -174,7 +174,7 @@ abstract final class ThrowTheme {
           foregroundColor: ThrowColors.accent,
           minimumSize: const Size(48, 48),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
-          textStyle: GoogleFonts.hindSiliguri(
+          textStyle: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -182,7 +182,7 @@ abstract final class ThrowTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: ThrowColors.surfaceHigh,
-        contentTextStyle: GoogleFonts.hindSiliguri(
+        contentTextStyle: GoogleFonts.plusJakartaSans(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: ThrowColors.text,
@@ -252,7 +252,7 @@ abstract final class ThrowTheme {
       focusColor: _lightFocusWash,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
-      textTheme: GoogleFonts.hindSiliguriTextTheme(_typeScale()).apply(
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(_typeScale()).apply(
         bodyColor: ThrowColors.lightText,
         displayColor: ThrowColors.lightText,
       ),
@@ -282,7 +282,7 @@ abstract final class ThrowTheme {
           minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
-          textStyle: GoogleFonts.hindSiliguri(
+          textStyle: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -295,7 +295,7 @@ abstract final class ThrowTheme {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           side: const BorderSide(color: ThrowColors.lightBorder),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
-          textStyle: GoogleFonts.hindSiliguri(
+          textStyle: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -306,7 +306,7 @@ abstract final class ThrowTheme {
           foregroundColor: ThrowColors.accent,
           minimumSize: const Size(48, 48),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
-          textStyle: GoogleFonts.hindSiliguri(
+          textStyle: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -314,7 +314,7 @@ abstract final class ThrowTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: ThrowColors.lightSurfaceHigh,
-        contentTextStyle: GoogleFonts.hindSiliguri(
+        contentTextStyle: GoogleFonts.plusJakartaSans(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: ThrowColors.lightText,

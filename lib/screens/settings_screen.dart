@@ -149,14 +149,29 @@ class SettingsScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text(
-            l10n.navSettings,
-            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Manage your device, language, and appearance.',
-            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.asset('assets/logo.png', width: 32, height: 32),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.navSettings,
+                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    Text(
+                      'Manage your device, language, and appearance.',
+                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
           Card(

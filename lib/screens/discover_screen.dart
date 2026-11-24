@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/permissions.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/device_provider.dart';
 import '../widgets/nearby_device_list.dart';
@@ -38,6 +39,11 @@ class DiscoverScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.asset('assets/logo.png', width: 32, height: 32),
+                      ),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           l10n.navDiscover,
@@ -86,14 +92,37 @@ class DiscoverScreen extends StatelessWidget {
               const SizedBox(height: 12),
               Card(
                 color: theme.colorScheme.errorContainer,
-                child: ListTile(
-                  title: Text(
-                    provider.error!,
-                    style: TextStyle(color: theme.colorScheme.onErrorContainer),
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: provider.clearError,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.error_outline_rounded, color: theme.colorScheme.onErrorContainer),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              provider.error!,
+                              style: TextStyle(color: theme.colorScheme.onErrorContainer),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded),
+                            onPressed: provider.clearError,
+                            color: theme.colorScheme.onErrorContainer,
+                          ),
+                        ],
+                      ),
+                      if (provider.error!.toLowerCase().contains('settings')) ...[
+                        const SizedBox(height: 8),
+                        FilledButton.tonal(
+                          onPressed: () => Permissions.openSettings(),
+                          child: const Text('Open system settings'),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),

@@ -72,6 +72,13 @@ class AdaptiveNav extends StatelessWidget {
             selectedIndex: selectedIndex,
             onDestinationSelected: onDestinationSelected,
             backgroundColor: theme.colorScheme.surface,
+            leading: Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 8),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset('assets/logo.png', width: 36, height: 36),
+              ),
+            ),
             destinations: destinations
                 .map(
                   (d) => NavigationRailDestination(

@@ -10,6 +10,6 @@ import 'app.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
-  await GoogleFonts.pendingFonts([GoogleFonts.hindSiliguri()]);
+  await GoogleFonts.pendingFonts([GoogleFonts.plusJakartaSans()]);
   runApp(const ThrowApp());
 }

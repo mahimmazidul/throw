@@ -13,7 +13,7 @@
   <link rel="icon" type="image/png" href="throw-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg:#14171F;--bg2:#1B1F29;--bg3:#222632;--border:#282D3A;--text:#E4E8F0;--muted:#98A0B3;
@@ -21,12 +21,12 @@
       --radius:16px;
     }
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+    body{font-family:"Plus Jakarta Sans",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
     a{color:inherit;text-decoration:none}
     .wrap{width:min(1120px,calc(100% - 40px));margin:0 auto}
     .nav{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);background:rgba(20,23,31,.72);border-bottom:1px solid rgba(40,45,58,.7)}
     .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 0;gap:16px}
-    .brand{display:flex;align-items:center;gap:10px;font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:1.25rem}
+    .brand{display:flex;align-items:center;gap:10px;font-family:"Plus Jakarta Sans",sans-serif;font-weight:700;font-size:1.25rem}
     .brand img{width:34px;height:34px;border-radius:10px}
     .nav-links{display:flex;gap:18px;align-items:center;color:var(--muted);font-size:.92rem}
     .nav-links a:hover{color:var(--text)}
@@ -39,7 +39,7 @@
     .hero::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(139,124,247,.18),transparent 65%);pointer-events:none}
     .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
     .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(139,124,247,.12);color:var(--accent2);font-size:.78rem;font-weight:600;margin-bottom:18px;border:1px solid rgba(139,124,247,.2)}
-    h1{font-family:"Space Grotesk",sans-serif;font-size:clamp(2.4rem,6vw,4.4rem);line-height:1.05;letter-spacing:-.03em;margin-bottom:18px}
+    h1{font-family:"Plus Jakarta Sans",sans-serif;font-size:clamp(2.4rem,6vw,4.4rem);line-height:1.05;letter-spacing:-.03em;margin-bottom:18px}
     .grad{background:linear-gradient(95deg,#fff 10%,#dcd4ff 45%,#9b8cff 85%);-webkit-background-clip:text;background-clip:text;color:transparent}
     .lead{font-size:1.05rem;color:var(--muted);max-width:620px;margin-bottom:28px}
     .hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:22px}
@@ -49,7 +49,7 @@
     .hero-card{background:linear-gradient(180deg,rgba(34,38,50,.9),rgba(27,31,41,.95));border:1px solid var(--border);border-radius:24px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
     .hero-card img{width:100%;border-radius:16px;display:block;border:1px solid rgba(255,255,255,.04)}
     .section{padding:56px 0}
-    .section-title{font-family:"Space Grotesk",sans-serif;font-size:clamp(1.7rem,3.5vw,2.6rem);letter-spacing:-.02em;margin-bottom:10px}
+    .section-title{font-family:"Plus Jakarta Sans",sans-serif;font-size:clamp(1.7rem,3.5vw,2.6rem);letter-spacing:-.02em;margin-bottom:10px}
     .section-sub{color:var(--muted);max-width:680px;margin-bottom:28px}
     .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
     .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
@@ -58,7 +58,7 @@
     .icon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(139,124,247,.14);color:var(--accent2);margin-bottom:14px;font-size:1.1rem}
     .dl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
     .dl-card{background:linear-gradient(180deg,var(--bg2),#191d27);border:1px solid var(--border);border-radius:18px;padding:22px}
-    .dl-card h3{font-family:"Space Grotesk",sans-serif;font-size:1.2rem;margin-bottom:4px}
+    .dl-card h3{font-family:"Plus Jakarta Sans",sans-serif;font-size:1.2rem;margin-bottom:4px}
     .dl-card .ver{color:var(--accent2);font-size:.8rem;font-weight:600;margin-bottom:14px}
     .dl-links{display:flex;flex-direction:column;gap:8px}
     .dl-link{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(40,45,58,.8);color:var(--text);font-size:.88rem;font-weight:500}
@@ -92,13 +92,13 @@
       <div>
         <div class="eyebrow"><span class="dot"></span> Offline • Direct • Open Source</div>
         <h1><span class="grad">Throw anything</span><br>to anyone nearby.</h1>
-        <p class="lead">Offline file and text sharing for Android, Windows, and Linux. Files move directly between devices over WiFi Direct or Bluetooth — never through a server.</p>
+        <p class="lead">Offline file and text sharing for Android, Windows, and Linux. Files move directly between nearby devices over WiFi Direct or Bluetooth.</p>
         <div class="hero-actions">
           <a class="btn btn-primary" id="hero-download" href="https://github.com/mahimmazidul/throw/releases/latest">Download latest</a>
           <a class="btn btn-ghost" href="https://github.com/mahimmazidul/throw">View on GitHub</a>
         </div>
         <div class="meta">
-          <span><span class="dot"></span> No internet required</span>
+          <span><span class="dot"></span> Direct local transfer</span>
           <span>MIT License</span>
           <span id="latest-version">Latest: v1.0.10</span>
         </div>
@@ -115,7 +115,7 @@
       <p class="section-sub">Throw keeps transfers simple: discover nearby devices, pick files or text, and send directly device-to-device.</p>
       <div class="grid-3">
         <div class="card"><div class="icon">⚡</div><h3>WiFi Direct speed</h3><p>Android-to-Android transfers use Nearby Connections over WiFi Direct for fast local sharing.</p></div>
-        <div class="card"><div class="icon">🔒</div><h3>No server, no cloud</h3><p>Your files move directly between devices. No account, no upload, no internet dependency.</p></div>
+        <div class="card"><div class="icon">🔒</div><h3>No server, no cloud</h3><p>Your files move directly between devices for private local sharing.</p></div>
         <div class="card"><div class="icon">📦</div><h3>Multiple files</h3><p>Pick multiple files at once or share them into Throw from the Android share sheet and send to a connected device.</p></div>
       </div>
     </div>

@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 
+import '../core/permissions.dart';
 import '../models/device_model.dart';
 import '../models/transfer_model.dart';
 import '../services/transfer_service.dart';
@@ -33,6 +36,35 @@ class DeviceProvider extends ChangeNotifier {
         notifyListeners();
       }
     });
+    unawaited(_initializeDeviceName());
+  }
+
+  Future<void> _initializeDeviceName() async {
+    try {
+      final plugin = DeviceInfoPlugin();
+      String? name;
+      if (Platform.isAndroid) {
+        final info = await plugin.androidInfo;
+        final model = info.model.trim();
+        final brand = info.brand.trim();
+        name = model.isNotEmpty ? (brand.isNotEmpty && !model.toLowerCase().startsWith(brand.toLowerCase()) ? '$brand $model' : model) : info.device;
+      } else if (Platform.isWindows) {
+        final info = await plugin.windowsInfo;
+        name = info.computerName;
+      } else if (Platform.isLinux) {
+        final info = await plugin.linuxInfo;
+        name = info.prettyName.isNotEmpty ? info.prettyName : info.name;
+      } else if (Platform.isMacOS) {
+        final info = await plugin.macOsInfo;
+        name = info.computerName;
+      }
+      if (name != null && name.trim().isNotEmpty) {
+        _deviceName = name.trim();
+        notifyListeners();
+      }
+    } catch (_) {
+      // Keep default name.
+    }
   }
 
   List<DeviceModel> get devices => List.unmodifiable(_devicesMap.values);
@@ -60,6 +92,15 @@ class DeviceProvider extends ChangeNotifier {
 
   Future<void> startAdvertising() async {
     _error = null;
+    final granted = await Permissions.ensureNearbyAccess();
+    if (!granted) {
+      _error = await Permissions.isPermanentlyDenied()
+          ? 'Nearby permission is required. Open system settings to allow it.'
+          : 'Nearby permission is required to make this device visible.';
+      _isAdvertising = false;
+      notifyListeners();
+      return;
+    }
     try {
       await _service.startAdvertising(deviceName: _deviceName);
       _isAdvertising = true;
@@ -82,6 +123,15 @@ class DeviceProvider extends ChangeNotifier {
 
   Future<void> startDiscovery() async {
     _error = null;
+    final granted = await Permissions.ensureNearbyAccess();
+    if (!granted) {
+      _error = await Permissions.isPermanentlyDenied()
+          ? 'Nearby permission is required. Open system settings to allow it.'
+          : 'Nearby permission is required to discover nearby devices.';
+      _isDiscovering = false;
+      notifyListeners();
+      return;
+    }
     try {
       await _service.startDiscovery();
       _isDiscovering = true;

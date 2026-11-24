@@ -161,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       active: connected.isNotEmpty,
                     ),
                     const _StatusChip(icon: Icons.wifi_tethering_rounded, label: 'WiFi Direct / Bluetooth', active: true),
-                    const _StatusChip(icon: Icons.shield_outlined, label: 'Offline, no server', active: true),
+                    const _StatusChip(icon: Icons.shield_outlined, label: 'Direct local sharing', active: true),
                   ],
                 ),
               ],
