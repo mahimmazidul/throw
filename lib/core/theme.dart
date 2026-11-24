@@ -46,47 +46,46 @@ abstract final class ThrowTheme {
       );
 
   static ThemeData dark() {
-    const c = ThrowColors();
     final scheme = ColorScheme.fromSeed(
-      seedColor: c.accent,
+      seedColor: ThrowColors.accent,
       brightness: Brightness.dark,
     ).copyWith(
-      primary: c.accent,
-      onPrimary: c.onAccent,
+      primary: ThrowColors.accent,
+      onPrimary: ThrowColors.onAccent,
       primaryContainer: const Color(0xFF37306B),
       onPrimaryContainer: const Color(0xFFE8E1FF),
-      secondary: c.secondary,
-      onSecondary: c.bg,
-      surface: c.bg,
-      onSurface: c.text,
-      surfaceContainerLow: c.surface,
-      surfaceContainer: c.surface,
-      surfaceContainerHigh: c.surfaceHigh,
-      surfaceContainerHighest: c.surfaceHigh,
-      outline: c.border,
-      outlineVariant: c.border,
+      secondary: ThrowColors.secondary,
+      onSecondary: ThrowColors.bg,
+      surface: ThrowColors.bg,
+      onSurface: ThrowColors.text,
+      surfaceContainerLow: ThrowColors.surface,
+      surfaceContainer: ThrowColors.surface,
+      surfaceContainerHigh: ThrowColors.surfaceHigh,
+      surfaceContainerHighest: ThrowColors.surfaceHigh,
+      outline: ThrowColors.border,
+      outlineVariant: ThrowColors.border,
     );
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: scheme,
-      scaffoldBackgroundColor: c.bg,
-      textTheme: GoogleFonts.hindSiliguriTextTheme(_typeScale()).apply(color: c.text),
-      dividerTheme: const DividerThemeData(color: c.border, thickness: 1, space: 1),
+      scaffoldBackgroundColor: ThrowColors.bg,
+      textTheme: GoogleFonts.hindSiliguriTextTheme(_typeScale()).apply(color: ThrowColors.text),
+      dividerTheme: const DividerThemeData(color: ThrowColors.border, thickness: 1, space: 1),
       cardTheme: CardThemeData(
-        color: c.surface,
+        color: ThrowColors.surface,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: c.border),
+          side: const BorderSide(color: ThrowColors.border),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: c.accent,
-          foregroundColor: c.onAccent,
+          backgroundColor: ThrowColors.accent,
+          foregroundColor: ThrowColors.onAccent,
           minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -98,10 +97,10 @@ abstract final class ThrowTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: c.text,
+          foregroundColor: ThrowColors.text,
           minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          side: const BorderSide(color: c.border),
+          side: const BorderSide(color: ThrowColors.border),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           textStyle: GoogleFonts.hindSiliguri(
             fontSize: 14,
@@ -111,7 +110,7 @@ abstract final class ThrowTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: c.accent,
+          foregroundColor: ThrowColors.accent,
           minimumSize: const Size(48, 48),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           textStyle: GoogleFonts.hindSiliguri(
@@ -121,17 +120,17 @@ abstract final class ThrowTheme {
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: c.surfaceHigh,
+        backgroundColor: ThrowColors.surfaceHigh,
         contentTextStyle: GoogleFonts.hindSiliguri(
           fontSize: 14,
           fontWeight: FontWeight.w400,
-          color: c.text,
+          color: ThrowColors.text,
         ),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: c.surface,
+        backgroundColor: ThrowColors.surface,
         surfaceTintColor: Colors.transparent,
         showDragHandle: false,
         shape: RoundedRectangleBorder(
@@ -139,36 +138,36 @@ abstract final class ThrowTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: c.surface,
+        backgroundColor: ThrowColors.surface,
         elevation: 0,
-        indicatorColor: c.surfaceHigh,
+        indicatorColor: ThrowColors.surfaceHigh,
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
-            color: states.contains(WidgetState.selected) ? c.accent : c.secondary,
+            color: states.contains(WidgetState.selected) ? ThrowColors.accent : ThrowColors.secondary,
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => GoogleFonts.hindSiliguri(
             fontSize: 11,
             fontWeight: FontWeight.w500,
-            color: states.contains(WidgetState.selected) ? c.accent : c.secondary,
+            color: states.contains(WidgetState.selected) ? ThrowColors.accent : ThrowColors.secondary,
           ),
         ),
       ),
       navigationRailTheme: NavigationRailThemeData(
-        backgroundColor: c.surface,
+        backgroundColor: ThrowColors.surface,
         elevation: 0,
-        indicatorColor: c.surfaceHigh,
+        indicatorColor: ThrowColors.surfaceHigh,
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
-            color: states.contains(WidgetState.selected) ? c.accent : c.secondary,
+            color: states.contains(WidgetState.selected) ? ThrowColors.accent : ThrowColors.secondary,
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => GoogleFonts.hindSiliguri(
             fontSize: 11,
             fontWeight: FontWeight.w500,
-            color: states.contains(WidgetState.selected) ? c.accent : c.secondary,
+            color: states.contains(WidgetState.selected) ? ThrowColors.accent : ThrowColors.secondary,
           ),
         ),
       ),
@@ -176,43 +175,42 @@ abstract final class ThrowTheme {
   }
 
   static ThemeData light() {
-    const c = ThrowColors();
     final scheme = ColorScheme.fromSeed(
-      seedColor: c.accent,
+      seedColor: ThrowColors.accent,
       brightness: Brightness.light,
     ).copyWith(
-      primary: c.accent,
-      onPrimary: c.onAccent,
-      surface: c.lightSurface,
-      onSurface: c.lightText,
-      surfaceContainerLow: c.lightSurface,
-      surfaceContainer: c.lightSurface,
-      surfaceContainerHigh: c.lightBg,
-      surfaceContainerHighest: c.lightBg,
-      outline: c.lightBorder,
-      outlineVariant: c.lightBorder,
+      primary: ThrowColors.accent,
+      onPrimary: ThrowColors.onAccent,
+      surface: ThrowColors.lightSurface,
+      onSurface: ThrowColors.lightText,
+      surfaceContainerLow: ThrowColors.lightSurface,
+      surfaceContainer: ThrowColors.lightSurface,
+      surfaceContainerHigh: ThrowColors.lightBg,
+      surfaceContainerHighest: ThrowColors.lightBg,
+      outline: ThrowColors.lightBorder,
+      outlineVariant: ThrowColors.lightBorder,
     );
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: scheme,
-      scaffoldBackgroundColor: c.lightBg,
-      textTheme: GoogleFonts.hindSiliguriTextTheme(_typeScale()).apply(color: c.lightText),
-      dividerTheme: const DividerThemeData(color: c.lightBorder, thickness: 1, space: 1),
+      scaffoldBackgroundColor: ThrowColors.lightBg,
+      textTheme: GoogleFonts.hindSiliguriTextTheme(_typeScale()).apply(color: ThrowColors.lightText),
+      dividerTheme: const DividerThemeData(color: ThrowColors.lightBorder, thickness: 1, space: 1),
       cardTheme: CardThemeData(
-        color: c.lightSurface,
+        color: ThrowColors.lightSurface,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: c.lightBorder),
+          side: const BorderSide(color: ThrowColors.lightBorder),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: c.accent,
-          foregroundColor: c.onAccent,
+          backgroundColor: ThrowColors.accent,
+          foregroundColor: ThrowColors.onAccent,
           minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -224,10 +222,10 @@ abstract final class ThrowTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: c.lightText,
+          foregroundColor: ThrowColors.lightText,
           minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          side: const BorderSide(color: c.lightBorder),
+          side: const BorderSide(color: ThrowColors.lightBorder),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           textStyle: GoogleFonts.hindSiliguri(
             fontSize: 14,
@@ -236,17 +234,17 @@ abstract final class ThrowTheme {
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: c.lightSurface,
+        backgroundColor: ThrowColors.lightSurface,
         contentTextStyle: GoogleFonts.hindSiliguri(
           fontSize: 14,
           fontWeight: FontWeight.w400,
-          color: c.lightText,
+          color: ThrowColors.lightText,
         ),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: c.lightSurface,
+        backgroundColor: ThrowColors.lightSurface,
         surfaceTintColor: Colors.transparent,
         showDragHandle: false,
         shape: RoundedRectangleBorder(
