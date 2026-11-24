@@ -42,22 +42,22 @@ class _HomeScreenState extends State<HomeScreen> {
     _textController.clear();
   }
 
-  Future<void> _pickAndSendFile(TransferProvider transferProvider) async {
+  Future<void> _pickAndSendFiles(TransferProvider transferProvider) async {
     final target = _selectedDevice;
     if (target == null) return;
 
-    final result = await FilePicker.platform.pickFiles();
+    final result = await FilePicker.platform.pickFiles(allowMultiple: true);
     if (result == null || result.files.isEmpty) return;
 
-    final file = result.files.first;
-    if (file.path == null) return;
-
-    await transferProvider.sendFile(
-      target,
-      filePath: file.path!,
-      fileName: file.name,
-      sizeBytes: file.size,
-    );
+    for (final file in result.files) {
+      if (file.path == null) continue;
+      await transferProvider.sendFile(
+        target,
+        filePath: file.path!,
+        fileName: file.name,
+        sizeBytes: file.size,
+      );
+    }
   }
 
   @override
@@ -75,83 +75,132 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return SafeArea(
-      child: Padding(
+      child: ListView(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l10n.navHome,
-              style: theme.textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 16),
-            if (connected.isEmpty)
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    l10n.stateNoDevices,
-                    style: theme.textTheme.bodyMedium?.copyWith(
+        children: [
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.asset(
+                  'assets/logo.png',
+                  width: 36,
+                  height: 36,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                l10n.navHome,
+                style: theme.textTheme.headlineSmall,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (connected.isEmpty)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.devices_rounded,
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
-                  ),
-                ),
-              )
-            else
-              DropdownButtonFormField<DeviceModel>(
-                initialValue: _selectedDevice,
-                decoration: InputDecoration(
-                  labelText: l10n.stateConnected,
-                  border: const OutlineInputBorder(),
-                ),
-                items: connected
-                    .map(
-                      (d) => DropdownMenuItem(
-                        value: d,
-                        child: Text(d.name),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        l10n.stateNoDevices,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    )
-                    .toList(),
-                onChanged: (value) => setState(() => _selectedDevice = value),
-              ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _textController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: l10n.sendClipboardHint,
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.paste_rounded),
-                  tooltip: l10n.actionPaste,
-                  onPressed: _pasteFromClipboard,
+                    ),
+                  ],
                 ),
               ),
+            )
+          else
+            DropdownButtonFormField<DeviceModel>(
+              initialValue: _selectedDevice,
+              decoration: InputDecoration(
+                labelText: l10n.stateConnected,
+                border: const OutlineInputBorder(),
+              ),
+              items: connected
+                  .map(
+                    (d) => DropdownMenuItem(
+                      value: d,
+                      child: Text(d.name),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) => setState(() => _selectedDevice = value),
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    controller: _textController,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      hintText: l10n.sendClipboardHint,
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.paste_rounded),
+                        tooltip: l10n.actionPaste,
+                        onPressed: _pasteFromClipboard,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
                     onPressed: _selectedDevice == null
                         ? null
                         : () => _sendText(transferProvider),
                     icon: const Icon(Icons.send_rounded),
                     label: Text(l10n.actionSend),
                   ),
-                ),
-                const SizedBox(width: 12),
-                OutlinedButton.icon(
-                  onPressed: _selectedDevice == null
-                      ? null
-                      : () => _pickAndSendFile(transferProvider),
-                  icon: const Icon(Icons.attach_file_rounded),
-                  label: Text(l10n.actionSend),
-                ),
-              ],
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+              leading: CircleAvatar(
+                backgroundColor:
+                    theme.colorScheme.primary.withValues(alpha: 0.16),
+                child: Icon(
+                  Icons.folder_open_rounded,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              title: Text(l10n.actionSend),
+              subtitle: Text(
+                l10n.speedWifi,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              trailing: FilledButton.tonalIcon(
+                onPressed: _selectedDevice == null
+                    ? null
+                    : () => _pickAndSendFiles(transferProvider),
+                icon: const Icon(Icons.attach_file_rounded),
+                label: Text(l10n.actionSend),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
