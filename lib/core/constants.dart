@@ -1,5 +1,9 @@
 /// App-wide constants: layout, spacing, transfer, and desktop window rules.
 abstract final class AppConstants {
+  static const String appVersion = '1.0.10';
+  static const String githubRepo = 'mahimmazidul/throw';
+  static const String releasesUrl = 'https://github.com/mahimmazidul/throw/releases/latest';
+
   // ── Layout ──────────────────────────────────────────────────────
 
   /// Minimum touch target on every platform, mouse included.

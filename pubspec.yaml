@@ -36,6 +36,9 @@ dependencies:
   window_manager: ^0.3.8 # Desktop window control
   flutter_window_close: ^0.2.2 # Graceful desktop exit
 
+  # Utilities
+  url_launcher: ^6.3.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

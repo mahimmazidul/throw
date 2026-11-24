@@ -25,7 +25,9 @@
         android:name="android.hardware.bluetooth_le"
         android:required="false" />
 
-    <!-- No INTERNET permission on purpose: Throw is local-only. -->
+    <!-- Internet is used only for optional update checks (GitHub releases). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"
