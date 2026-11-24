@@ -16,18 +16,18 @@ class TransferProgressTile extends StatelessWidget {
     this.onCancel,
   });
 
-  String _stateLabel(AppLocalizations l10n, TransferState state) {
-    switch (state) {
-      case TransferState.pending:
-      case TransferState.transferring:
+  String _stateLabel(AppLocalizations l10n, TransferStatus status) {
+    switch (status) {
+      case TransferStatus.pending:
+      case TransferStatus.transferring:
         return l10n.stateTransferring;
-      case TransferState.completed:
+      case TransferStatus.completed:
         return l10n.stateComplete;
-      case TransferState.failed:
+      case TransferStatus.failed:
         return l10n.stateFailed;
-      case TransferState.cancelled:
+      case TransferStatus.cancelled:
         return l10n.stateCancelled;
-      case TransferState.rejected:
+      case TransferStatus.rejected:
         return l10n.stateRejected;
     }
   }
@@ -36,12 +36,13 @@ class TransferProgressTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final isFile = transfer.payload.type == PayloadType.file;
+    final firstPayload =
+        transfer.payloads.isNotEmpty ? transfer.payloads.first : null;
+    final isFile = firstPayload?.type == PayloadType.file;
     final title = isFile
-        ? (transfer.payload.fileName ?? 'file')
-        : (transfer.payload.text ?? '');
-    final isActive = transfer.state == TransferState.pending ||
-        transfer.state == TransferState.transferring;
+        ? (firstPayload?.fileName ?? 'file')
+        : (firstPayload?.text ?? '');
+    final isActive = transfer.isActive;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -53,9 +54,7 @@ class TransferProgressTile extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  transfer.direction == TransferDirection.outgoing
-                      ? Icons.upload_rounded
-                      : Icons.download_rounded,
+                  Icons.swap_horiz_rounded,
                   size: 20,
                   color: theme.colorScheme.primary,
                 ),
@@ -86,7 +85,7 @@ class TransferProgressTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${transfer.device.name} · ${_stateLabel(l10n, transfer.state)}',
+                  '${transfer.peer.name} · ${_stateLabel(l10n, transfer.status)}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),

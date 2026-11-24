@@ -25,8 +25,6 @@ class DeviceCard extends StatelessWidget {
         return Icons.desktop_windows_rounded;
       case DevicePlatform.linux:
         return Icons.laptop_rounded;
-      case DevicePlatform.unknown:
-        return Icons.devices_other_rounded;
     }
   }
 
@@ -35,7 +33,7 @@ class DeviceCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final transportLabel = device.transport == TransportType.wifiDirect
+    final transportLabel = device.channel == TransferChannel.wifiDirect
         ? l10n.speedWifi
         : l10n.speedBluetooth;
 
