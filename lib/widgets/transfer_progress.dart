@@ -9,14 +9,14 @@ import '../models/transfer_model.dart';
 
 /// Displays a single file or text transfer with progress bar, status, and cancel.
 class TransferProgressTile extends StatelessWidget {
-  final TransferModel transfer;
-  final VoidCallback? onCancel;
-
   const TransferProgressTile({
     super.key,
     required this.transfer,
     this.onCancel,
   });
+
+  final TransferModel transfer;
+  final VoidCallback? onCancel;
 
   String _stateLabel(AppLocalizations l10n, TransferStatus status) {
     switch (status) {

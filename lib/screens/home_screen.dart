@@ -2,20 +2,33 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-
-import '../core/theme.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
+import '../core/constants.dart';
+import '../core/theme.dart';
 import '../l10n/app_localizations.dart';
 import '../models/device_model.dart';
 import '../providers/device_provider.dart';
 import '../providers/share_inbox_provider.dart';
 import '../providers/transfer_provider.dart';
+import '../widgets/accent_icon_badge.dart';
+import '../widgets/device_picker.dart';
 import '../widgets/error_banner.dart';
+import '../widgets/received_items_list.dart';
+import '../widgets/screen_header.dart';
 
-/// Home screen for quick text/clipboard and file sharing.
+/// Home: pick a peer, then throw something at it.
+///
+/// Structure follows the reference apps rather than the previous revision:
+///
+///  * the **peer** is the first object on the screen (LocalSend's device grid,
+///    Android's share sheet), not a dropdown;
+///  * the three payload kinds — text, files, share-sheet inbox — are peers of
+///    each other under it, each with one primary action;
+///  * what you **received** is one tab away, with copy/save/open, instead of
+///    being collected into a provider nobody reads.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -33,6 +46,14 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  void _syncSelection(List<DeviceModel> connected) {
+    if (_selectedDevice != null && !connected.contains(_selectedDevice)) {
+      _selectedDevice = connected.isNotEmpty ? connected.first : null;
+    } else if (_selectedDevice == null && connected.isNotEmpty) {
+      _selectedDevice = connected.first;
+    }
+  }
+
   Future<void> _pasteFromClipboard() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
     if (data?.text != null && data!.text!.isNotEmpty) {
@@ -45,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final text = _textController.text.trim();
     if (target == null || text.isEmpty) return;
     await transferProvider.sendText(target, text);
-    _textController.clear();
+    if (mounted) _textController.clear();
   }
 
   Future<void> _pickAndSendFiles(TransferProvider transferProvider) async {
@@ -105,208 +126,121 @@ class _HomeScreenState extends State<HomeScreen> {
     final shareInbox = context.watch<ShareInboxProvider>();
     final connected = deviceProvider.connectedDevices;
 
-    if (_selectedDevice != null && !connected.contains(_selectedDevice)) {
-      _selectedDevice = connected.isNotEmpty ? connected.first : null;
-    } else if (_selectedDevice == null && connected.isNotEmpty) {
-      _selectedDevice = connected.first;
-    }
+    _syncSelection(connected);
+    final canSend = _selectedDevice != null;
 
     return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: ThrowRadius.sheet,
-              // Flat tint, no gradient — one token, one edge, no radiant wash.
-              color: theme.colorScheme.primaryContainer,
-              border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: ThrowRadius.button,
-                      child: Image.asset('assets/logo.png', width: 44, height: 44),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(l10n.appTitle, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
-                          Text(
-                            'Send files and text directly to nearby devices.',
-                            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _StatusChip(
-                      icon: connected.isNotEmpty ? Icons.link_rounded : Icons.link_off_rounded,
-                      label: connected.isNotEmpty
-                          ? l10n.statusConnectedCount(connected.length)
-                          : l10n.statusNoDevice,
-                      active: connected.isNotEmpty,
-                    ),
-                    _StatusChip(icon: Icons.wifi_tethering_rounded, label: l10n.transportBoth, active: true),
-                    _StatusChip(icon: Icons.shield_outlined, label: l10n.featureDirectSharing, active: true),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (transferProvider.error != null) ...[
-            ErrorBanner(error: transferProvider.error!, onDismiss: transferProvider.clearError),
-            const SizedBox(height: 12),
-          ],
-          if (connected.isEmpty)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.14),
-                      child: Icon(Icons.devices_rounded, color: ThrowTheme.accentFg(context)),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        l10n.stateNoDevices,
-                        style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                      ),
-                    ),
-                  ],
-                ),
+      child: DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppConstants.space5,
+                AppConstants.space5,
+                AppConstants.space5,
+                AppConstants.space3,
               ),
-            )
-          else
-            DropdownButtonFormField<DeviceModel>(
-              initialValue: _selectedDevice,
-              decoration: InputDecoration(
-                labelText: l10n.stateConnected,
-                prefixIcon: const Icon(Icons.devices_rounded),
-                border: OutlineInputBorder(borderRadius: ThrowRadius.button),
-              ),
-              items: connected.map((d) => DropdownMenuItem(value: d, child: Text(d.name))).toList(),
-              onChanged: (value) => setState(() => _selectedDevice = value),
-            ),
-          if (shareInbox.hasPending) ...[
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.inbox_rounded, color: theme.colorScheme.primary),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(l10n.shareInboxTitle(shareInbox.sharedFiles.length), style: theme.textTheme.titleMedium)),
-                        IconButton(tooltip: 'Clear', onPressed: shareInbox.clear, icon: const Icon(Icons.close_rounded)),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    ...shareInbox.sharedFiles.take(3).map((f) {
-                      final isText = f.type == SharedMediaType.text || f.type == SharedMediaType.url;
-                      final label = isText ? f.path : f.path.split(RegExp(r'[/\\]')).last;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                      );
-                    }),
-                    if (shareInbox.sharedFiles.length > 3)
-                      Text(l10n.shareInboxMore(shareInbox.sharedFiles.length - 3),
-                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                    const SizedBox(height: 12),
-                    FilledButton.icon(
-                      onPressed: _selectedDevice == null ? null : () => _sendSharedInbox(transferProvider, shareInbox),
-                      icon: const Icon(Icons.send_rounded),
-                      label: Text(l10n.shareInboxSend),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(l10n.sendTextTitle, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _textController,
-                    maxLines: 4,
-                    decoration: InputDecoration(
-                      hintText: l10n.sendClipboardHint,
-                      filled: true,
-                      border: OutlineInputBorder(borderRadius: ThrowRadius.button),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.paste_rounded),
-                        tooltip: l10n.actionPaste,
-                        onPressed: _pasteFromClipboard,
-                      ),
-                    ),
+                  ScreenHeader(
+                    title: l10n.appTitle,
+                    subtitle: l10n.homeTagline,
                   ),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: _selectedDevice == null ? null : () => _sendText(transferProvider),
-                    icon: const Icon(Icons.send_rounded),
-                    label: Text(l10n.actionSend),
+                  const SizedBox(height: AppConstants.space4),
+                  if (connected.isEmpty)
+                    _NoPeersCard(message: l10n.stateNoDevices)
+                  else
+                    DevicePicker(
+                      devices: connected,
+                      selected: _selectedDevice,
+                      onSelected: (device) =>
+                          setState(() => _selectedDevice = device),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppConstants.space3),
+            TabBar(
+              tabs: [
+                Tab(
+                  icon: const Icon(Icons.send_rounded, size: 18),
+                  text: l10n.actionSend,
+                ),
+                Tab(
+                  icon: const Icon(Icons.inbox_rounded, size: 18),
+                  text: l10n.receivedTitle,
+                ),
+              ],
+            ),
+            if (transferProvider.error != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppConstants.space5,
+                  AppConstants.space3,
+                  AppConstants.space5,
+                  0,
+                ),
+                child: ErrorBanner(
+                  error: transferProvider.error!,
+                  onDismiss: transferProvider.clearError,
+                ),
+              ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _SendTab(
+                    l10n: l10n,
+                    theme: theme,
+                    canSend: canSend,
+                    textController: _textController,
+                    onPaste: _pasteFromClipboard,
+                    onSendText: () => _sendText(transferProvider),
+                    onPickFiles: () => _pickAndSendFiles(transferProvider),
+                    shareInbox: shareInbox,
+                    onSendInbox: () =>
+                        _sendSharedInbox(transferProvider, shareInbox),
+                  ),
+                  ReceivedItemsList(
+                    payloads: transferProvider.receivedPayloads,
                   ),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.14),
-                    child: Icon(Icons.insert_drive_file_rounded, color: ThrowTheme.accentFg(context)),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(l10n.sendFilesTitle, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 2),
-                        Text(l10n.sendFilesHint,
-                            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  FilledButton.tonalIcon(
-                    onPressed: _selectedDevice == null ? null : () => _pickAndSendFiles(transferProvider),
-                    icon: const Icon(Icons.attach_file_rounded),
-                    label: Text(l10n.actionPick),
-                  ),
-                ],
-              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shown when nothing is connected: a single tile that says what to do next.
+class _NoPeersCard extends StatelessWidget {
+  const _NoPeersCard({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.space3),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHigh.withValues(alpha: 0.7),
+        borderRadius: ThrowRadius.card,
+      ),
+      child: Row(
+        children: [
+          const AccentIconBadge(icon: Icons.devices_rounded, size: 34),
+          const SizedBox(width: AppConstants.space3),
+          Expanded(
+            child: Text(
+              message,
+              style:
+                  theme.textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
           ),
         ],
@@ -315,40 +249,221 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.icon, required this.label, required this.active});
-  final IconData icon;
-  final String label;
-  final bool active;
+class _SendTab extends StatelessWidget {
+  const _SendTab({
+    required this.l10n,
+    required this.theme,
+    required this.canSend,
+    required this.textController,
+    required this.onPaste,
+    required this.onSendText,
+    required this.onPickFiles,
+    required this.shareInbox,
+    required this.onSendInbox,
+  });
+
+  final AppLocalizations l10n;
+  final ThemeData theme;
+  final bool canSend;
+  final TextEditingController textController;
+  final VoidCallback onPaste;
+  final VoidCallback onSendText;
+  final VoidCallback onPickFiles;
+  final ShareInboxProvider shareInbox;
+  final VoidCallback onSendInbox;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final bg = active
-        ? theme.colorScheme.primary.withValues(alpha: 0.14)
-        : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5);
-    // accentFg: the fill accent is 3.2:1 on this tint and fails AA.
-    final fg = active ? ThrowTheme.accentFg(context) : theme.colorScheme.onSurfaceVariant;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: fg),
-          const SizedBox(width: 6),
-          // Flexible + ellipsis: this chip used to overflow by 22px at 390dp
-          // when the label ran long, because a plain Text has no way to shrink.
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelMedium
-                  ?.copyWith(color: fg, fontWeight: FontWeight.w600),
+    final cs = theme.colorScheme;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+        AppConstants.space5,
+        AppConstants.space4,
+        AppConstants.space5,
+        AppConstants.space5,
+      ),
+      children: [
+        if (!canSend) ...[
+          const NoPeerHint(),
+          const SizedBox(height: AppConstants.space3),
+        ],
+        if (shareInbox.hasPending) ...[
+          _ShareInboxCard(
+            l10n: l10n,
+            theme: theme,
+            shareInbox: shareInbox,
+            enabled: canSend,
+            onSend: onSendInbox,
+          ),
+          const SizedBox(height: AppConstants.space3),
+        ],
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(AppConstants.space4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.sendTextTitle,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: AppConstants.space2),
+                TextField(
+                  controller: textController,
+                  maxLines: 4,
+                  minLines: 2,
+                  decoration: InputDecoration(
+                    hintText: l10n.sendClipboardHint,
+                    filled: true,
+                    fillColor: cs.surfaceContainerHigh.withValues(alpha: 0.5),
+                    contentPadding: const EdgeInsets.all(AppConstants.space3),
+                    border: OutlineInputBorder(
+                      borderRadius: ThrowRadius.card,
+                      borderSide: BorderSide.none,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.paste_rounded, size: 20),
+                      tooltip: l10n.actionPaste,
+                      onPressed: onPaste,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppConstants.space3),
+                FilledButton.icon(
+                  onPressed: canSend ? onSendText : null,
+                  icon: const Icon(Icons.send_rounded, size: 18),
+                  label: Text(l10n.actionSend),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
+        const SizedBox(height: AppConstants.space3),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(AppConstants.space4),
+            child: Row(
+              children: [
+                const AccentIconBadge(
+                  icon: Icons.insert_drive_file_rounded,
+                  size: 46,
+                ),
+                const SizedBox(width: AppConstants.space3),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.sendFilesTitle,
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.sendFilesHint,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: cs.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppConstants.space2),
+                FilledButton.tonalIcon(
+                  onPressed: canSend ? onPickFiles : null,
+                  icon: const Icon(Icons.attach_file_rounded, size: 18),
+                  label: Text(l10n.actionPick),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ShareInboxCard extends StatelessWidget {
+  const _ShareInboxCard({
+    required this.l10n,
+    required this.theme,
+    required this.shareInbox,
+    required this.enabled,
+    required this.onSend,
+  });
+
+  final AppLocalizations l10n;
+  final ThemeData theme;
+  final ShareInboxProvider shareInbox;
+  final bool enabled;
+  final VoidCallback onSend;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = theme.colorScheme;
+    final files = shareInbox.sharedFiles;
+
+    return Card(
+      color: cs.primaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(AppConstants.space3),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                AccentIconBadge(
+                  icon: Icons.inbox_rounded,
+                  size: 34,
+                  emphasis: BadgeEmphasis.solid,
+                ),
+                const SizedBox(width: AppConstants.space3),
+                Expanded(
+                  child: Text(
+                    l10n.shareInboxTitle(files.length),
+                    style: theme.textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                IconButton(
+                  tooltip: l10n.actionClear,
+                  visualDensity: VisualDensity.compact,
+                  onPressed: shareInbox.clear,
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppConstants.space2),
+            ...files.take(3).map((f) {
+              final isText =
+                  f.type == SharedMediaType.text || f.type == SharedMediaType.url;
+              final label = isText ? f.path : f.path.split(RegExp(r'[/\\]')).last;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: AppConstants.space1),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: cs.onSurfaceVariant),
+                ),
+              );
+            }),
+            if (files.length > 3)
+              Text(
+                l10n.shareInboxMore(files.length - 3),
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: cs.onSurfaceVariant),
+              ),
+            const SizedBox(height: AppConstants.space3),
+            FilledButton.icon(
+              onPressed: enabled ? onSend : null,
+              icon: const Icon(Icons.send_rounded, size: 18),
+              label: Text(l10n.shareInboxSend),
+            ),
+          ],
+        ),
       ),
     );
   }

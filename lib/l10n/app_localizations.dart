@@ -63,7 +63,7 @@ import 'app_localizations_en.dart';
 /// property.
 abstract class AppLocalizations {
   AppLocalizations(String locale)
-    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -86,16 +86,16 @@ abstract class AppLocalizations {
   /// of delegates is preferred or required.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
       <LocalizationsDelegate<dynamic>>[
-        delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ];
+    delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+  ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('bn'),
-    Locale('en'),
+    Locale('en')
   ];
 
   /// No description provided for @appTitle.
@@ -499,6 +499,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Track active and recent transfers.'**
   String get transfersSubtitle;
+
+  /// No description provided for @homeTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Send files and text directly to nearby devices.'**
+  String get homeTagline;
+
+  /// No description provided for @homeChooseDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a device'**
+  String get homeChooseDevice;
+
+  /// No description provided for @homePickDeviceFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a device above to send something.'**
+  String get homePickDeviceFirst;
+
+  /// No description provided for @actionClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get actionClear;
+
+  /// No description provided for @actionRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get actionRefresh;
+
+  /// No description provided for @discoverScanningHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning… keep Throw open on both devices.'**
+  String get discoverScanningHint;
+
+  /// No description provided for @discoverIdleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Find devices, or make this one visible.'**
+  String get discoverIdleHint;
+
+  /// No description provided for @settingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your device, language, and appearance.'**
+  String get settingsSubtitle;
+
+  /// No description provided for @settingsEditName.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get settingsEditName;
+
+  /// No description provided for @transfersEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing transferred yet'**
+  String get transfersEmptyTitle;
+
+  /// No description provided for @transfersEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Files and text you send or receive will appear here.'**
+  String get transfersEmptyBody;
+
+  /// No description provided for @transfersOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get transfersOpen;
+
+  /// No description provided for @receivedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Received'**
+  String get receivedTitle;
+
+  /// No description provided for @receivedEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing received yet'**
+  String get receivedEmptyTitle;
+
+  /// No description provided for @receivedEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Text and files that arrive will be saved here with the newest first.'**
+  String get receivedEmptyBody;
+
+  /// No description provided for @receivedActionCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get receivedActionCopy;
+
+  /// No description provided for @receivedActionCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to clipboard'**
+  String get receivedActionCopied;
+
+  /// No description provided for @receivedActionSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as'**
+  String get receivedActionSave;
+
+  /// No description provided for @receivedActionOpenFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Open file'**
+  String get receivedActionOpenFile;
+
+  /// No description provided for @receivedOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open that item.'**
+  String get receivedOpenFailed;
+
+  /// No description provided for @receivedShareMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'That file has no saved path, so it cannot be opened.'**
+  String get receivedShareMissing;
+
+  /// No description provided for @receivedTypeText.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get receivedTypeText;
+
+  /// No description provided for @receivedTypeFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get receivedTypeFile;
 }
 
 class _AppLocalizationsDelegate
@@ -528,9 +666,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   }
 
   throw FlutterError(
-    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-    'an issue with the localizations generation tool. Please file an issue '
-    'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.',
-  );
+      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+      'an issue with the localizations generation tool. Please file an issue '
+      'on GitHub with a reproducible sample app and the gen-l10n configuration '
+      'that was used.');
 }

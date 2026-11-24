@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -241,4 +240,78 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get transfersSubtitle => 'চলমান ও সাম্প্রতিক ট্রান্সফার দেখুন।';
+
+  @override
+  String get homeTagline => 'কাছাকাছি ডিভাইসে সরাসরি ফাইল ও টেক্সট পাঠান।';
+
+  @override
+  String get homeChooseDevice => 'ডিভাইস বেছে নিন';
+
+  @override
+  String get homePickDeviceFirst =>
+      'কিছু পাঠাতে আগে উপরে একটি ডিভাইস বেছে নিন।';
+
+  @override
+  String get actionClear => 'মুছুন';
+
+  @override
+  String get actionRefresh => 'রিফ্রেশ';
+
+  @override
+  String get discoverScanningHint =>
+      'খোঁজা হচ্ছে… দুই ডিভাইসেই Throw খোলা রাখুন।';
+
+  @override
+  String get discoverIdleHint => 'ডিভাইস খুঁজুন, বা এই ডিভাইসটি দৃশ্যমান করুন।';
+
+  @override
+  String get settingsSubtitle => 'আপনার ডিভাইস, ভাষা ও চেহারা নিয়ন্ত্রণ করুন।';
+
+  @override
+  String get settingsEditName => 'নাম বদলান';
+
+  @override
+  String get transfersEmptyTitle => 'এখনও কিছু পাঠানো হয়নি';
+
+  @override
+  String get transfersEmptyBody =>
+      'আপনার পাঠানো বা গ্রহণ করা ফাইল ও টেক্সট এখানে দেখা যাবে।';
+
+  @override
+  String get transfersOpen => 'খুলুন';
+
+  @override
+  String get receivedTitle => 'গৃহীত';
+
+  @override
+  String get receivedEmptyTitle => 'এখনও কিছু পাওয়া যায়নি';
+
+  @override
+  String get receivedEmptyBody =>
+      'আসা টেক্সট ও ফাইল নতুন থেকে পুরোনো ক্রমে এখানে জমা থাকবে।';
+
+  @override
+  String get receivedActionCopy => 'কপি করুন';
+
+  @override
+  String get receivedActionCopied => 'ক্লিপবোর্ডে কপি হয়েছে';
+
+  @override
+  String get receivedActionSave => 'সেভ করুন';
+
+  @override
+  String get receivedActionOpenFile => 'ফাইল খুলুন';
+
+  @override
+  String get receivedOpenFailed => 'সেই আইটেমটি খোলা যায়নি।';
+
+  @override
+  String get receivedShareMissing =>
+      'ফাইলটির কোনো সেভ করা ঠিকানা নেই, তাই খোলা যাবে না।';
+
+  @override
+  String get receivedTypeText => 'টেক্সট';
+
+  @override
+  String get receivedTypeFile => 'ফাইল';
 }

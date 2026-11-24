@@ -25,8 +25,10 @@ Throw is a local file and text sharing app for Android, Windows, and Linux. It c
 - **Text & clipboard** — paste or type text and send it instantly.
 - **Cross-platform** — Android, Windows, and Linux builds.
 - **Transfer progress** — track active and recent transfers.
+- **Received items** — everything that arrives is kept, newest first: copy text with one tap, open or save files.
 - **Update checker** — check for the latest GitHub release from Settings.
-- **Bilingual UI** — English and বাংলা.
+- **Bilingual UI** — English and বাংলা, with a bundled Bengali typeface so Bangla renders on Windows and Linux too.
+- **Remembers your setup** — device name, language and theme survive a relaunch.
 - **Modern, dark-first design** — clean interface with Plus Jakarta Sans typography.
 
 ## How it works
@@ -48,11 +50,20 @@ Get the latest build from [GitHub Releases](https://github.com/mahimmazidul/thro
 ## Screenshots
 
 <p align="center">
-  <img src="assets/screenshots/home.png" alt="Home screen" width="200" />
-  <img src="assets/screenshots/discover.png" alt="Discover screen" width="200" />
+  <img src="assets/screenshots/home_with_device.png" alt="Home screen with a connected device" width="200" />
+  <img src="assets/screenshots/discover_with_device.png" alt="Discover screen" width="200" />
   <img src="assets/screenshots/transfers.png" alt="Transfers screen" width="200" />
   <img src="assets/screenshots/settings.png" alt="Settings screen" width="200" />
+  <img src="assets/screenshots/home_bn.png" alt="Home screen in বাংলা" width="200" />
 </p>
+
+Screenshots are rendered by `test/screenshots_test.dart` with the bundled fonts
+and compared in CI, so they cannot drift from the app again. Regenerate with:
+
+```bash
+flutter test --update-goldens \
+  --dart-define=THROW_COMPARE_SCREENSHOTS=true test/screenshots_test.dart
+```
 
 ## Tech stack
 
@@ -62,7 +73,8 @@ Get the latest build from [GitHub Releases](https://github.com/mahimmazidul/thro
 | Android transfer | `nearby_connections` (WiFi Direct / Nearby) |
 | Desktop transfer | `bluetooth_low_energy` |
 | State management | `provider` |
-| UI | Material 3, Plus Jakarta Sans, responsive layout |
+| Persistence | `shared_preferences` |
+| UI | Material 3, Plus Jakarta Sans + Hind Siliguri, responsive layout |
 | Localization | `flutter_localizations` + `intl` (en, bn) |
 
 ## Build locally
@@ -74,6 +86,12 @@ flutter pub get
 flutter gen-l10n
 flutter run
 ```
+
+## Design notes
+
+The UI pass behind v1.1 is documented in [docs/UI-AUDIT.md](docs/UI-AUDIT.md):
+what was compared (LocalSend, Bloomee, Musify, Planets), every defect found,
+and the test that now guards each one.
 
 ## Contributing
 

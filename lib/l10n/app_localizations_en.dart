@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -240,4 +239,78 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transfersSubtitle => 'Track active and recent transfers.';
+
+  @override
+  String get homeTagline => 'Send files and text directly to nearby devices.';
+
+  @override
+  String get homeChooseDevice => 'Choose a device';
+
+  @override
+  String get homePickDeviceFirst => 'Pick a device above to send something.';
+
+  @override
+  String get actionClear => 'Clear';
+
+  @override
+  String get actionRefresh => 'Refresh';
+
+  @override
+  String get discoverScanningHint =>
+      'Scanning… keep Throw open on both devices.';
+
+  @override
+  String get discoverIdleHint => 'Find devices, or make this one visible.';
+
+  @override
+  String get settingsSubtitle =>
+      'Manage your device, language, and appearance.';
+
+  @override
+  String get settingsEditName => 'Rename';
+
+  @override
+  String get transfersEmptyTitle => 'Nothing transferred yet';
+
+  @override
+  String get transfersEmptyBody =>
+      'Files and text you send or receive will appear here.';
+
+  @override
+  String get transfersOpen => 'Open';
+
+  @override
+  String get receivedTitle => 'Received';
+
+  @override
+  String get receivedEmptyTitle => 'Nothing received yet';
+
+  @override
+  String get receivedEmptyBody =>
+      'Text and files that arrive will be saved here with the newest first.';
+
+  @override
+  String get receivedActionCopy => 'Copy';
+
+  @override
+  String get receivedActionCopied => 'Copied to clipboard';
+
+  @override
+  String get receivedActionSave => 'Save as';
+
+  @override
+  String get receivedActionOpenFile => 'Open file';
+
+  @override
+  String get receivedOpenFailed => 'Could not open that item.';
+
+  @override
+  String get receivedShareMissing =>
+      'That file has no saved path, so it cannot be opened.';
+
+  @override
+  String get receivedTypeText => 'Text';
+
+  @override
+  String get receivedTypeFile => 'File';
 }

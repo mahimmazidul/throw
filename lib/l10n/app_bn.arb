@@ -146,5 +146,28 @@
       }
     }
   },
-  "transfersSubtitle": "চলমান ও সাম্প্রতিক ট্রান্সফার দেখুন।"
+  "transfersSubtitle": "চলমান ও সাম্প্রতিক ট্রান্সফার দেখুন।",
+  "homeTagline": "কাছাকাছি ডিভাইসে সরাসরি ফাইল ও টেক্সট পাঠান।",
+  "homeChooseDevice": "ডিভাইস বেছে নিন",
+  "homePickDeviceFirst": "কিছু পাঠাতে আগে উপরে একটি ডিভাইস বেছে নিন।",
+  "actionClear": "মুছুন",
+  "actionRefresh": "রিফ্রেশ",
+  "discoverScanningHint": "খোঁজা হচ্ছে… দুই ডিভাইসেই Throw খোলা রাখুন।",
+  "discoverIdleHint": "ডিভাইস খুঁজুন, বা এই ডিভাইসটি দৃশ্যমান করুন।",
+  "settingsSubtitle": "আপনার ডিভাইস, ভাষা ও চেহারা নিয়ন্ত্রণ করুন।",
+  "settingsEditName": "নাম বদলান",
+  "transfersEmptyTitle": "এখনও কিছু পাঠানো হয়নি",
+  "transfersEmptyBody": "আপনার পাঠানো বা গ্রহণ করা ফাইল ও টেক্সট এখানে দেখা যাবে।",
+  "transfersOpen": "খুলুন",
+  "receivedTitle": "গৃহীত",
+  "receivedEmptyTitle": "এখনও কিছু পাওয়া যায়নি",
+  "receivedEmptyBody": "আসা টেক্সট ও ফাইল নতুন থেকে পুরোনো ক্রমে এখানে জমা থাকবে।",
+  "receivedActionCopy": "কপি করুন",
+  "receivedActionCopied": "ক্লিপবোর্ডে কপি হয়েছে",
+  "receivedActionSave": "সেভ করুন",
+  "receivedActionOpenFile": "ফাইল খুলুন",
+  "receivedOpenFailed": "সেই আইটেমটি খোলা যায়নি।",
+  "receivedShareMissing": "ফাইলটির কোনো সেভ করা ঠিকানা নেই, তাই খোলা যাবে না।",
+  "receivedTypeText": "টেক্সট",
+  "receivedTypeFile": "ফাইল"
 }

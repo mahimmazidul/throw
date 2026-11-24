@@ -5,19 +5,19 @@ import '../core/breakpoints.dart';
 /// Responsive layout wrapper that switches between compact, medium,
 /// and expanded builders using [LayoutBuilder].
 class ResponsiveLayout extends StatelessWidget {
-  final Widget Function(BuildContext context, BoxConstraints constraints)
-      compact;
-  final Widget Function(BuildContext context, BoxConstraints constraints)?
-      medium;
-  final Widget Function(BuildContext context, BoxConstraints constraints)?
-      expanded;
-
   const ResponsiveLayout({
     super.key,
     required this.compact,
     this.medium,
     this.expanded,
   });
+
+  final Widget Function(BuildContext context, BoxConstraints constraints)
+      compact;
+  final Widget Function(BuildContext context, BoxConstraints constraints)?
+      medium;
+  final Widget Function(BuildContext context, BoxConstraints constraints)?
+      expanded;
 
   @override
   Widget build(BuildContext context) {

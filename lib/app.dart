@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'core/preferences.dart';
 import 'core/theme.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/device_provider.dart';
@@ -14,21 +15,31 @@ import 'screens/transfer_screen.dart';
 import 'widgets/adaptive_nav.dart';
 
 class ThrowApp extends StatelessWidget {
-  const ThrowApp({super.key});
+  const ThrowApp({super.key, this.preferences});
+
+  /// Injected by `main()` after loading the platform store; `null` keeps an
+  /// in-memory store so tests and previews run without plugins.
+  final AppPreferences? preferences;
 
   @override
   Widget build(BuildContext context) {
+    final prefs = preferences ?? AppPreferences.inMemory();
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        ChangeNotifierProvider(create: (_) => DeviceProvider()),
+        ChangeNotifierProvider(create: (_) => LocaleProvider(preferences: prefs)..restore()),
+        ChangeNotifierProvider(
+          create: (_) => DeviceProvider(preferences: prefs),
+        ),
         ChangeNotifierProvider(create: (_) => TransferProvider()),
         ChangeNotifierProvider(create: (_) => ShareInboxProvider()..initialize()),
       ],
       child: Consumer<LocaleProvider>(
         builder: (context, localeProvider, _) {
           return MaterialApp(
-            title: 'Throw',
+            // The OS task switcher can be in a different language than the
+            // in-app UI; onGenerateTitle runs inside the l10n scope so the
+            // label follows the user's choice instead of the hardcoded brand.
+            onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
             debugShowCheckedModeBanner: false,
             theme: ThrowTheme.light(),
             darkTheme: ThrowTheme.dark(),
