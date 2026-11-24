@@ -1,516 +1,403 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:nearby_connections/nearby_connections.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../core/constants.dart';
-import '../core/permissions.dart';
 import '../models/device_model.dart';
 import '../models/payload_model.dart';
 import '../models/transfer_model.dart';
 import 'transfer_service.dart';
 
-/// Android transfer path: WiFi Direct via Google Nearby Connections.
-///
-/// Both ends advertise/discover [AppConstants.androidServiceId] with
-/// [Strategy.P2P_CLUSTER] so Throw installs find each other and nothing
-/// else does. Text travels as BYTES payloads, files as FILE payloads.
+/// Android transfer implementation backed by Google Nearby Connections
+/// (WiFi Direct + Bluetooth LE). Only instantiated when [Platform.isAndroid].
 class NearbyService implements TransferService {
-  NearbyService();
+  final Nearby _nearby = Nearby();
+  final String _serviceId = AppConstants.androidServiceId;
+  final Strategy _strategy = Strategy.P2P_CLUSTER;
 
-  final _devices = StreamController<DeviceModel>.broadcast();
-  final _transfers = StreamController<TransferModel>.broadcast();
-  final _requests = StreamController<ConnectionRequest>.broadcast();
-  final _received = StreamController<PayloadModel>.broadcast();
+  final _devicesController = StreamController<List<DeviceModel>>.broadcast();
+  final _transfersController =
+      StreamController<List<TransferModel>>.broadcast();
+  final _incomingController = StreamController<TransferModel>.broadcast();
+  final _connectionRequestsController =
+      StreamController<DeviceModel>.broadcast();
 
-  final _peers = <String, DeviceModel>{};
-  final _pendingRequests = <String, ConnectionRequest>{};
+  final Map<String, DeviceModel> _discoveredDevices = {};
+  final Map<String, TransferModel> _transfers = {};
+  final Map<int, String> _pendingFileNames = {};
+  final Map<int, Payload> _receivedFilePayloads = {};
 
-  /// Drafts for outgoing payloads, queued per endpoint so two quick sends
-  /// don't overwrite each other before the transport reports an id.
-  final _outgoingDrafts = <String, List<_PayloadDraft>>{};
-
-  /// In-flight sessions keyed by transport payload id.
-  final _sessions = <String, _Session>{};
-
-  /// Received FILE payloads held until the transport reports completion.
-  final _incomingFiles = <String, PayloadModel>{};
-
-  bool _advertising = false;
-  bool _discovering = false;
-  bool _disposed = false;
+  String? _localDeviceName;
+  bool _isAdvertising = false;
+  bool _isDiscovering = false;
 
   @override
-  Stream<DeviceModel> get devices => _devices.stream;
+  Stream<List<DeviceModel>> get discoveredDevices => _devicesController.stream;
 
   @override
-  Stream<TransferModel> get transfers => _transfers.stream;
+  Stream<List<TransferModel>> get transfers => _transfersController.stream;
 
   @override
-  Stream<ConnectionRequest> get connectionRequests => _requests.stream;
+  Stream<TransferModel> get incomingTransfers => _incomingController.stream;
 
   @override
-  Stream<PayloadModel> get receivedPayloads => _received.stream;
+  Stream<DeviceModel> get connectionRequests =>
+      _connectionRequestsController.stream;
 
   @override
-  Future<void> startAdvertising({required String deviceName}) async {
-    if (_advertising || _disposed) return;
-    await _requirePermission();
-    try {
-      // Nearby advertises the system device name; deviceName is accepted
-      // for interface parity with the desktop service.
-      await Nearby().startAdvertising(
-        AppConstants.androidServiceId,
-        _connectionCallback,
-        _payloadCallback,
-        strategy: Strategy.P2P_CLUSTER,
+  bool get isAdvertising => _isAdvertising;
+
+  @override
+  bool get isDiscovering => _isDiscovering;
+
+  void _guardPlatform() {
+    if (!Platform.isAndroid) {
+      throw UnsupportedError(
+        'NearbyService is only supported on Android.',
       );
-      _advertising = true;
+    }
+  }
+
+  @override
+  Future<void> startAdvertising(String deviceName) async {
+    _guardPlatform();
+    _localDeviceName = deviceName;
+    if (_isAdvertising) return;
+
+    try {
+      final started = await _nearby.startAdvertising(
+        deviceName,
+        _strategy,
+        onConnectionInitiated: _onConnectionInitiated,
+        onConnectionResult: _onConnectionResult,
+        onDisconnected: _onDisconnected,
+        serviceId: _serviceId,
+      );
+      _isAdvertising = started;
     } catch (e) {
-      throw TransferException('Could not start advertising', cause: e);
+      _isAdvertising = false;
+      rethrow;
     }
   }
 
   @override
   Future<void> stopAdvertising() async {
-    if (!_advertising) return;
-    try {
-      await Nearby().stopAdvertising();
-    } catch (_) {
-      // Already stopped — nothing to do.
-    }
-    _advertising = false;
+    _guardPlatform();
+    if (!_isAdvertising) return;
+    await _nearby.stopAdvertising();
+    _isAdvertising = false;
   }
 
   @override
   Future<void> startDiscovery() async {
-    if (_discovering || _disposed) return;
-    await _requirePermission();
+    _guardPlatform();
+    if (_isDiscovering) return;
+
     try {
-      await Nearby().startDiscovery(
-        AppConstants.androidServiceId,
-        _onEndpointFound,
-        _onEndpointLost,
-        strategy: Strategy.P2P_CLUSTER,
+      final started = await _nearby.startDiscovery(
+        _localDeviceName ?? AppConstants.defaultDeviceName,
+        _strategy,
+        onEndpointFound: (String id, String name, String serviceId) {
+          final device = DeviceModel(
+            id: id,
+            name: name,
+            platform: DevicePlatform.android,
+            transport: TransportType.wifiDirect,
+            isConnected: false,
+          );
+          _discoveredDevices[id] = device;
+          _devicesController.add(_discoveredDevices.values.toList());
+        },
+        onEndpointLost: (String? id) {
+          if (id != null) {
+            _discoveredDevices.remove(id);
+            _devicesController.add(_discoveredDevices.values.toList());
+          }
+        },
+        serviceId: _serviceId,
       );
-      _discovering = true;
+      _isDiscovering = started;
     } catch (e) {
-      throw TransferException('Could not start discovery', cause: e);
+      _isDiscovering = false;
+      rethrow;
     }
   }
 
   @override
   Future<void> stopDiscovery() async {
-    if (!_discovering) return;
-    try {
-      await Nearby().stopDiscovery();
-    } catch (_) {
-      // Already stopped — nothing to do.
-    }
-    _discovering = false;
+    _guardPlatform();
+    if (!_isDiscovering) return;
+    await _nearby.stopDiscovery();
+    _isDiscovering = false;
   }
 
   @override
   Future<void> connect(DeviceModel device) async {
-    await _requirePermission();
-    try {
-      await Nearby().requestConnection(
-        device.name,
-        device.id,
-        _connectionCallback,
-      );
-    } catch (e) {
-      throw TransferException('Could not connect to ${device.name}',
-          cause: e);
-    }
-  }
-
-  @override
-  Future<void> disconnect(String endpointId) async {
-    try {
-      await Nearby().disconnectFromEndpoint(endpointId);
-    } catch (e) {
-      throw TransferException('Disconnect failed', cause: e);
-    }
-    _publishPeer(endpointId, isConnected: false);
-  }
-
-  @override
-  Future<void> acceptConnection(String endpointId) async {
-    _pendingRequests.remove(endpointId);
-    try {
-      await Nearby().acceptConnection(endpointId, _payloadCallback);
-    } catch (e) {
-      throw TransferException('Accept failed', cause: e);
-    }
-  }
-
-  @override
-  Future<void> rejectConnection(String endpointId) async {
-    _pendingRequests.remove(endpointId);
-    try {
-      await Nearby().rejectConnection(endpointId);
-    } catch (e) {
-      throw TransferException('Reject failed', cause: e);
-    }
-  }
-
-  @override
-  Future<void> sendText({required String endpointId, required String text}) async {
-    final bytes = Uint8List.fromList(utf8.encode(text));
-    _queueDraft(endpointId, _PayloadDraft(kind: PayloadKind.text, totalBytes: bytes.length));
-    try {
-      await Nearby().sendBytes(endpointId, bytes);
-    } catch (e) {
-      _dropLastDraft(endpointId);
-      throw TransferException('Sending text failed', cause: e);
-    }
-  }
-
-  @override
-  Future<void> sendFile({required String endpointId, required File file}) async {
-    if (!await file.exists()) {
-      throw const TransferException('File no longer exists');
-    }
-    final size = await file.length();
-    _queueDraft(
-      endpointId,
-      _PayloadDraft(
-        kind: PayloadKind.file,
-        name: file.uri.pathSegments.last,
-        totalBytes: size,
-      ),
+    _guardPlatform();
+    await _nearby.requestConnection(
+      _localDeviceName ?? AppConstants.defaultDeviceName,
+      device.id,
+      onConnectionInitiated: _onConnectionInitiated,
+      onConnectionResult: _onConnectionResult,
+      onDisconnected: _onDisconnected,
     );
-    try {
-      await Nearby().sendFile(endpointId, file);
-    } catch (e) {
-      _dropLastDraft(endpointId);
-      throw TransferException('Sending file failed', cause: e);
-    }
   }
 
   @override
-  Future<void> cancelTransfer(String transferId) async {
-    final session = _sessions[transferId];
-    try {
-      await Nearby().cancelPayload(transferId);
-    } catch (e) {
-      throw TransferException('Cancel failed', cause: e);
-    }
-    if (session != null) {
-      _publishSession(
-        session,
-        status: TransferStatus.cancelled,
-        error: null,
-      );
-    }
+  Future<void> disconnect(DeviceModel device) async {
+    _guardPlatform();
+    await _nearby.disconnectFromEndpoint(device.id);
+    _updateDeviceConnection(device.id, false);
   }
 
   @override
-  Future<void> dispose() async {
-    if (_disposed) return;
-    _disposed = true;
-    await stopDiscovery();
-    await stopAdvertising();
-    await _devices.close();
-    await _transfers.close();
-    await _requests.close();
-    await _received.close();
-  }
-
-  // ── Internals ────────────────────────────────────────────────────
-
-  Future<void> _requirePermission() async {
-    final granted = await Permissions.ensureNearbyAccess();
-    if (!granted) {
-      throw const TransferException('Nearby device permission denied');
-    }
-  }
-
-  void _onEndpointFound(String endpointId, String endpointName) {
-    final device = DeviceModel(
-      id: endpointId,
-      name: endpointName.isEmpty ? endpointId : endpointName,
-      platform: DevicePlatform.android,
-      channel: TransferChannel.wifiDirect,
-      lastSeen: DateTime.now(),
+  Future<void> acceptConnection(DeviceModel device) async {
+    _guardPlatform();
+    await _nearby.acceptConnection(
+      device.id,
+      onPayLoadRecieved: _onPayloadReceived,
+      onPayloadTransferUpdate: _onPayloadTransferUpdate,
     );
-    _peers[endpointId] = device;
-    _devices.add(device);
   }
 
-  void _onEndpointLost(String endpointId) {
-    final peer = _peers[endpointId];
-    if (peer == null) return;
-    final updated = peer.copyWith(
-      isConnected: false,
-      lastSeen: DateTime.now(),
+  @override
+  Future<void> rejectConnection(DeviceModel device) async {
+    _guardPlatform();
+    await _nearby.rejectConnection(device.id);
+  }
+
+  @override
+  Future<TransferModel> sendPayload(
+    DeviceModel target,
+    PayloadModel payload,
+  ) async {
+    _guardPlatform();
+    final transferId = DateTime.now().microsecondsSinceEpoch.toString();
+    final transfer = TransferModel(
+      id: transferId,
+      device: target,
+      payload: payload,
+      direction: TransferDirection.outgoing,
+      state: TransferState.transferring,
+      bytesTransferred: 0,
+      totalBytes: payload.sizeBytes,
+      startedAt: DateTime.now(),
     );
-    _peers[endpointId] = updated;
-    _devices.add(updated);
-  }
+    _transfers[transferId] = transfer;
+    _transfersController.add(_transfers.values.toList());
 
-  void _publishPeer(String endpointId, {required bool isConnected}) {
-    final peer = _peers[endpointId];
-    if (peer == null) return;
-    final updated = peer.copyWith(
-      isConnected: isConnected,
-      lastSeen: DateTime.now(),
-    );
-    _peers[endpointId] = updated;
-    _devices.add(updated);
-  }
+    try {
+      if (payload.type == PayloadType.text && payload.text != null) {
+        final bytes = Uint8List.fromList(payload.text!.codeUnits);
+        await _nearby.sendBytesPayload(target.id, bytes);
+        _updateTransferState(
+          transferId,
+          TransferState.completed,
+          bytesTransferred: bytes.length,
+        );
+      } else if (payload.filePath != null) {
+        final payloadId = await _nearby.sendFilePayload(
+          target.id,
+          payload.filePath!,
+        );
+        final fileName = payload.fileName ?? 'file';
+        final metaBytes = Uint8List.fromList('$payloadId:$fileName'.codeUnits);
+        await _nearby.sendBytesPayload(target.id, metaBytes);
 
-  late final ConnectionLifecycleCallback _connectionCallback =
-      ConnectionLifecycleCallback(
-    onConnectionInitiated: (endpointId, endpointName) {
-      final request = ConnectionRequest(
-        endpointId: endpointId,
-        deviceName: endpointName.isEmpty ? endpointId : endpointName,
-        receivedAt: DateTime.now(),
-      );
-      _pendingRequests[endpointId] = request;
-      _requests.add(request);
-    },
-    onConnectionResult: (endpointId, status) {
-      _pendingRequests.remove(endpointId);
-      if (status == Status.SUCCESS) {
-        _publishPeer(endpointId, isConnected: true);
-        return;
+        _transfers[payloadId.toString()] = transfer.copyWith(
+          id: payloadId.toString(),
+        );
+        _transfers.remove(transferId);
+        _transfersController.add(_transfers.values.toList());
+        return _transfers[payloadId.toString()]!;
       }
-      // Surface the failure so the UI can show it — nothing fails silently.
-      final peer = _peers[endpointId];
-      if (peer != null) {
-        _transfers.add(TransferModel(
-          id: 'conn-$endpointId-${DateTime.now().microsecondsSinceEpoch}',
-          peer: peer,
-          payloads: const [],
-          status: status == Status.REJECTED
-              ? TransferStatus.rejected
-              : TransferStatus.failed,
-          startedAt: DateTime.now(),
-          endedAt: DateTime.now(),
-          error: status == Status.REJECTED ? 'rejected' : 'connection failed',
-        ));
-      }
-    },
-    onDisconnected: (endpointId) {
-      _publishPeer(endpointId, isConnected: false);
-      for (final session in _sessions.values.toList()) {
-        if (session.endpointId == endpointId && session.model.isActive) {
-          _publishSession(
-            session,
-            status: TransferStatus.failed,
-            error: 'disconnected',
-          );
-        }
-      }
-    },
-  );
+    } catch (e) {
+      _updateTransferState(transferId, TransferState.failed);
+      rethrow;
+    }
 
-  late final PayloadCallback _payloadCallback = PayloadCallback(
-    onPayloadReceived: _onPayloadReceived,
-    onPayloadTransferUpdate: _onPayloadTransferUpdate,
-  );
+    return _transfers[transferId]!;
+  }
 
-  void _onPayloadReceived(String endpointId, Payload payload) {
-    final peer = _peers[endpointId] ??
+  @override
+  Future<void> cancelTransfer(TransferModel transfer) async {
+    _guardPlatform();
+    final numericId = int.tryParse(transfer.id);
+    if (numericId != null) {
+      await _nearby.cancelPayload(numericId);
+    }
+    _updateTransferState(transfer.id, TransferState.cancelled);
+  }
+
+  void _onConnectionInitiated(String id, ConnectionInfo info) {
+    final device = _discoveredDevices[id] ??
+        DeviceModel(
+          id: id,
+          name: info.endpointName,
+          platform: DevicePlatform.android,
+          transport: TransportType.wifiDirect,
+          isConnected: false,
+        );
+    _discoveredDevices[id] = device;
+    _connectionRequestsController.add(device);
+  }
+
+  void _onConnectionResult(String id, Status status) {
+    final connected = status == Status.CONNECTED;
+    _updateDeviceConnection(id, connected);
+  }
+
+  void _onDisconnected(String id) {
+    _updateDeviceConnection(id, false);
+  }
+
+  void _updateDeviceConnection(String id, bool isConnected) {
+    final existing = _discoveredDevices[id];
+    if (existing != null) {
+      _discoveredDevices[id] = existing.copyWith(isConnected: isConnected);
+      _devicesController.add(_discoveredDevices.values.toList());
+    }
+  }
+
+  void _onPayloadReceived(String endpointId, Payload payload) async {
+    final device = _discoveredDevices[endpointId] ??
         DeviceModel(
           id: endpointId,
           name: endpointId,
           platform: DevicePlatform.android,
-          channel: TransferChannel.wifiDirect,
-          lastSeen: DateTime.now(),
+          transport: TransportType.wifiDirect,
+          isConnected: true,
         );
 
-    if (payload.type == PayloadType.BYTES) {
-      final text = utf8.decode(payload.bytes ?? const [], allowMalformed: true);
-      final isClipboard = text.startsWith(_clipboardMarker);
-      final body = isClipboard ? text.substring(_clipboardMarker.length) : text;
-      _received.add(PayloadModel(
-        id: 'rx-${payload.hashCode}-${DateTime.now().microsecondsSinceEpoch}',
-        kind: isClipboard ? PayloadKind.clipboard : PayloadKind.text,
-        direction: PayloadDirection.received,
-        text: body,
-        createdAt: DateTime.now(),
-      ));
-      return;
-    }
+    if (payload.type == PayloadType.BYTES && payload.bytes != null) {
+      final text = String.fromCharCodes(payload.bytes!);
+      final colonIdx = text.indexOf(':');
+      if (colonIdx > 0) {
+        final maybeId = int.tryParse(text.substring(0, colonIdx));
+        if (maybeId != null) {
+          final fileName = text.substring(colonIdx + 1);
+          _pendingFileNames[maybeId] = fileName;
+          await _finalizeFileIfReady(maybeId, device);
+          return;
+        }
+      }
 
-    if (payload.type == PayloadType.FILE) {
-      final path = payload.filePath;
-      final name = path == null ? 'file' : path.split(Platform.pathSeparator).last;
-      final model = PayloadModel(
-        id: 'rx-${payload.hashCode}',
-        kind: PayloadKind.file,
-        direction: PayloadDirection.received,
-        name: name,
-        path: path,
-        createdAt: DateTime.now(),
+      final transfer = TransferModel(
+        id: payload.id.toString(),
+        device: device,
+        payload: PayloadModel.text(text),
+        direction: TransferDirection.incoming,
+        state: TransferState.completed,
+        bytesTransferred: payload.bytes!.length,
+        totalBytes: payload.bytes!.length,
+        startedAt: DateTime.now(),
       );
-      // Hold until SUCCESS: the bytes may still be on their way.
-      _incomingFiles['${payload.id}'] = model;
-      _startSession(
-        payloadId: '${payload.id}',
-        endpointId: endpointId,
-        peer: peer,
-        draft: _PayloadDraft(
-          kind: PayloadKind.file,
-          name: name,
-          totalBytes: payload.totalBytes ?? 0,
+      _transfers[transfer.id] = transfer;
+      _transfersController.add(_transfers.values.toList());
+      _incomingController.add(transfer);
+    } else if (payload.type == PayloadType.FILE) {
+      _receivedFilePayloads[payload.id] = payload;
+      final transfer = TransferModel(
+        id: payload.id.toString(),
+        device: device,
+        payload: PayloadModel.file(
+          filePath: payload.uri ?? '',
+          fileName: _pendingFileNames[payload.id] ?? 'incoming_file',
+          sizeBytes: 0,
         ),
-        direction: PayloadDirection.received,
+        direction: TransferDirection.incoming,
+        state: TransferState.transferring,
+        bytesTransferred: 0,
+        totalBytes: 0,
+        startedAt: DateTime.now(),
       );
+      _transfers[transfer.id] = transfer;
+      _transfersController.add(_transfers.values.toList());
+      _incomingController.add(transfer);
     }
   }
 
-  void _onPayloadTransferUpdate(String endpointId, PayloadTransferUpdate update) {
-    final payloadId = '${update.payloadId}';
-    final session = _sessions[payloadId];
+  void _onPayloadTransferUpdate(
+    String endpointId,
+    PayloadTransferUpdate update,
+  ) async {
+    final id = update.id.toString();
+    final existing = _transfers[id];
+    if (existing == null) return;
 
+    TransferState nextState = existing.state;
     if (update.status == PayloadStatus.SUCCESS) {
-      final incoming = _incomingFiles.remove(payloadId);
-      if (incoming != null) {
-        _received.add(incoming);
-      }
-      if (session != null) {
-        _publishSession(
-          session,
-          status: TransferStatus.completed,
-          bytes: update.totalBytes ?? session.model.totalBytes,
+      nextState = TransferState.completed;
+      final device = _discoveredDevices[endpointId] ?? existing.device;
+      await _finalizeFileIfReady(update.id, device);
+    } else if (update.status == PayloadStatus.FAILURE) {
+      nextState = TransferState.failed;
+    } else if (update.status == PayloadStatus.CANCELED) {
+      nextState = TransferState.cancelled;
+    }
+
+    _transfers[id] = existing.copyWith(
+      bytesTransferred: update.bytesTransferred,
+      totalBytes: update.totalBytes,
+      state: nextState,
+    );
+    _transfersController.add(_transfers.values.toList());
+  }
+
+  Future<void> _finalizeFileIfReady(int payloadId, DeviceModel device) async {
+    final payload = _receivedFilePayloads[payloadId];
+    final fileName = _pendingFileNames[payloadId];
+    if (payload == null || fileName == null || payload.uri == null) return;
+
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final destPath = '${dir.path}/$fileName';
+      await _nearby.copyFileAndDeleteOriginal(payload.uri!, destPath);
+      _receivedFilePayloads.remove(payloadId);
+      _pendingFileNames.remove(payloadId);
+
+      final id = payloadId.toString();
+      final existing = _transfers[id];
+      if (existing != null) {
+        _transfers[id] = existing.copyWith(
+          payload: PayloadModel.file(
+            filePath: destPath,
+            fileName: fileName,
+            sizeBytes: existing.totalBytes,
+          ),
+          state: TransferState.completed,
         );
+        _transfersController.add(_transfers.values.toList());
       }
-      return;
+    } catch (_) {
+      // Keep temp uri if move fails
     }
-
-    if (update.status == PayloadStatus.FAILURE) {
-      if (session != null) {
-        _publishSession(session, status: TransferStatus.failed, error: 'transfer failed');
-      }
-      return;
-    }
-
-    if (update.status == PayloadStatus.CANCELED) {
-      if (session != null) {
-        _publishSession(session, status: TransferStatus.cancelled);
-      }
-      return;
-    }
-
-    // IN_PROGRESS: seed the session from a queued draft on first sight.
-    if (session == null) {
-      final draft = _popDraft(endpointId);
-      if (draft == null) return;
-      _startSession(
-        payloadId: payloadId,
-        endpointId: endpointId,
-        peer: _peers[endpointId] ??
-            DeviceModel(
-              id: endpointId,
-              name: endpointId,
-              platform: DevicePlatform.android,
-              channel: TransferChannel.wifiDirect,
-              lastSeen: DateTime.now(),
-            ),
-        draft: draft,
-        direction: PayloadDirection.sent,
-      );
-    }
-    final current = _sessions[payloadId];
-    if (current == null) return;
-    _publishSession(
-      current,
-      status: TransferStatus.transferring,
-      bytes: update.bytesTransferred,
-      total: update.totalBytes,
-    );
   }
 
-  void _startSession({
-    required String payloadId,
-    required String endpointId,
-    required DeviceModel peer,
-    required _PayloadDraft draft,
-    required PayloadDirection direction,
+  void _updateTransferState(
+    String id,
+    TransferState state, {
+    int? bytesTransferred,
   }) {
-    final payload = PayloadModel(
-      id: payloadId,
-      kind: draft.kind,
-      direction: direction,
-      name: draft.name,
-      sizeBytes: draft.totalBytes,
-      createdAt: DateTime.now(),
+    final existing = _transfers[id];
+    if (existing == null) return;
+    _transfers[id] = existing.copyWith(
+      state: state,
+      bytesTransferred: bytesTransferred ?? existing.bytesTransferred,
     );
-    final model = TransferModel(
-      id: payloadId,
-      peer: peer,
-      payloads: [payload],
-      totalBytes: draft.totalBytes,
-      status: TransferStatus.transferring,
-      startedAt: DateTime.now(),
-    );
-    _sessions[payloadId] = _Session(endpointId: endpointId, model: model);
-    _transfers.add(model);
+    _transfersController.add(_transfers.values.toList());
   }
 
-  void _publishSession(
-    _Session session, {
-    required TransferStatus status,
-    int? bytes,
-    int? total,
-    String? error,
-  }) {
-    final model = session.model.copyWith(
-      status: status,
-      bytesTransferred: bytes,
-      totalBytes: total,
-      error: error,
-      endedAt: status == TransferStatus.transferring ? null : DateTime.now(),
-    );
-    session.model = model;
-    _transfers.add(model);
-    if (!model.isActive) {
-      _sessions.remove(model.id);
-    }
+  @override
+  Future<void> dispose() async {
+    await stopAdvertising();
+    await stopDiscovery();
+    await _devicesController.close();
+    await _transfersController.close();
+    await _incomingController.close();
+    await _connectionRequestsController.close();
   }
-
-  void _queueDraft(String endpointId, _PayloadDraft draft) {
-    _outgoingDrafts.putIfAbsent(endpointId, () => []).add(draft);
-  }
-
-  void _dropLastDraft(String endpointId) {
-    final queue = _outgoingDrafts[endpointId];
-    if (queue != null && queue.isNotEmpty) queue.removeLast();
-  }
-
-  _PayloadDraft? _popDraft(String endpointId) {
-    final queue = _outgoingDrafts[endpointId];
-    if (queue == null || queue.isEmpty) return null;
-    return queue.removeAt(0);
-  }
-
-  /// Clipboard payloads ride the text channel with a marker prefix so the
-  /// receiver can tell "copy this" apart from "read this".
-  static const _clipboardMarker = 'throw-clipboard:';
-}
-
-class _PayloadDraft {
-  _PayloadDraft({
-    required this.kind,
-    this.name,
-    required this.totalBytes,
-  });
-
-  final PayloadKind kind;
-  final String? name;
-  final int totalBytes;
-}
-
-class _Session {
-  _Session({required this.endpointId, required this.model});
-
-  final String endpointId;
-  TransferModel model;
 }
