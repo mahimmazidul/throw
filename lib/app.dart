@@ -1,60 +1,74 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
 
 import 'core/theme.dart';
 import 'l10n/app_localizations.dart';
+import 'providers/device_provider.dart';
+import 'providers/locale_provider.dart';
+import 'providers/transfer_provider.dart';
+import 'screens/discover_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/transfer_screen.dart';
+import 'widgets/adaptive_nav.dart';
 
-/// Root widget: localization, theming, and the bootstrap shell.
 class ThrowApp extends StatelessWidget {
   const ThrowApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Throw',
-      debugShowCheckedModeBanner: false,
-      // Dark first; light follows the system when the user asks for it.
-      theme: ThrowTheme.light(),
-      darkTheme: ThrowTheme.dark(),
-      themeMode: ThemeMode.dark,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => DeviceProvider()),
+        ChangeNotifierProvider(create: (_) => TransferProvider()),
       ],
-      supportedLocales: const [
-        Locale('en'),
-        Locale('bn'),
-      ],
-      home: const _BootstrapShell(),
+      child: Consumer<LocaleProvider>(
+        builder: (context, localeProvider, _) {
+          return MaterialApp(
+            title: 'Throw',
+            debugShowCheckedModeBanner: false,
+            theme: ThrowTheme.light(),
+            darkTheme: ThrowTheme.dark(),
+            themeMode: localeProvider.themeMode,
+            locale: localeProvider.locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const _MainShell(),
+          );
+        },
+      ),
     );
   }
 }
 
-/// Placeholder home until the home screen lands — proves l10n + theme work.
-class _BootstrapShell extends StatelessWidget {
-  const _BootstrapShell();
+class _MainShell extends StatefulWidget {
+  const _MainShell();
+
+  @override
+  State<_MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends State<_MainShell> {
+  int _selectedIndex = 0;
+
+  static const List<Widget> _screens = [
+    HomeScreen(),
+    DiscoverScreen(),
+    TransferScreen(),
+    SettingsScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.appTitle, style: Theme.of(context).textTheme.headlineLarge),
-            const SizedBox(height: 8),
-            Text(
-              l10n.tagline,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyLarge
-                  ?.copyWith(color: Theme.of(context).colorScheme.secondary),
-            ),
-          ],
-        ),
+    return AdaptiveNav(
+      selectedIndex: _selectedIndex,
+      onDestinationSelected: (index) {
+        setState(() => _selectedIndex = index);
+      },
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _screens,
       ),
     );
   }
