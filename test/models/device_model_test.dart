@@ -4,28 +4,32 @@ import '../../lib/models/device_model.dart';
 
 void main() {
   group('DeviceModel', () {
+    final now = DateTime(2026, 11, 24);
+
     test('constructs with required fields and defaults', () {
-      const device = DeviceModel(
+      final device = DeviceModel(
         id: 'dev-1',
         name: 'Pixel 8',
         platform: DevicePlatform.android,
-        transport: TransportType.wifiDirect,
+        channel: TransferChannel.wifiDirect,
+        lastSeen: now,
       );
 
       expect(device.id, 'dev-1');
       expect(device.name, 'Pixel 8');
       expect(device.platform, DevicePlatform.android);
-      expect(device.transport, TransportType.wifiDirect);
+      expect(device.channel, TransferChannel.wifiDirect);
       expect(device.isConnected, isFalse);
     });
 
     test('copyWith updates only specified fields', () {
-      const device = DeviceModel(
+      final device = DeviceModel(
         id: 'dev-1',
         name: 'Pixel 8',
         platform: DevicePlatform.android,
-        transport: TransportType.wifiDirect,
+        channel: TransferChannel.wifiDirect,
         isConnected: false,
+        lastSeen: now,
       );
 
       final connected = device.copyWith(isConnected: true);
@@ -39,24 +43,27 @@ void main() {
     });
 
     test('equality is based on id', () {
-      const a = DeviceModel(
+      final a = DeviceModel(
         id: 'same-id',
         name: 'Device A',
         platform: DevicePlatform.windows,
-        transport: TransportType.bluetooth,
+        channel: TransferChannel.bluetooth,
+        lastSeen: now,
       );
-      const b = DeviceModel(
+      final b = DeviceModel(
         id: 'same-id',
         name: 'Device B',
         platform: DevicePlatform.linux,
-        transport: TransportType.bluetooth,
+        channel: TransferChannel.bluetooth,
         isConnected: true,
+        lastSeen: now,
       );
-      const c = DeviceModel(
+      final c = DeviceModel(
         id: 'other-id',
         name: 'Device A',
         platform: DevicePlatform.windows,
-        transport: TransportType.bluetooth,
+        channel: TransferChannel.bluetooth,
+        lastSeen: now,
       );
 
       expect(a, equals(b));

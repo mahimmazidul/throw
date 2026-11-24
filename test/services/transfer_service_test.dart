@@ -6,16 +6,23 @@ import '../../lib/models/transfer_model.dart';
 
 void main() {
   group('PayloadModel', () {
-    test('text factory sets type, text, and sizeBytes', () {
-      final payload = PayloadModel.text('hello throw');
+    test('text payload sets type, text, and sizeBytes', () {
+      const payload = PayloadModel(
+        id: 'p1',
+        type: PayloadType.text,
+        text: 'hello throw',
+        sizeBytes: 11,
+      );
       expect(payload.type, PayloadType.text);
       expect(payload.text, 'hello throw');
       expect(payload.sizeBytes, 11);
       expect(payload.filePath, isNull);
     });
 
-    test('file factory sets type, filePath, fileName, and sizeBytes', () {
-      final payload = PayloadModel.file(
+    test('file payload sets type, filePath, fileName, and sizeBytes', () {
+      const payload = PayloadModel(
+        id: 'p2',
+        type: PayloadType.file,
         filePath: '/tmp/photo.jpg',
         fileName: 'photo.jpg',
         sizeBytes: 2048,
@@ -28,23 +35,31 @@ void main() {
   });
 
   group('TransferModel', () {
-    const device = DeviceModel(
+    final now = DateTime(2026, 11, 24);
+    final device = DeviceModel(
       id: 'd1',
       name: 'ThinkPad',
       platform: DevicePlatform.linux,
-      transport: TransportType.bluetooth,
+      channel: TransferChannel.bluetooth,
+      lastSeen: now,
     );
 
     test('progress computes ratio and clamps safely', () {
       final transfer = TransferModel(
         id: 't1',
-        device: device,
-        payload: PayloadModel.text('abc'),
-        direction: TransferDirection.outgoing,
-        state: TransferState.transferring,
+        peer: device,
+        payloads: const [
+          PayloadModel(
+            id: 'p1',
+            type: PayloadType.text,
+            text: 'abc',
+            sizeBytes: 200,
+          ),
+        ],
+        status: TransferStatus.transferring,
         bytesTransferred: 50,
         totalBytes: 200,
-        startedAt: DateTime(2026, 11, 24),
+        startedAt: now,
       );
 
       expect(transfer.progress, closeTo(0.25, 0.0001));
@@ -53,13 +68,19 @@ void main() {
     test('progress returns 0.0 when totalBytes is 0', () {
       final transfer = TransferModel(
         id: 't2',
-        device: device,
-        payload: PayloadModel.text(''),
-        direction: TransferDirection.incoming,
-        state: TransferState.transferring,
+        peer: device,
+        payloads: const [
+          PayloadModel(
+            id: 'p2',
+            type: PayloadType.text,
+            text: '',
+            sizeBytes: 0,
+          ),
+        ],
+        status: TransferStatus.transferring,
         bytesTransferred: 0,
         totalBytes: 0,
-        startedAt: DateTime(2026, 11, 24),
+        startedAt: now,
       );
 
       expect(transfer.progress, 0.0);
