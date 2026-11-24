@@ -144,35 +144,11 @@ abstract final class ThrowTheme {
         backgroundColor: ThrowColors.surface,
         elevation: 0,
         indicatorColor: ThrowColors.surfaceHigh,
-        iconTheme: WidgetStateProperty.resolveWith(
-          (states) => IconThemeData(
-            color: states.contains(WidgetState.selected) ? ThrowColors.accent : ThrowColors.secondary,
-          ),
-        ),
-        labelTextStyle: WidgetStateProperty.resolveWith(
-          (states) => GoogleFonts.hindSiliguri(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: states.contains(WidgetState.selected) ? ThrowColors.accent : ThrowColors.secondary,
-          ),
-        ),
       ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: ThrowColors.surface,
         elevation: 0,
         indicatorColor: ThrowColors.surfaceHigh,
-        iconTheme: WidgetStateProperty.resolveWith(
-          (states) => IconThemeData(
-            color: states.contains(WidgetState.selected) ? ThrowColors.accent : ThrowColors.secondary,
-          ),
-        ),
-        labelTextStyle: WidgetStateProperty.resolveWith(
-          (states) => GoogleFonts.hindSiliguri(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: states.contains(WidgetState.selected) ? ThrowColors.accent : ThrowColors.secondary,
-          ),
-        ),
       ),
     );
   }
