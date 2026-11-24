@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../lib/core/theme.dart';
@@ -82,15 +81,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
 
-    // Finish loading bundled fonts before mounting render objects that listen
-    // for system font changes. Late notifications leave frames at teardown.
-    GoogleFonts.config.allowRuntimeFetching = false;
-    final theme = await tester.runAsync(() async {
-      final theme = ThrowTheme.dark();
-      await GoogleFonts.pendingFonts();
-      return theme;
-    });
-    expect(theme, isNotNull);
+    final theme = ThrowTheme.dark();
 
     final screens = {
       'home': const HomeScreen(),
@@ -100,7 +91,7 @@ void main() {
     };
 
     for (final entry in screens.entries) {
-      await tester.pumpWidget(_wrapScreen(entry.value, theme!));
+      await tester.pumpWidget(_wrapScreen(entry.value, theme));
       await tester.pumpAndSettle(const Duration(milliseconds: 200), EnginePhase.sendSemanticsUpdate, const Duration(seconds: 10));
       // Drain any transient framework exceptions (e.g. late font updates in CI).
       final exception = tester.takeException();

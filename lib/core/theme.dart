@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Design tokens for Throw — quiet moss and stone, dark first.
 ///
@@ -141,7 +140,8 @@ abstract final class ThrowTheme {
       focusColor: _focusWash,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
-      textTheme: GoogleFonts.plusJakartaSansTextTheme(_typeScale()).apply(
+      textTheme: _typeScale().apply(
+        fontFamily: 'Plus Jakarta Sans',
         bodyColor: ThrowColors.text,
         displayColor: ThrowColors.text,
       ),
@@ -167,7 +167,8 @@ abstract final class ThrowTheme {
           minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
-          textStyle: GoogleFonts.plusJakartaSans(
+          textStyle: const TextStyle(
+            fontFamily: 'Plus Jakarta Sans',
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -180,7 +181,8 @@ abstract final class ThrowTheme {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           side: const BorderSide(color: ThrowColors.border),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
-          textStyle: GoogleFonts.plusJakartaSans(
+          textStyle: const TextStyle(
+            fontFamily: 'Plus Jakarta Sans',
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -191,7 +193,8 @@ abstract final class ThrowTheme {
           foregroundColor: ThrowColors.accentText,
           minimumSize: const Size(48, 48),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
-          textStyle: GoogleFonts.plusJakartaSans(
+          textStyle: const TextStyle(
+            fontFamily: 'Plus Jakarta Sans',
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -199,7 +202,8 @@ abstract final class ThrowTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: ThrowColors.surfaceHigh,
-        contentTextStyle: GoogleFonts.plusJakartaSans(
+        contentTextStyle: const TextStyle(
+          fontFamily: 'Plus Jakarta Sans',
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: ThrowColors.text,
@@ -269,7 +273,8 @@ abstract final class ThrowTheme {
       focusColor: _lightFocusWash,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
-      textTheme: GoogleFonts.plusJakartaSansTextTheme(_typeScale()).apply(
+      textTheme: _typeScale().apply(
+        fontFamily: 'Plus Jakarta Sans',
         bodyColor: ThrowColors.lightText,
         displayColor: ThrowColors.lightText,
       ),
@@ -299,7 +304,8 @@ abstract final class ThrowTheme {
           minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
-          textStyle: GoogleFonts.plusJakartaSans(
+          textStyle: const TextStyle(
+            fontFamily: 'Plus Jakarta Sans',
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -312,7 +318,8 @@ abstract final class ThrowTheme {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           side: const BorderSide(color: ThrowColors.lightBorder),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
-          textStyle: GoogleFonts.plusJakartaSans(
+          textStyle: const TextStyle(
+            fontFamily: 'Plus Jakarta Sans',
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -323,7 +330,8 @@ abstract final class ThrowTheme {
           foregroundColor: ThrowColors.lightAccent,
           minimumSize: const Size(48, 48),
           shape: const RoundedRectangleBorder(borderRadius: _buttonRadius),
-          textStyle: GoogleFonts.plusJakartaSans(
+          textStyle: const TextStyle(
+            fontFamily: 'Plus Jakarta Sans',
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -331,7 +339,8 @@ abstract final class ThrowTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: ThrowColors.lightSurfaceHigh,
-        contentTextStyle: GoogleFonts.plusJakartaSans(
+        contentTextStyle: const TextStyle(
+          fontFamily: 'Plus Jakarta Sans',
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: ThrowColors.lightText,
