@@ -1,4 +1,4 @@
-name: throw
+name: throw_app
 description: "Offline file and text sharing."
 publish_to: "none"
 version: 1.0.0+1
