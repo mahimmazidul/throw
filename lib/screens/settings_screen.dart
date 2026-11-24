@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../core/constants.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/device_provider.dart';
 import '../providers/locale_provider.dart';
@@ -97,9 +96,7 @@ class SettingsScreen extends StatelessWidget {
             child: ListTile(
               leading: const Icon(Icons.info_outline_rounded),
               title: Text(l10n.settingsAbout),
-              subtitle: const Text(
-                '${AppConstants.appName} v${AppConstants.appVersion}',
-              ),
+              subtitle: const Text('Throw v1.0.0'),
             ),
           ),
         ],
