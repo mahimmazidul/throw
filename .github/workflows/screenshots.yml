@@ -1,0 +1,43 @@
+name: Update Screenshots
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  update-screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Regenerate screenshots
+        run: flutter test --update-goldens --dart-define=THROW_COMPARE_SCREENSHOTS=true test/screenshots_test.dart
+
+      - name: Commit and push screenshot updates
+        run: |
+          if git diff --quiet -- assets/screenshots; then
+            echo "No screenshot changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/screenshots
+          git commit -m "docs: update app screenshots [skip ci]"
+          git push origin HEAD:main
