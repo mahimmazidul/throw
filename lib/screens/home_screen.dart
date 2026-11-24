@@ -41,7 +41,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final target = _selectedDevice;
     final text = _textController.text.trim();
     if (target == null || text.isEmpty) return;
-
     await transferProvider.sendText(target, text);
     _textController.clear();
   }
@@ -76,9 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (item.type == SharedMediaType.text ||
           item.type == SharedMediaType.url) {
         final text = item.path.trim();
-        if (text.isNotEmpty) {
-          await transferProvider.sendText(target, text);
-        }
+        if (text.isNotEmpty) await transferProvider.sendText(target, text);
         continue;
       }
 
@@ -115,23 +112,60 @@ class _HomeScreenState extends State<HomeScreen> {
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.asset(
-                  'assets/logo.png',
-                  width: 36,
-                  height: 36,
-                  fit: BoxFit.cover,
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  theme.colorScheme.primary.withValues(alpha: 0.22),
+                  theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.45),
+                ],
+              ),
+              border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset('assets/logo.png', width: 44, height: 44),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Throw', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
+                          Text(
+                            'Send files and text directly to nearby devices.',
+                            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                l10n.navHome,
-                style: theme.textTheme.headlineSmall,
-              ),
-            ],
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _StatusChip(
+                      icon: connected.isNotEmpty ? Icons.link_rounded : Icons.link_off_rounded,
+                      label: connected.isNotEmpty ? '${connected.length} connected' : 'No device connected',
+                      active: connected.isNotEmpty,
+                    ),
+                    const _StatusChip(icon: Icons.wifi_tethering_rounded, label: 'WiFi Direct / Bluetooth', active: true),
+                    const _StatusChip(icon: Icons.shield_outlined, label: 'Offline, no server', active: true),
+                  ],
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           if (connected.isEmpty)
@@ -140,17 +174,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.devices_rounded,
-                      color: theme.colorScheme.onSurfaceVariant,
+                    CircleAvatar(
+                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.14),
+                      child: Icon(Icons.devices_rounded, color: theme.colorScheme.primary),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         l10n.stateNoDevices,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                        style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                       ),
                     ),
                   ],
@@ -162,16 +194,10 @@ class _HomeScreenState extends State<HomeScreen> {
               initialValue: _selectedDevice,
               decoration: InputDecoration(
                 labelText: l10n.stateConnected,
-                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.devices_rounded),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              items: connected
-                  .map(
-                    (d) => DropdownMenuItem(
-                      value: d,
-                      child: Text(d.name),
-                    ),
-                  )
-                  .toList(),
+              items: connected.map((d) => DropdownMenuItem(value: d, child: Text(d.name))).toList(),
               onChanged: (value) => setState(() => _selectedDevice = value),
             ),
           if (shareInbox.hasPending) ...[
@@ -184,53 +210,28 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.inbox_rounded,
-                            color: theme.colorScheme.primary),
+                        Icon(Icons.inbox_rounded, color: theme.colorScheme.primary),
                         const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Shared to Throw (${shareInbox.sharedFiles.length})',
-                            style: theme.textTheme.titleMedium,
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: 'Clear',
-                          onPressed: shareInbox.clear,
-                          icon: const Icon(Icons.close_rounded),
-                        ),
+                        Expanded(child: Text('Shared to Throw (${shareInbox.sharedFiles.length})', style: theme.textTheme.titleMedium)),
+                        IconButton(tooltip: 'Clear', onPressed: shareInbox.clear, icon: const Icon(Icons.close_rounded)),
                       ],
                     ),
                     const SizedBox(height: 8),
                     ...shareInbox.sharedFiles.take(3).map((f) {
-                      final isText = f.type == SharedMediaType.text ||
-                          f.type == SharedMediaType.url;
-                      final label = isText
-                          ? f.path
-                          : f.path.split(RegExp(r'[/\\]')).last;
+                      final isText = f.type == SharedMediaType.text || f.type == SharedMediaType.url;
+                      final label = isText ? f.path : f.path.split(RegExp(r'[/\\]')).last;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 4),
-                        child: Text(
-                          label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
+                        child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
                       );
                     }),
                     if (shareInbox.sharedFiles.length > 3)
-                      Text(
-                        '+${shareInbox.sharedFiles.length - 3} more',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
+                      Text('+${shareInbox.sharedFiles.length - 3} more',
+                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
                     const SizedBox(height: 12),
                     FilledButton.icon(
-                      onPressed: _selectedDevice == null
-                          ? null
-                          : () => _sendSharedInbox(transferProvider, shareInbox),
+                      onPressed: _selectedDevice == null ? null : () => _sendSharedInbox(transferProvider, shareInbox),
                       icon: const Icon(Icons.send_rounded),
                       label: const Text('Send shared items'),
                     ),
@@ -246,12 +247,15 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Text('Send text', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 10),
                   TextField(
                     controller: _textController,
                     maxLines: 4,
                     decoration: InputDecoration(
                       hintText: l10n.sendClipboardHint,
-                      border: const OutlineInputBorder(),
+                      filled: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.paste_rounded),
                         tooltip: l10n.actionPaste,
@@ -261,9 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 12),
                   FilledButton.icon(
-                    onPressed: _selectedDevice == null
-                        ? null
-                        : () => _sendText(transferProvider),
+                    onPressed: _selectedDevice == null ? null : () => _sendText(transferProvider),
                     icon: const Icon(Icons.send_rounded),
                     label: Text(l10n.actionSend),
                   ),
@@ -273,35 +275,65 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 12),
           Card(
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
-              leading: CircleAvatar(
-                backgroundColor:
-                    theme.colorScheme.primary.withValues(alpha: 0.16),
-                child: Icon(
-                  Icons.folder_open_rounded,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              title: Text(l10n.actionSend),
-              subtitle: Text(
-                l10n.speedWifi,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              trailing: FilledButton.tonalIcon(
-                onPressed: _selectedDevice == null
-                    ? null
-                    : () => _pickAndSendFiles(transferProvider),
-                icon: const Icon(Icons.attach_file_rounded),
-                label: Text(l10n.actionSend),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.14),
+                    child: Icon(Icons.insert_drive_file_rounded, color: theme.colorScheme.primary),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Send files', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 2),
+                        Text('Pick multiple files and send directly to the selected device.',
+                            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  FilledButton.tonalIcon(
+                    onPressed: _selectedDevice == null ? null : () => _pickAndSendFiles(transferProvider),
+                    icon: const Icon(Icons.attach_file_rounded),
+                    label: const Text('Pick'),
+                  ),
+                ],
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({required this.icon, required this.label, required this.active});
+  final IconData icon;
+  final String label;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bg = active
+        ? theme.colorScheme.primary.withValues(alpha: 0.14)
+        : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5);
+    final fg = active ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: fg),
+          const SizedBox(width: 6),
+          Text(label, style: theme.textTheme.labelMedium?.copyWith(color: fg, fontWeight: FontWeight.w600)),
         ],
       ),
     );

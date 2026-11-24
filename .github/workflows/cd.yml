@@ -29,16 +29,7 @@ jobs:
           flutter-version: '3.x'
           channel: stable
           cache: true
-          cache-key: >-
-            flutter-:os:-:channel:-:version:-:arch:-:hash:
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.pub-cache
-            .dart_tool
-          key: ${{ runner.os }}-pub-${{ hashFiles('pubspec.lock') }}
-          restore-keys: ${{ runner.os }}-pub-
 
       - run: flutter pub get
       - run: flutter gen-l10n
@@ -82,16 +73,7 @@ jobs:
           flutter-version: '3.x'
           channel: stable
           cache: true
-          cache-key: >-
-            flutter-:os:-:channel:-:version:-:arch:-:hash:
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.pub-cache
-            .dart_tool
-          key: ${{ runner.os }}-pub-${{ hashFiles('pubspec.lock') }}
-          restore-keys: ${{ runner.os }}-pub-
 
       - run: flutter pub get
       - run: flutter gen-l10n
@@ -137,16 +119,7 @@ jobs:
           flutter-version: '3.x'
           channel: stable
           cache: true
-          cache-key: >-
-            flutter-:os:-:channel:-:version:-:arch:-:hash:
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.pub-cache
-            .dart_tool
-          key: ${{ runner.os }}-linux-pub-${{ hashFiles('pubspec.lock') }}
-          restore-keys: ${{ runner.os }}-linux-pub-
 
       - run: flutter pub get
       - run: flutter gen-l10n
@@ -259,3 +232,72 @@ jobs:
           name: "Throw ${{ github.ref_name }}"
           bodyFile: "CHANGELOG.md"
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  update-pages:
+    name: Update Pages Links
+    needs: [release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update release download links in docs
+        run: |
+          TAG="${{ github.ref_name }}"
+          python3 - <<'PY'
+          import os, re, pathlib
+          tag=os.environ['TAG']
+          p=pathlib.Path('docs/index.html')
+          s=p.read_text()
+          block=f"""<!-- RELEASE_LINKS_START -->
+                <div class="dl-grid" data-release="{tag}">
+                  <div class="dl-card">
+                    <h3>Android</h3>
+                    <div class="ver">{tag}</div>
+                    <div class="dl-links">
+                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/app-arm64-v8a-release.apk"><span>ARM64 APK</span><small>.apk</small></a>
+                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/app-armeabi-v7a-release.apk"><span>ARM32 APK</span><small>.apk</small></a>
+                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/app-x86_64-release.apk"><span>x86_64 APK</span><small>.apk</small></a>
+                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/app-release.aab"><span>Android App Bundle</span><small>.aab</small></a>
+                    </div>
+                  </div>
+                  <div class="dl-card">
+                    <h3>Windows</h3>
+                    <div class="ver">{tag}</div>
+                    <div class="dl-links">
+                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/throw-windows-x64.zip"><span>Windows ZIP</span><small>.zip</small></a>
+                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/throw_app.msix"><span>Windows MSIX</span><small>.msix</small></a>
+                    </div>
+                  </div>
+                  <div class="dl-card">
+                    <h3>Linux</h3>
+                    <div class="ver">{tag}</div>
+                    <div class="dl-links">
+                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/throw-linux-amd64.deb"><span>Debian/Ubuntu</span><small>.deb</small></a>
+                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/throw-linux-x86_64.AppImage"><span>AppImage</span><small>.AppImage</small></a>
+                      <a class="dl-link" href="https://github.com/mahimmazidul/throw/releases/download/{tag}/throw-linux-x64.tar.gz"><span>Tarball</span><small>.tar.gz</small></a>
+                    </div>
+                  </div>
+                </div>
+                <!-- RELEASE_LINKS_END -->"""
+          s=re.sub(r'<!-- RELEASE_LINKS_START -->.*?<!-- RELEASE_LINKS_END -->', block, s, flags=re.S)
+          s=re.sub(r'Latest: v[0-9]+\.[0-9]+\.[0-9]+', f'Latest: {tag}', s)
+          p.write_text(s)
+          print('updated', tag)
+          PY
+        env:
+          TAG: ${{ github.ref_name }}
+
+      - name: Commit and push docs update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/index.html
+          if git diff --staged --quiet; then
+            echo "No docs changes"
+            exit 0
+          fi
+          git commit -m "docs: update download links for ${{ github.ref_name }}"
+          git push origin HEAD:main

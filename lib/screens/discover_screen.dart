@@ -21,42 +21,66 @@ class DiscoverScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.navDiscover,
-                    style: theme.textTheme.headlineSmall,
-                  ),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.primary.withValues(alpha: 0.16),
+                    theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                  ],
                 ),
-                FilledButton.tonalIcon(
-                  onPressed: provider.isDiscovering
-                      ? provider.stopDiscovery
-                      : provider.startDiscovery,
-                  icon: Icon(
+                border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.navDiscover,
+                          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      FilledButton.tonalIcon(
+                        onPressed: provider.isDiscovering
+                            ? provider.stopDiscovery
+                            : provider.startDiscovery,
+                        icon: Icon(provider.isDiscovering ? Icons.stop_rounded : Icons.radar_rounded),
+                        label: Text(provider.isDiscovering ? l10n.actionCancel : l10n.navDiscover),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
                     provider.isDiscovering
-                        ? Icons.stop_rounded
-                        : Icons.radar_rounded,
+                        ? 'Scanning nearby devices. Keep Throw open on both devices.'
+                        : 'Find nearby devices or make this device visible for connections.',
+                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
-                  label: Text(
-                    provider.isDiscovering
-                        ? l10n.actionCancel
-                        : l10n.navDiscover,
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ActionChip(
+                        avatar: Icon(
+                          provider.isAdvertising ? Icons.wifi_tethering_rounded : Icons.wifi_tethering_off_rounded,
+                          size: 18,
+                        ),
+                        label: Text(provider.isAdvertising ? 'Visible as ${provider.deviceName}' : 'Make visible'),
+                        onPressed: provider.isAdvertising ? provider.stopAdvertising : provider.startAdvertising,
+                      ),
+                      Chip(
+                        avatar: const Icon(Icons.devices_rounded, size: 18),
+                        label: Text('${provider.devices.length} found'),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                IconButton.outlined(
-                  onPressed: provider.isAdvertising
-                      ? provider.stopAdvertising
-                      : provider.startAdvertising,
-                  icon: Icon(
-                    provider.isAdvertising
-                        ? Icons.wifi_tethering_rounded
-                        : Icons.wifi_tethering_off_rounded,
-                  ),
-                  tooltip: provider.deviceName,
-                ),
-              ],
+                ],
+              ),
             ),
             if (provider.error != null) ...[
               const SizedBox(height: 12),

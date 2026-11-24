@@ -24,7 +24,12 @@ class TransferScreen extends StatelessWidget {
           children: [
             Text(
               l10n.navTransfers,
-              style: theme.textTheme.headlineSmall,
+              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Track active and recent transfers.',
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
             Expanded(

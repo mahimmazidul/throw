@@ -54,9 +54,14 @@ class SettingsScreen extends StatelessWidget {
         children: [
           Text(
             l10n.navSettings,
-            style: theme.textTheme.headlineSmall,
+            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 4),
+          Text(
+            'Manage your device, language, and appearance.',
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 20),
           Card(
             child: Column(
               children: [
@@ -96,7 +101,7 @@ class SettingsScreen extends StatelessWidget {
             child: ListTile(
               leading: const Icon(Icons.info_outline_rounded),
               title: Text(l10n.settingsAbout),
-              subtitle: const Text('Throw v1.0.0'),
+              subtitle: const Text('Throw v1.0.10 • Offline file sharing'),
             ),
           ),
         ],
