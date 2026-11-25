@@ -194,6 +194,23 @@ Widget _wrapScreen(
   );
 }
 
+
+/// Advances a fixed amount of time rather than settling.
+///
+/// The app now has ambient motion that never stops (a drifting backdrop, a
+/// radar pulse). That is the point — but `pumpAndSettle` waits for *no* frames
+/// to be scheduled, which by definition never happens. Goldens need a
+/// deterministic instant, so this pumps a known duration: long enough for the
+/// staggered entrance and any route transition to finish, short enough that the
+/// 44-second drift has barely moved.
+Future<void> _settleEnough(WidgetTester tester) async {
+  await tester.pump(); // first frame
+  const step = Duration(milliseconds: 50);
+  for (var i = 0; i < 24; i++) {
+    await tester.pump(step);
+  }
+}
+
 void main() {
   const compareScreenshots = bool.fromEnvironment('THROW_COMPARE_SCREENSHOTS');
 
@@ -219,11 +236,7 @@ void main() {
       await tester.pumpWidget(
         _wrapScreen(entry.value.$1, theme, service, navIndex: entry.value.$2),
       );
-      await tester.pumpAndSettle(
-        const Duration(milliseconds: 200),
-        EnginePhase.sendSemanticsUpdate,
-        const Duration(seconds: 10),
-      );
+      await _settleEnough(tester);
       final exception = tester.takeException();
       expect(exception, isNull, reason: '${entry.key}: $exception');
       if (compareScreenshots) {
@@ -251,11 +264,7 @@ void main() {
       locale: const Locale('bn'),
     ));
     service.flushSeeds();
-    await tester.pumpAndSettle(
-      const Duration(milliseconds: 200),
-      EnginePhase.sendSemanticsUpdate,
-      const Duration(seconds: 10),
-    );
+    await _settleEnough(tester);
     expect(tester.takeException(), isNull);
     if (compareScreenshots) {
       await expectLater(
@@ -289,11 +298,7 @@ void main() {
         _wrapScreen(entry.value.$1, theme, service, navIndex: entry.value.$2),
       );
       service.flushSeeds();
-      await tester.pumpAndSettle(
-        const Duration(milliseconds: 200),
-        EnginePhase.sendSemanticsUpdate,
-        const Duration(seconds: 10),
-      );
+      await _settleEnough(tester);
       final exception = tester.takeException();
       expect(exception, isNull, reason: '${entry.key}: $exception');
       if (compareScreenshots) {

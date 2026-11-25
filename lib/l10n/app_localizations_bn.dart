@@ -86,10 +86,14 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get speedWifi => 'ওয়াইফাই ডাইরেক্ট · ~২৫০ মেগাবিট';
+  String get speedWifi => 'WiFi Direct · রাউটার লাগে না, ~১০–৪০ MB/s';
 
   @override
-  String get speedBluetooth => 'ব্লুটুথ · ~৩ মেগাবিট';
+  String get transportNoteWifi =>
+      'কোনো ওয়াইফাই নেটওয়ার্ক লাগে না, হটস্পটও তৈরি হয় না। WiFi Direct শুধু দুই ডিভাইসের মধ্যে সরাসরি সংযোগ বানায়।';
+
+  @override
+  String get speedBluetooth => 'ব্লুটুথ LE · পেয়ারিং লাগে না, ~৫–৩০ KB/s';
 
   @override
   String get settingsLanguage => 'ভাষা';
@@ -113,6 +117,10 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get errorBluetoothOff =>
       'ব্লুটুথ বন্ধ আছে। ডিভিস খুঁজতে এটি চালু করুন।';
+
+  @override
+  String get errorNoRadio =>
+      'এই ডিভাইসে ব্লুটুথ রেডিও নেই, তাই অন্য ডিভাইস খুঁজে পাওয়া বা সংযোগ করা যাবে না।';
 
   @override
   String get errorLocationOff =>
@@ -202,6 +210,14 @@ class AppLocalizationsBn extends AppLocalizations {
   String updateFailed(String error) {
     return 'আপডেট পরীক্ষা করা যায়নি: $error';
   }
+
+  @override
+  String get updateOffline =>
+      'এখন ইন্টারনেট নেই। Throw অফলাইনেই কাজ করে — শুধু আপডেট দেখতে কানেকশন লাগে।';
+
+  @override
+  String get updateOfflineShort =>
+      'আপনি অফলাইনে আছেন বলে মনে হচ্ছে। কানেকশন পেলে আবার চেষ্টা করুন।';
 
   @override
   String get settingsCheckUpdates => 'আপডেট পরীক্ষা করুন';
@@ -469,7 +485,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get developerRole => 'Throw-এর ডিজাইনার ও ডেভেলপার';
 
   @override
-  String get developerLocation => 'খুলনা, বাংলাদেশ';
+  String get developerLocation => 'বাংলাদেশ';
 
   @override
   String get linksSection => 'লিংক';
@@ -601,4 +617,14 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get settingsStorageCleared => 'সাময়িক কপি মুছে ফেলা হয়েছে';
+
+  @override
+  String get receivedActionShare => 'অন্য অ্যাপে পাঠান';
+
+  @override
+  String get receivedShareDone => 'পাঠানো হয়েছে';
+
+  @override
+  String get receivedShareNoTarget =>
+      'এই ডিভাইসে ওই ফাইল নেওয়ার মতো অ্যাপ নেই';
 }

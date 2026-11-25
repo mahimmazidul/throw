@@ -3,6 +3,7 @@ import 'dart:ui' show SemanticsAction, SemanticsFlag;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:throw_app/core/atmosphere.dart';
 
 import 'package:throw_app/core/theme.dart';
 import 'package:throw_app/core/utils.dart';
@@ -33,6 +34,11 @@ DeviceModel _device(String id, String name, {bool connected = true}) =>
     );
 
 void main() {
+  // Ambient motion never settles, so `pumpAndSettle` would wait for its
+  // timeout on every screen. The widgets are exercised statically here.
+  setUp(() => Atmosphere.enabled = false);
+  tearDown(() => Atmosphere.enabled = true);
+
   group('AppUtils.formatRelativeTime', () {
     final now = DateTime(2026, 11, 24, 12);
 

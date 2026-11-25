@@ -202,4 +202,42 @@ void main() {
       expect(byTransfer['b'], equals(b));
     });
   });
+
+  group('text is sent as a text frame, never double-wrapped', () {
+    // What `sendText` writes now: the text frame straight to the link.
+    Uint8List singlyFramed() => FrameEncoder.text(
+          text: 'meet me at 6',
+          metadata: {'from': 'Laptop', 'tid': 't1'},
+        );
+
+    // What the old code effectively produced: that same frame wrapped again by
+    // the file-chunk chunker that `_writeAll` applies to its argument.
+    Uint8List doublyFramed() => Uint8List.fromList(
+          FrameEncoder.fileChunks(
+            transferId: 't1',
+            body: singlyFramed(),
+          ).expand((f) => f).toList(),
+        );
+
+    test('a single frame decodes as a text frame carrying the message', () {
+      final frames = FrameDecoder().add(singlyFramed());
+
+      expect(frames, hasLength(1));
+      expect(frames.single, isA<TextFrame>());
+      expect((frames.single as TextFrame).text, 'meet me at 6');
+    });
+
+    test('the old double-wrapped bytes never produce a text frame', () {
+      final frames = FrameDecoder().add(doublyFramed());
+
+      // This is the defect stated as an assertion: whatever arrives, it is not
+      // the message. The text is buried inside a file body.
+      expect(
+        frames.whereType<TextFrame>(),
+        isEmpty,
+        reason: 'double-wrapping loses the message entirely',
+      );
+      expect(frames.whereType<FileChunkFrame>(), isNotEmpty);
+    });
+  });
 }

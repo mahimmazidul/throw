@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:open_file/open_file.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../core/constants.dart';
 import '../core/incoming_store.dart';
@@ -174,6 +175,49 @@ class _ReceivedRow extends StatelessWidget {
     }
   }
 
+  /// Hands the file (or the text) to the system share sheet.
+  ///
+  /// This is the other half of "can it share with other apps": Throw has always
+  /// been able to *receive* a share, but a file that arrived had no way out to
+  /// a chat app, a mail draft or a cloud client except by finding it in the
+  /// filesystem first. `open_file` covers "show me this"; this covers "send it
+  /// on", which is what people actually do with a file they just received.
+  Future<void> _share(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+
+    if (_isText) {
+      await SharePlus.instance.share(ShareParams(text: payload.text ?? ''));
+      return;
+    }
+
+    final path = payload.path;
+    if (path == null || path.isEmpty || !await File(path).exists()) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.receivedShareMissing)));
+      return;
+    }
+    try {
+      final result = await SharePlus.instance.share(
+        ShareParams(files: [XFile(path)], subject: payload.label),
+      );
+      if (result.status == ShareResultStatus.unavailable) {
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(content: Text(l10n.receivedShareNoTarget)),
+          );
+      }
+    } catch (_) {
+      // A platform with no share sheet (some Linux desktops) throws rather
+      // than reporting `unavailable`.
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.receivedShareNoTarget)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -253,6 +297,16 @@ class _ReceivedRow extends StatelessWidget {
                 color: ThrowTheme.accentFg(context),
                 onPressed:
                     _isText ? () => _copyText(context) : () => _copyPath(context),
+              ),
+            ),
+            // "Send it on" — the share sheet, for text and files alike.
+            Pressable(
+              child: IconButton(
+                visualDensity: VisualDensity.compact,
+                tooltip: l10n.receivedActionShare,
+                icon: const Icon(Icons.ios_share_rounded, size: 19),
+                color: ThrowTheme.accentFg(context),
+                onPressed: () => _share(context),
               ),
             ),
             if (!_isText)

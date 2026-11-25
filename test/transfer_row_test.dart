@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:throw_app/core/atmosphere.dart';
 import 'package:throw_app/core/theme.dart';
 import 'package:throw_app/l10n/app_localizations.dart';
 import 'package:throw_app/models/device_model.dart';
@@ -18,6 +19,11 @@ import 'package:throw_app/widgets/transfer_progress.dart';
 /// exception was thrown. `tester.takeException()` is the assertion: a RenderFlex
 /// overflow surfaces as a FlutterError there.
 void main() {
+  // Ambient motion never settles, so `pumpAndSettle` would wait for its
+  // timeout on every screen. The widgets are exercised statically here.
+  setUp(() => Atmosphere.enabled = false);
+  tearDown(() => Atmosphere.enabled = true);
+
   DeviceModel peer(String name) => DeviceModel(
         id: 'peer-1',
         name: name,

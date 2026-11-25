@@ -12,6 +12,7 @@ import '../core/temp_files.dart';
 import '../core/theme.dart';
 import '../core/utils.dart';
 import '../l10n/app_localizations.dart';
+import '../models/app_error.dart';
 import '../providers/device_provider.dart';
 import '../providers/locale_provider.dart';
 import '../widgets/entrance.dart';
@@ -170,8 +171,12 @@ class SettingsScreen extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
+      // Classified, not stringified. An offline check is not a failure — the
+      // user is told they are offline, in the app's own voice, instead of
+      // being shown `SocketException: Failed host lookup`.
+      final error = AppError.fromObject(e, fallback: AppErrorCode.updateFailed);
       messenger.showSnackBar(
-        SnackBar(content: Text(l10n.updateFailed(e.toString()))),
+        SnackBar(content: Text(describeError(error, l10n))),
       );
     }
   }

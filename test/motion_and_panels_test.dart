@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:throw_app/core/atmosphere.dart';
 
 import 'package:throw_app/core/motion.dart';
 import 'package:throw_app/core/theme.dart';
@@ -30,6 +31,11 @@ DeviceModel _device(String id, String name) => DeviceModel(
     );
 
 void main() {
+  // Ambient motion never settles, so `pumpAndSettle` would wait for its
+  // timeout on every screen. The widgets are exercised statically here.
+  setUp(() => Atmosphere.enabled = false);
+  tearDown(() => Atmosphere.enabled = true);
+
   group('Pressable', () {
     testWidgets('scales down while the pointer is held, back up on release',
         (tester) async {

@@ -86,10 +86,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get speedWifi => 'WiFi Direct · ~250 Mbps';
+  String get speedWifi => 'WiFi Direct · no router needed, ~10–40 MB/s';
 
   @override
-  String get speedBluetooth => 'Bluetooth · ~3 Mbps';
+  String get transportNoteWifi =>
+      'No WiFi network is needed and no hotspot is created. WiFi Direct makes a private link between the two devices only.';
+
+  @override
+  String get speedBluetooth => 'Bluetooth LE · no pairing needed, ~5–30 KB/s';
 
   @override
   String get settingsLanguage => 'Language';
@@ -113,6 +117,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorBluetoothOff =>
       'Bluetooth is off. Turn it on to discover devices.';
+
+  @override
+  String get errorNoRadio =>
+      'This device has no Bluetooth radio, so it cannot find or reach other devices.';
 
   @override
   String get errorLocationOff =>
@@ -202,6 +210,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String updateFailed(String error) {
     return 'Could not check updates: $error';
   }
+
+  @override
+  String get updateOffline =>
+      'No internet right now. Throw works offline — updates are the only thing that needs a connection.';
+
+  @override
+  String get updateOfflineShort =>
+      'You appear to be offline. Try again when you have a connection.';
 
   @override
   String get settingsCheckUpdates => 'Check for updates';
@@ -468,7 +484,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get developerRole => 'Designer and developer of Throw';
 
   @override
-  String get developerLocation => 'Khulna, Bangladesh';
+  String get developerLocation => 'Bangladesh';
 
   @override
   String get linksSection => 'Links';
@@ -600,4 +616,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsStorageCleared => 'Temporary copies deleted';
+
+  @override
+  String get receivedActionShare => 'Share with another app';
+
+  @override
+  String get receivedShareDone => 'Shared';
+
+  @override
+  String get receivedShareNoTarget =>
+      'Nothing on this device can receive that file';
 }

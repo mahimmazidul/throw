@@ -251,13 +251,19 @@ abstract class AppLocalizations {
   /// No description provided for @speedWifi.
   ///
   /// In en, this message translates to:
-  /// **'WiFi Direct · ~250 Mbps'**
+  /// **'WiFi Direct · no router needed, ~10–40 MB/s'**
   String get speedWifi;
+
+  /// No description provided for @transportNoteWifi.
+  ///
+  /// In en, this message translates to:
+  /// **'No WiFi network is needed and no hotspot is created. WiFi Direct makes a private link between the two devices only.'**
+  String get transportNoteWifi;
 
   /// No description provided for @speedBluetooth.
   ///
   /// In en, this message translates to:
-  /// **'Bluetooth · ~3 Mbps'**
+  /// **'Bluetooth LE · no pairing needed, ~5–30 KB/s'**
   String get speedBluetooth;
 
   /// No description provided for @settingsLanguage.
@@ -301,6 +307,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Bluetooth is off. Turn it on to discover devices.'**
   String get errorBluetoothOff;
+
+  /// No description provided for @errorNoRadio.
+  ///
+  /// In en, this message translates to:
+  /// **'This device has no Bluetooth radio, so it cannot find or reach other devices.'**
+  String get errorNoRadio;
 
   /// No description provided for @errorLocationOff.
   ///
@@ -445,6 +457,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not check updates: {error}'**
   String updateFailed(String error);
+
+  /// No description provided for @updateOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet right now. Throw works offline — updates are the only thing that needs a connection.'**
+  String get updateOffline;
+
+  /// No description provided for @updateOfflineShort.
+  ///
+  /// In en, this message translates to:
+  /// **'You appear to be offline. Try again when you have a connection.'**
+  String get updateOfflineShort;
 
   /// No description provided for @settingsCheckUpdates.
   ///
@@ -887,7 +911,7 @@ abstract class AppLocalizations {
   /// No description provided for @developerLocation.
   ///
   /// In en, this message translates to:
-  /// **'Khulna, Bangladesh'**
+  /// **'Bangladesh'**
   String get developerLocation;
 
   /// No description provided for @linksSection.
@@ -1141,6 +1165,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Temporary copies deleted'**
   String get settingsStorageCleared;
+
+  /// No description provided for @receivedActionShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share with another app'**
+  String get receivedActionShare;
+
+  /// No description provided for @receivedShareDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared'**
+  String get receivedShareDone;
+
+  /// No description provided for @receivedShareNoTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing on this device can receive that file'**
+  String get receivedShareNoTarget;
 }
 
 class _AppLocalizationsDelegate

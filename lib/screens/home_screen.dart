@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
+import '../core/atmosphere.dart';
 import '../core/constants.dart';
 import '../core/incoming_store.dart';
 import '../core/motion.dart';
@@ -201,7 +202,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final canSend = selected.isNotEmpty;
     final receipts = transfers.receivedPayloads;
 
-    return SafeArea(
+    // The canvas drifts while the screen is at rest. It is switched off the
+    // moment there is something to read (an error), because ambient motion
+    // behind a message is noise competing with the message.
+    return AmbientBackdrop(
+      intensity: transfers.error != null ? 0 : 1,
+      child: SafeArea(
       child: Center(
         // One measure for the whole screen. Without it the composer and its
         // Send button ran the full width of a 1280dp desktop window — the
@@ -371,6 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

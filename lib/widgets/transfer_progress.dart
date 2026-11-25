@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/atmosphere.dart';
 import '../core/constants.dart';
 import '../core/motion.dart';
 import '../core/theme.dart';
@@ -109,7 +110,14 @@ class TransferProgressTile extends StatelessWidget {
     final isText = firstPayload?.kind == PayloadKind.text;
     final title = transfer.title;
 
-    return Padding(
+    // The progress track already reports the percentage; the sweep is what
+    // makes "this is moving" visible in peripheral vision, which matters when
+    // several sends run at once and the user is looking elsewhere. It is bound
+    // to `isActive`, so a paused, failed or finished row never shimmers — the
+    // motion is never decorative, it is always information.
+    return Shimmer(
+      active: isActive,
+      child: Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppConstants.space1,
         vertical: AppConstants.space3,
@@ -244,6 +252,7 @@ class TransferProgressTile extends StatelessWidget {
             ),
           ],
         ],
+      ),
       ),
     );
   }

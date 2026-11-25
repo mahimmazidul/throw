@@ -33,8 +33,9 @@
       }
     }
   },
-  "speedWifi": "WiFi Direct · ~250 Mbps",
-  "speedBluetooth": "Bluetooth · ~3 Mbps",
+  "speedWifi": "WiFi Direct · no router needed, ~10–40 MB/s",
+  "transportNoteWifi": "No WiFi network is needed and no hotspot is created. WiFi Direct makes a private link between the two devices only.",
+  "speedBluetooth": "Bluetooth LE · no pairing needed, ~5–30 KB/s",
   "settingsLanguage": "Language",
   "settingsTheme": "Theme",
   "settingsDeviceName": "Device name",
@@ -42,6 +43,7 @@
   "permissionTitle": "Permissions needed",
   "permissionBody": "Throw needs nearby device access to find and transfer to devices around you.",
   "errorBluetoothOff": "Bluetooth is off. Turn it on to discover devices.",
+  "errorNoRadio": "This device has no Bluetooth radio, so it cannot find or reach other devices.",
   "errorLocationOff": "Location services are off. Nearby discovery needs them on Android.",
   "sendClipboardHint": "Write a note to send…",
   "statusConnectedCount": "{count} connected",
@@ -118,6 +120,8 @@
     }
   },
   "updateFailed": "Could not check updates: {error}",
+  "updateOffline": "No internet right now. Throw works offline — updates are the only thing that needs a connection.",
+  "updateOfflineShort": "You appear to be offline. Try again when you have a connection.",
   "@updateFailed": {
     "placeholders": {
       "error": {
@@ -323,7 +327,7 @@
   "developerSection": "Developer",
   "developerName": "Md. Mazidul Islam Mahim",
   "developerRole": "Designer and developer of Throw",
-  "developerLocation": "Khulna, Bangladesh",
+  "developerLocation": "Bangladesh",
   "linksSection": "Links",
   "linkGithub": "GitHub",
   "linkWebsite": "Website",
@@ -372,5 +376,8 @@
     }
   },
   "settingsStorageClear": "Clear",
-  "settingsStorageCleared": "Temporary copies deleted"
+  "settingsStorageCleared": "Temporary copies deleted",
+  "receivedActionShare": "Share with another app",
+  "receivedShareDone": "Shared",
+  "receivedShareNoTarget": "Nothing on this device can receive that file"
 }

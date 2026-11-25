@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -142,6 +143,81 @@ void main() {
       expect(
           const AppError(AppErrorCode.transferFailed).offerSettings, isFalse);
       expect(const AppError(AppErrorCode.bluetoothOff).offerSettings, isFalse);
+    });
+
+    test('a machine with no Bluetooth radio is not a failure', () {
+      // What the BlueZ stack actually throws when `adapters` is empty. This
+      // used to surface as a red "Scanning for devices failed" banner on every
+      // launch of a desktop with no adapter — an alarming message for a
+      // machine that is working exactly as well as its hardware allows.
+      final e = AppError.fromObject(
+        StateError('Bad state: No element'),
+        fallback: AppErrorCode.discoveryFailed,
+      );
+      expect(e.code, AppErrorCode.noRadio);
+      expect(e.isSevere, isFalse,
+          reason: 'a missing radio is a state, not a crash');
+      expect(e.offerSettings, isFalse,
+          reason: 'settings cannot install an adapter');
+    });
+
+    test('no-radio copy explains the hardware, not a fault', () async {
+      final en = await AppLocalizations.delegate.load(const Locale('en'));
+      final copy = describeError(
+        const AppError(AppErrorCode.noRadio),
+        en,
+      );
+      expect(copy.toLowerCase(), contains('bluetooth'));
+      expect(copy.toLowerCase(), contains('radio'));
+    });
+
+    test('a check with no network is classified offline, not broken', () {
+      // The exact exception a phone with no connectivity throws today.
+      expect(
+        AppError.fromObject(
+          const SocketException("Failed host lookup: 'api.github.com'"),
+          fallback: AppErrorCode.updateFailed,
+        ).code,
+        AppErrorCode.offline,
+      );
+      expect(
+        AppError.fromObject(
+          const SocketException('Network is unreachable'),
+          fallback: AppErrorCode.updateFailed,
+        ).code,
+        AppErrorCode.offline,
+      );
+      expect(
+        AppError.fromObject(
+          TimeoutException('Connection timed out'),
+          fallback: AppErrorCode.updateFailed,
+        ).code,
+        AppErrorCode.offline,
+      );
+    });
+
+    test('a server error is NOT excused as offline', () {
+      // A 404 or 500 is a real fault; blaming the user's connection for it
+      // would be a lie that also hides a broken release pipeline.
+      expect(
+        AppError.fromObject(
+          Exception('GitHub returned 500'),
+          fallback: AppErrorCode.updateFailed,
+        ).code,
+        AppErrorCode.updateFailed,
+      );
+    });
+
+    test('offline copy never contains an exception string', () async {
+      final en = await AppLocalizations.delegate.load(const Locale('en'));
+      final error = AppError.fromObject(
+        const SocketException("Failed host lookup: 'api.github.com'"),
+        fallback: AppErrorCode.updateFailed,
+      );
+      final copy = describeError(error, en);
+      expect(copy.toLowerCase(), isNot(contains('socketexception')));
+      expect(copy.toLowerCase(), isNot(contains('host lookup')));
+      expect(copy, contains('internet'));
     });
 
     test('recovery failures are marked severe', () {
@@ -362,9 +438,11 @@ void main() {
     test('a fallback code is used when the message is unrecognisable', () {
       final error = AppError.fromObject(
         StateError('Bad state: No element'),
-        fallback: AppErrorCode.discoveryFailed,
+        // Deliberately not discovery: an empty `.first` during a transfer is a
+        // real fault, and classifying it as "no Bluetooth radio" would hide it.
+        fallback: AppErrorCode.transferFailed,
       );
-      expect(error.code, AppErrorCode.discoveryFailed);
+      expect(error.code, AppErrorCode.transferFailed);
     });
 
     test('a recognisable message still wins over the fallback', () {

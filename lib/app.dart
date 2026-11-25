@@ -14,6 +14,7 @@ import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/transfer_screen.dart';
 import 'widgets/adaptive_nav.dart';
+import 'widgets/swipeable_tabs.dart';
 
 class ThrowApp extends StatelessWidget {
   const ThrowApp({super.key, this.preferences, this.tempFiles});
@@ -102,8 +103,13 @@ class _MainShellState extends State<_MainShell> {
       onDestinationSelected: (index) {
         setState(() => _selectedIndex = index);
       },
-      body: IndexedStack(
+      // Same keep-alive guarantee as the IndexedStack it replaces, plus the
+      // horizontal gesture. Swiping is on at every size: every screen scrolls
+      // vertically, so a horizontal drag has nothing else to claim, and a
+      // desktop user with a trackpad expects the same gesture as a phone user.
+      body: SwipeableTabs(
         index: _selectedIndex,
+        onChanged: (index) => setState(() => _selectedIndex = index),
         children: _screens,
       ),
     );

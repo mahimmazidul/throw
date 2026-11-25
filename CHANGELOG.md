@@ -5,6 +5,103 @@ All notable changes to Throw are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] — 2026-11-25
+
+Two transport bugs, an honesty pass on what the app tells you about its network,
+and the motion layer the interface was missing.
+
+### Fixed — text sent between desktop peers arrived as an unusable file
+
+`BluetoothService.sendText` framed its text with `FrameEncoder.text` and then
+handed that frame to `_writeAll`, which re-wraps whatever it is given in
+`fileChunk` frames. The receiver therefore got a *file* whose body happened to
+contain a text frame, and the decoder never emitted a `TextFrame`. Text sent
+laptop-to-laptop was silently unreadable. It now writes the text frame once,
+directly, and a regression test asserts that the double-wrapped byte stream
+can never yield a text frame.
+
+### Fixed — Bluetooth transfers were throttled by acknowledged writes
+
+Every BLE write used `withResponse`: the sender stalled until the peripheral
+acknowledged each packet before sending the next. At the 20-byte ATT payload a
+stock phone negotiates, that is roughly 2–6 KB/s — a 5 MB photo took about
+twenty minutes. Writes now use `withoutResponse`, which lets the stack send
+back-to-back within a connection interval, with an automatic per-characteristic
+fallback to acknowledged writes for peripherals that do not support it. This is
+the single biggest throughput lever available without changing transports.
+
+### Fixed — checking for updates online failure showed a raw exception
+
+`updateFailed` was rendered as `l10n.updateFailed(e.toString())`, so a phone
+with no connectivity showed `Could not check updates: SocketException: Failed
+host lookup 'api.github.com'`. There is now an explicit `offline` classification
+with a human message, and a detector that separates "no network" from a real
+fault (a 404 from the releases API still reads as a fault — blaming the user's
+connection for a broken release would be worse than saying nothing).
+
+### Fixed — a desktop with no Bluetooth adapter raised an error on every launch
+
+The BlueZ stack throws `Bad state: No element` out of `adapters.first` when the
+machine has no radio, and that surfaced as a red "Scanning for devices failed"
+banner on a perfectly healthy device. `AppErrorCode.noRadio` now covers it, is
+not marked severe, does not offer a settings shortcut that cannot help, and
+reads as a hardware fact rather than a failure. The empty-collection match is
+scoped to discovery so an unrelated `.first` crash is still treated as a crash.
+
+### Changed — honest speed figures, and the WiFi question answered in-app
+
+"WiFi Direct · ~250 Mbps" was the PHY ceiling, not anything an app transfer
+reaches; "Bluetooth · ~3 Mbps" was not either. Both now state a realistic range
+and, more importantly, state that **no WiFi network is required and no hotspot
+is created** — the single most-asked question about how this app connects.
+
+### Added — swipe between tabs, with the buttons
+
+The shell keeps tabs alive in a stack, so swiping that stack directly was not
+possible. Swiping now slides the *incoming* screen over the outgoing one instead
+of shifting all four in lockstep, which is what a `PageView` does and why it
+feels loose with four tabs. Direction comes from the gesture, a small drag
+springs back, the first and last tabs are inert at their edges, and vertical
+drags are never claimed — lists still scroll.
+
+### Added — the atmosphere layer
+
+The app had motion only in response to touch, so a screen at rest was a still
+image. Three primitives, taken from the project's own web page and rebuilt for
+Flutter:
+
+* **ambient drift** — two soft accent fields moving on long, unequal periods
+  behind the canvas, so the surface reads as depth rather than a flat fill;
+* **radar pulse** — expanding rings while discovery is actually running, which
+  gives the one state with nothing to look at something to look at;
+* **shimmer** — a light band sweeping an active transfer row, so "moving" is
+  visible in peripheral vision without reading the percentage.
+
+All three animate transform and opacity only (compositor work, never layout),
+stop completely under the OS reduce-motion setting, and are switched off behind
+content that needs to be read — ambient motion behind an error message is noise
+competing with the message.
+
+### Added — send a received file on to another app
+
+Receiving a share is registered for any MIME type, but a file that arrived could
+only be opened or its path copied. Every received item now also has a share
+action, so a photo that came off a phone can go straight into a chat without
+being hunted down in the filesystem first.
+
+### Changed — the developer's location reads "Bangladesh"
+
+It said "Khulna, Bangladesh". The request was for something broader; a person's
+city in a shipped app is more detail than the About row needs.
+
+### Tests
+
+245 passing (up from 225). New coverage: the text-frame regression, offline and
+no-radio classification with negative cases, ambient motion scheduling no frames
+when disabled or when reduce-motion is on, swipe gestures committing in both
+directions and springing back under threshold, edge tabs refusing to move,
+vertical drags surviving, and press feedback scaling.
+
 ## [1.2.1] — 2026-11-24
 
 Reported as "works but failed transfer consumes sender storage of app". It was

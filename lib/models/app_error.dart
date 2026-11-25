@@ -23,6 +23,14 @@ enum AppErrorCode {
   /// The radio is off. Nothing will scan until it is on.
   bluetoothOff,
 
+  /// This machine has no Bluetooth adapter at all.
+  ///
+  /// Distinct from [bluetoothOff] because there is nothing the user can switch
+  /// on: a desktop without a radio is not failing, it simply has no such
+  /// hardware. Reporting it as a discovery error put a red "Scanning for
+  /// devices failed" banner on every launch of a perfectly healthy app.
+  noRadio,
+
   /// Location services off; Android discovery needs them.
   locationOff,
 
@@ -32,8 +40,14 @@ enum AppErrorCode {
   /// A send or receive failed mid-flight.
   transferFailed,
 
-  /// Checking for an app update failed (usually offline).
+  /// Checking for an app update failed for a reason that is not connectivity.
   updateFailed,
+
+  /// There is no usable network right now. Distinct from [updateFailed]
+  /// because it is not a fault: Throw is an offline app, and being offline is
+  /// its normal state. Telling someone "that failed" for checking on a
+  /// feature that is only a convenience is the wrong message.
+  offline,
 
   /// Anything unrecognised; [AppError.detail] keeps the raw message.
   unknown,
@@ -87,6 +101,28 @@ class AppError {
     if (m.contains('location')) {
       return AppError(AppErrorCode.locationOff, detail: msg);
     }
+    // A missing adapter, reported two ways: the BlueZ stack throws an
+    // empty-collection error out of `adapters.first`, and the platform channels
+    // throw an unsupported operation.
+    //
+    // The bare "No element" case is only treated as "no radio" when the caller
+    // was discovering — an empty `.first` anywhere else (a transfer with no
+    // payload, say) is a genuine fault and must keep its own fallback. Without
+    // that guard this would quietly reclassify unrelated crashes as a
+    // reassuring hardware message.
+    if ((m.contains('bluetooth') || m.contains('adapter')) &&
+        (m.contains('not supported') ||
+            m.contains('not found') ||
+            m.contains('unavailable') ||
+            m.contains('no element'))) {
+      return AppError(AppErrorCode.noRadio, detail: msg);
+    }
+    if (fallback == AppErrorCode.discoveryFailed && m.contains('no element')) {
+      return AppError(AppErrorCode.noRadio, detail: msg);
+    }
+    if (_looksOffline(msg)) {
+      return AppError(AppErrorCode.offline, detail: msg);
+    }
     return AppError(fallback, detail: msg);
   }
 
@@ -108,10 +144,15 @@ String describeError(AppError error, AppLocalizations l10n) =>
       AppErrorCode.permissionDenied => l10n.errorPermissionDenied,
       AppErrorCode.permissionBlocked => l10n.errorPermissionBlocked,
       AppErrorCode.bluetoothOff => l10n.errorBluetoothOff,
+      AppErrorCode.noRadio => l10n.errorNoRadio,
       AppErrorCode.locationOff => l10n.errorLocationOff,
       AppErrorCode.discoveryFailed => l10n.errorDiscoveryFailed,
       AppErrorCode.transferFailed => l10n.errorTransferFailed,
-      AppErrorCode.updateFailed => l10n.updateFailed(error.detail ?? ''),
+      AppErrorCode.offline => l10n.updateOffline,
+      // Deliberately not `updateFailed(detail)`: the raw exception text is a
+      // debugging aid, and "Could not check updates: SocketException: Failed
+      // host lookup 'api.github.com'" is not something a person can act on.
+      AppErrorCode.updateFailed => l10n.updateOfflineShort,
       // The raw exception text is a debugging aid, not copy. Showing
       // "Bad state: No element" to someone who tried to find their phone is
       // worse than saying nothing useful at all; it reads like the app is
@@ -121,3 +162,37 @@ String describeError(AppError error, AppLocalizations l10n) =>
           ? l10n.errorGeneric
           : l10n.errorGenericWithDetail,
     };
+
+/// True when [message] reads like "there is no network", rather than like a
+/// bug. Dart has no single offline exception, so this matches the shapes that
+/// actually reach an app: `SocketException: Failed host lookup: 'api.github.com'`
+/// (no DNS), `SocketException: Network is unreachable` (no route),
+/// `HandshakeException` (captive portal), and the connect timeouts the update
+/// check sets for itself.
+///
+/// Deliberately narrow. A 404 from the releases API is a real fault and must
+/// keep reading as a fault, so nothing here matches on status codes.
+bool _looksOffline(String message) {
+  final m = message.toLowerCase();
+  const signals = [
+    'failed host lookup',
+    'socketexception',
+    'network is unreachable',
+    'network is down',
+    'no route to host',
+    'connection refused',
+    'connection reset',
+    'connection timed out',
+    'connection closed',
+    'handshakeexception',
+    'handshake failed',
+    'temporary failure in name resolution',
+    'nodename nor servname',
+    'timed out',
+    'timeout',
+    'no address associated with hostname',
+    'operation not permitted',
+    'os error 51', // iOS: network connection lost
+  ];
+  return signals.any(m.contains);
+}

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/atmosphere.dart';
 import '../core/constants.dart';
 import '../core/motion.dart';
 import '../core/theme.dart';
@@ -31,7 +32,8 @@ class DiscoverScreen extends StatelessWidget {
     final connected = devices.where((d) => d.isConnected).toList();
     final nearby = devices.where((d) => !d.isConnected).toList();
 
-    return SafeArea(
+    return AmbientBackdrop(
+      child: SafeArea(
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: AppConstants.contentMax),
@@ -76,7 +78,15 @@ class DiscoverScreen extends StatelessWidget {
                             : provider.startAdvertising(),
                       ),
                       FlatRow(
-                        leading: const Icon(Icons.radar_rounded),
+                        // The radar row is the only place in the app that says
+                        // "still looking" with nothing to show. The pulse makes
+                        // that legible at a glance — and it stops the instant a
+                        // device appears or the scan is switched off, so motion
+                        // always means work in progress.
+                        leading: RadarPulse(
+                          active: provider.isDiscovering,
+                          child: const Icon(Icons.radar_rounded),
+                        ),
                         title: l10n.discoverFindingSwitch,
                         subtitle: provider.isDiscovering
                             ? l10n.stateSearching
@@ -138,6 +148,23 @@ class DiscoverScreen extends StatelessWidget {
                   ],
 
                   const SizedBox(height: AppConstants.space5),
+                  // The single most-asked question about this app: does it
+                  // need a WiFi network, and does it hijack my WiFi? Stated
+                  // once, here, rather than repeated on every device row.
+                  if (nearby.isNotEmpty || provider.isDiscovering) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: AppConstants.space3,
+                      ),
+                      child: Text(
+                        l10n.transportNoteWifi,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
                   if (nearby.isEmpty && !provider.isDiscovering)
                     // No `header` here: the row's own title already says "No
                     // devices nearby yet", and a heading repeating it directly
@@ -198,6 +225,7 @@ class DiscoverScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

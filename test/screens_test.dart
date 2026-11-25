@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:throw_app/core/atmosphere.dart';
 import 'package:provider/provider.dart';
 
 import 'package:throw_app/core/preferences.dart';
@@ -141,6 +142,11 @@ Widget _transfers(FakeTransferService service) {
 }
 
 void main() {
+  // Ambient motion never settles, so `pumpAndSettle` would wait for its
+  // timeout on every screen. The widgets are exercised statically here.
+  setUp(() => Atmosphere.enabled = false);
+  tearDown(() => Atmosphere.enabled = true);
+
   group('HomeScreen', () {
     testWidgets('with no peers, shows the empty hint and disabled actions',
         (tester) async {

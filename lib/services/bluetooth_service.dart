@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluetooth_low_energy/bluetooth_low_energy.dart';
+import 'package:flutter/foundation.dart';
 
 import '../core/frame_codec.dart';
 import '../core/incoming_store.dart';
@@ -65,6 +66,12 @@ class BluetoothService implements TransferService {
   bool _isAdvertising = false;
   bool _isDiscovering = false;
   String _localDeviceName = 'Throw';
+
+  /// Whether a given TX characteristic accepts write-without-response. Keyed by
+  /// characteristic UUID; a `false` sticks for the session so a peripheral that
+  /// rejects the fast path is not re-probed on every chunk. Absent means "not
+  /// yet known", which takes the fast path and records the answer.
+  final Map<String, bool> _supportsUnacknowledgedWrites = {};
 
   @override
   Stream<DeviceModel> get devices => _devicesController.stream;
@@ -294,11 +301,17 @@ class BluetoothService implements TransferService {
     );
 
     try {
-      final frames = FrameEncoder.text(
-        text: text,
-        metadata: {'from': _localDeviceName, 'tid': transferId},
+      // One text frame, written as-is. This used to be handed to `_writeAll`,
+      // which re-wraps its argument in file-chunk frames — so the receiver got
+      // a file body containing a text frame and never emitted a TextFrame.
+      // Text sent between desktop peers was silently unreadable.
+      await _write(
+        endpointId,
+        FrameEncoder.text(
+          text: text,
+          metadata: {'from': _localDeviceName, 'tid': transferId},
+        ),
       );
-      await _writeAll(endpointId, transferId, frames.length, frames, transfer);
       _complete(transferId, bytes.length);
     } catch (e) {
       _fail(transferId, e);
@@ -391,22 +404,75 @@ class BluetoothService implements TransferService {
       throw StateError('Device $endpointId is not connected.');
     }
 
+    // Throughput. Every write used to be `withResponse`: the sender stops and
+    // waits for the peripheral to acknowledge before sending the next one, so
+    // the link spends most of its time idle. At the 20-byte ATT payload a
+    // stock phone negotiates, that lands at roughly 2-6 KB/s — a 5 MB photo
+    // took about twenty minutes.
+    //
+    // `withoutResponse` lets the stack send back-to-back inside a connection
+    // interval instead of round-tripping each packet, which is the single
+    // biggest lever available without changing transports. It is not
+    // universal, though: not every peripheral exposes a write-without-response
+    // characteristic, and some stacks report a length for it that they refuse
+    // to honour. So the first frame is written with response to confirm the
+    // path, and the fast path is only used once that has succeeded.
     final maxLen = await _central.getMaximumWriteLength(
       peripheral,
-      type: GATTCharacteristicWriteType.withResponse,
+      type: GATTCharacteristicWriteType.withoutResponse,
     );
-    final chunkSize = maxLen > 0 ? maxLen : 20;
+    final negotiated = maxLen > 0
+        ? maxLen
+        : await _central.getMaximumWriteLength(
+            peripheral,
+            type: GATTCharacteristicWriteType.withResponse,
+          );
+    // 20 bytes is the guaranteed ATT MTU payload every device accepts.
+    final chunkSize = negotiated > 0 ? negotiated : 20;
 
-    // The frame is split across writes; the receiver's decoder reassembles.
+    final fastPath = _supportsUnacknowledgedWrites[txChar.uuid.toString()] !=
+        false;
+
+    // The frame is split across writes; the receiver's decoder reassembles
+    // from its own byte stream, so fragmentation is invisible to it.
     for (var offset = 0; offset < frame.length; offset += chunkSize) {
       final end =
           offset + chunkSize < frame.length ? offset + chunkSize : frame.length;
-      await _central.writeCharacteristic(
-        peripheral,
-        txChar,
-        value: Uint8List.sublistView(frame, offset, end),
-        type: GATTCharacteristicWriteType.withResponse,
-      );
+      final chunk = Uint8List.sublistView(frame, offset, end);
+
+      if (!fastPath) {
+        await _central.writeCharacteristic(
+          peripheral,
+          txChar,
+          value: chunk,
+          type: GATTCharacteristicWriteType.withResponse,
+        );
+        continue;
+      }
+
+      try {
+        await _central.writeCharacteristic(
+          peripheral,
+          txChar,
+          value: chunk,
+          type: GATTCharacteristicWriteType.withoutResponse,
+        );
+        _supportsUnacknowledgedWrites[txChar.uuid.toString()] = true;
+      } catch (e) {
+        // Remember the downgrade for this characteristic so every later chunk
+        // does not pay for the same failed attempt.
+        _supportsUnacknowledgedWrites[txChar.uuid.toString()] = false;
+        debugPrint(
+          'BluetoothService: write-without-response unsupported, '
+          'falling back to acknowledged writes ($e)',
+        );
+        await _central.writeCharacteristic(
+          peripheral,
+          txChar,
+          value: chunk,
+          type: GATTCharacteristicWriteType.withResponse,
+        );
+      }
     }
   }
 
