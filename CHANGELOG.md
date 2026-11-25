@@ -45,18 +45,23 @@ change since 1.0. Getting to the actual files meant scrolling past all of it.
 writes it with a one-line header pointing at the downloads. The v1.3.4 page is
 that section, and nothing else.
 
-### Fixed — Pages deployments retry, and cannot fail quietly
+### Fixed — the site updates on every release again
 
-The site showed v1.0.15 through several releases. The cause was a single `500`
-from the Pages service during an outage, which the workflow treated as final.
-Because Pages deploys on its own workflow, separate from the release job, a
-release could be green while the site had not moved in months — which is exactly
-what happened.
+The site sat on v1.0.15 through a dozen releases while every build was green.
+There were two separate causes, and the first one was not the interesting one.
 
-`Deploy Pages` now retries the deployment once if the first attempt fails, and a
-confirmation step fails the run if both attempts fail, so a stale site shows up
-as a red build instead of going unnoticed. Pages was also re-dispatched and the
-live site is current.
+*A `500` is not a decision.* The last deploy attempt died on `Failed to create
+deployment (status: 500)` from the Pages service during an outage, and the
+workflow treated that as final. It now retries once and fails the run if both
+attempts fail, so a stale site is red instead of silent.
+
+*The deploy was never asked for.* Underneath that: GitHub does not start
+workflows for a push made with `GITHUB_TOKEN`, to stop loops. The release job
+pushes its own docs commit, so `Deploy Pages` — which triggers on `paths:
+docs/**` — has never once been triggered by a release. Every deploy to date was
+someone running it by hand. Retrying the *deployment* cannot fix a run that does
+not exist, so the release job now asks for the run explicitly and the site is
+current.
 
 ### Added — filled buttons have depth
 

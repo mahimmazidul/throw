@@ -300,6 +300,9 @@ jobs:
     # now runs whenever the release itself succeeded - including after retries.
     if: needs.release.result == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -355,3 +358,20 @@ jobs:
           fi
           git commit -m "docs: update download links for ${{ github.event.inputs.tag || github.ref_name }}"
           git push origin HEAD:main
+
+      # GitHub does not start workflows for a push made with GITHUB_TOKEN - it
+      # suppresses them to stop workflow loops. This job pushes its own docs
+      # commit, so Deploy Pages has never once been triggered by the `paths:
+      # docs/**` filter: every release left the site pointing at whatever
+      # version was last deployed by hand. That is how the site came to sit on
+      # v1.0.15 through a dozen releases while every build was green.
+      #
+      # Retrying the Pages *deployment* (as pages.yml now does) cannot help
+      # here, because no run exists to retry. The only reliable fix is to ask
+      # for the run explicitly.
+      - name: Deploy the updated site
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run pages.yml --ref main
+          echo "dispatched Deploy Pages"
