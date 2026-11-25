@@ -5,6 +5,51 @@ All notable changes to Throw are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] — 2026-11-24
+
+Three defects in the v1.3.0 motion layer, all found by using the app rather than
+by running its tests. One of them — the swipe showing the wrong screen — was
+introduced while fixing the first two.
+
+### Fixed — swiping left or right made the whole app look transparent
+
+Every screen paints onto a clear canvas: the ambient backdrop is a translucent
+layer and the page itself has no background, so a tab only *looked* opaque
+because it sat directly on the shell's `Scaffold`. The swipe stacked two tabs
+and faded the outgoing one to 28% opacity, which meant both layers were
+see-through at once and the window showed through both. It read as the app
+going transparent, with two screens' text legibly overlapping.
+
+Tabs are now backed by the canvas colour inside the transition, so "in front"
+means something, and the outgoing screen is no longer faded at all — a slide
+between two opaque surfaces needs no cross-fade.
+
+### Fixed — the next screen did not appear until the finger was lifted
+
+The owner is only told about a tab change on drag *release*, so during a live
+drag `index` still pointed at the current tab and the incoming screen was never
+built. A swipe produced no visual feedback whatsoever until it was let go. The
+incoming screen is now inferred from the gesture itself and slides in under the
+finger.
+
+### Fixed — a drag previewed the wrong screen from the wrong side
+
+`_from` was set when a move started and never cleared when one finished, so it
+stayed latched at a stale index. After the first completed move, every later
+drag slid an unrelated screen in from the wrong edge. The transition now names
+both of its ends and clears them on completion, with a test that moves 0→1 and
+then asserts a fresh drag offers 2 (and, reversed, 0 again).
+
+### Fixed — Discover pushed its text sideways and off the screen
+
+The radar halo was a 220dp `CustomPaint` inside a `Row`'s 22dp leading slot, so
+it reserved 220dp of width and shoved the row's title out of view — the text
+"went sideways" exactly while discovery was running, because that is when the
+halo animates. It is now painted through an `OverflowBox` inside a 22dp box:
+the halo bleeds over the background as a glow and participates in no layout at
+all. Verified by diffing glyph bounding boxes with discovery off and on —
+`223x31+9+8` in both.
+
 ## [1.3.0] — 2026-11-25
 
 Two transport bugs, an honesty pass on what the app tells you about its network,

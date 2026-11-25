@@ -54,8 +54,18 @@ class _SwipeableTabsState extends State<SwipeableTabs>
     duration: Motion.standard,
   );
 
-  /// The index being animated *away from*.
-  late int _from = widget.index;
+  /// The screens of the transition currently on screen, or null when idle.
+  ///
+  /// This used to be a bare `_from` set when a move started, with the incoming
+  /// screen assumed to be `widget.index`. The assumption only held for as long
+  /// as `_from` was refreshed, and nothing refreshed it when a move finished
+  /// (or when a move was abandoned before it began). It stayed latched at an
+  /// old index forever, so every later drag previewed whichever screen had last
+  /// been left behind — the user saw a third screen slide in from the wrong
+  /// side. Naming both ends and clearing them on completion keeps the stage
+  /// honest.
+  int? _outgoing;
+  int? _incoming;
 
   /// Which way the incoming screen travels: 1 when moving to a higher index
   /// (it comes from the right), -1 when moving to a lower one.
@@ -82,15 +92,24 @@ class _SwipeableTabsState extends State<SwipeableTabs>
     if (old.index == widget.index) return;
     if (Motion.reduceMotion(context)) {
       // No slide at all; the new tab is simply shown.
-      _from = widget.index;
+      _outgoing = null;
+      _incoming = null;
       _controller.value = 1;
       return;
     }
-    _from = old.index;
+    _outgoing = old.index;
+    _incoming = widget.index;
     _direction = widget.index > old.index ? 1 : -1;
     _controller
       ..duration = Motion.standard
-      ..forward(from: 0);
+      ..forward(from: 0).whenCompleteOrCancel(() {
+        if (!mounted) return;
+        // The move is done: drop the stage, or the next drag would replay it.
+        setState(() {
+          _outgoing = null;
+          _incoming = null;
+        });
+      });
   }
 
   void _onDragEnd(DragEndDetails details) {
@@ -173,39 +192,66 @@ class _SwipeableTabsState extends State<SwipeableTabs>
         animation: _controller,
         builder: (context, _) {
           final t = Motion.curve.transform(_controller.value.clamp(0.0, 1.0));
-          // During a drag the arrow comes from the gesture itself, which is the
-          // only way to know whether the user is heading forward or back.
-          final direction = _controller.value > 0 && _drag != 0
-              ? (_drag > 0 ? 1 : -1)
-              : _direction;
+          final canvas = Theme.of(context).scaffoldBackgroundColor;
+
+          // Which screens are on stage.
+          //
+          // A committed move has both ends named by `didUpdateWidget`. A live
+          // drag has neither: the owner is only told on release, so the
+          // incoming screen is inferred from the gesture. Without that branch
+          // nothing on screen moved while a finger was down, and the gesture
+          // felt dead until it was let go.
+          final int outgoing;
+          final int? incoming;
+          if (_outgoing != null && _incoming != null) {
+            outgoing = _outgoing!;
+            incoming = _incoming;
+          } else if (_drag != 0) {
+            outgoing = widget.index;
+            incoming = (widget.index + (_drag > 0 ? 1 : -1))
+                .clamp(0, widget.children.length - 1);
+          } else {
+            outgoing = widget.index;
+            incoming = null;
+          }
+
+          final moving = incoming != null && incoming != outgoing && t > 0;
+
           return Stack(
             fit: StackFit.expand,
             children: [
-              // The screen being left stays put and fades out as the new one
-              // covers it. The fade is strong on purpose: at 0.15 the two
-              // screens' text overlapped legibly mid-transition, which read as
-              // a rendering glitch rather than a slide. By the time the incoming
-              // screen is halfway across, the outgoing one is a faint ghost.
-              _buildScreen(_from, opacity: 1.0 - 0.72 * t),
-              if (t > 0 && widget.index != _from)
+              // The outgoing screen stays put and stays fully opaque.
+              //
+              // It is deliberately not faded. Fading it was what made the app
+              // look transparent during a swipe: the screens paint onto a clear
+              // canvas (the ambient drift is translucent and the page itself has
+              // no background — the shell's Scaffold supplied the fill). With
+              // both layers at partial opacity you saw straight through them to
+              // the window behind.
+              _buildScreen(outgoing, canvas: canvas),
+              if (moving)
                 FractionalTranslation(
-                  translation: Offset(direction * (1 - t), 0),
+                  translation: Offset(
+                    (_drag != 0 ? (_drag > 0 ? 1 : -1) : _direction) * (1 - t),
+                    0,
+                  ),
                   child: DecoratedBox(
-                    // A hairline edge and a soft left shadow so the incoming
-                    // screen reads as a surface moving over another, not as two
-                    // layers cross-fading.
+                    // An edge shadow sells it as a surface sliding over another
+                    // rather than two layers swapping in place.
                     decoration: BoxDecoration(
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: 0.28 * (1 - t),
-                          ),
+                          color: Colors.black.withValues(alpha: 0.28),
                           blurRadius: 24,
-                          offset: Offset(-direction * 6.0, 0),
+                          offset: Offset(
+                            -(_drag != 0 ? (_drag > 0 ? 1 : -1) : _direction) *
+                                6.0,
+                            0,
+                          ),
                         ),
                       ],
                     ),
-                    child: _buildScreen(widget.index, opacity: 1.0),
+                    child: _buildScreen(incoming, canvas: canvas),
                   ),
                 ),
             ],
@@ -217,9 +263,18 @@ class _SwipeableTabsState extends State<SwipeableTabs>
     );
   }
 
-  Widget _buildScreen(int index, {required double opacity}) {
-    return Opacity(
-      opacity: opacity,
+  /// A tab, guaranteed opaque.
+  ///
+  /// The `ColoredBox` is the load-bearing part. Every screen draws onto a clear
+  /// canvas — the ambient drift is a translucent layer and the page itself
+  /// paints no background — so a screen only looked opaque because it happened
+  /// to sit directly on the shell's Scaffold. The moment two of them are
+  /// stacked during a swipe, both are see-through and the whole transition
+  /// reads as the app going transparent. Painting the canvas colour under each
+  /// one makes "in front" mean something.
+  Widget _buildScreen(int index, {required Color canvas}) {
+    return ColoredBox(
+      color: canvas,
       child: _KeepAliveStack(index: index, children: widget.children),
     );
   }

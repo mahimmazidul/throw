@@ -281,24 +281,45 @@ class _RadarPulseState extends State<RadarPulse>
         Motion.reduceMotion(context)) {
       return widget.child;
     }
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        RepaintBoundary(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, _) => CustomPaint(
-              size: const Size.square(220),
-              painter: _RadarPainter(
-                t: _controller.value,
-                rings: widget.ringCount,
-                color: ThrowTheme.accentFg(context),
+    // The rings are a halo around the icon, not a widget that takes part in
+    // layout. This used to be a `Stack` whose first child was a 220dp
+    // `CustomPaint`, which made the whole thing 220dp wide — and it sits in a
+    // row's 22dp leading slot, so it pushed the title clean off the screen.
+    //
+    // `OverflowBox` paints the halo outside a 22dp box instead: the box is all
+    // the row sees, and the rings bleed out over the background where they
+    // cannot displace anything. The halo is deliberately small (56dp) so it
+    // reads as a glow on the icon rather than reaching the text.
+    const iconBox = 22.0;
+    const haloSize = 56.0;
+    return SizedBox(
+      width: iconBox,
+      height: iconBox,
+      child: OverflowBox(
+        maxWidth: haloSize,
+        maxHeight: haloSize,
+        child: IgnorePointer(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              RepaintBoundary(
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, _) => CustomPaint(
+                    size: const Size.square(haloSize),
+                    painter: _RadarPainter(
+                      t: _controller.value,
+                      rings: widget.ringCount,
+                      color: ThrowTheme.accentFg(context),
+                    ),
+                  ),
+                ),
               ),
-            ),
+              widget.child,
+            ],
           ),
         ),
-        widget.child,
-      ],
+      ),
     );
   }
 }
