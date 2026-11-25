@@ -15,6 +15,9 @@ class RecordingService implements TransferService {
   final calls = <String>[];
   final advertisedNames = <String>[];
   bool failAdvertising = false;
+  bool failStoppingDiscovery = false;
+  bool failDiscovery = false;
+  bool failStoppingAdvertising = false;
 
   @override
   Stream<DeviceModel> get devices => devicesController.stream;
@@ -37,13 +40,22 @@ class RecordingService implements TransferService {
   }
 
   @override
-  Future<void> stopAdvertising() async => calls.add('stopAdvertise');
+  Future<void> stopAdvertising() async {
+    calls.add('stopAdvertise');
+    if (failStoppingAdvertising) throw StateError('busy');
+  }
 
   @override
-  Future<void> startDiscovery() async => calls.add('discover');
+  Future<void> startDiscovery() async {
+    calls.add('discover');
+    if (failDiscovery) throw StateError('scan failed');
+  }
 
   @override
-  Future<void> stopDiscovery() async => calls.add('stopDiscover');
+  Future<void> stopDiscovery() async {
+    calls.add('stopDiscover');
+    if (failStoppingDiscovery) throw StateError('busy');
+  }
 
   @override
   Future<void> connect(DeviceModel device) async {}

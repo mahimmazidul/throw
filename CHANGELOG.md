@@ -5,6 +5,72 @@ All notable changes to Throw are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.5] — 2026-11-26
+
+Discovery was listing the same phone twice and could sit spinning with a red
+"Scanning failed" banner at the same time. The UI was fine; the state machine
+underneath it was not.
+
+### Fixed — one phone is one row again
+
+An endpoint id is a WiFi Direct P2P address, and one phone can advertise on more
+than one — a second network interface, a stale session that was never torn down,
+or a re-advertise after its group formed. Devices were keyed by endpoint id, so
+each address became its own row: the same phone listed twice, each copy with its
+own **Connect** button, and picking either one was a coin toss over which address
+was actually live.
+
+Rows now match on the advertised device name, which is what a person uses to tell
+two phones apart anyway. The newest endpoint wins, because its address is the one
+that reported most recently, and a row that was already connected stays connected
+through the collapse — dropping that silently disconnected the device someone was
+about to send to. Two different phones with different names still get two rows,
+and nameless peers never merge, since matching those would fold unrelated devices
+together.
+
+### Fixed — "scanning" and "scanning failed" can no longer both be true
+
+`stopDiscovery()` cleared the scanning flag only if the native call *succeeded*.
+When it threw — which WiFi Direct does when the radio is busy — the flag stayed
+`true`, so the screen kept advertising "Scanning… keep Throw open on both
+devices" while a red "Scanning for devices failed" banner appeared underneath it
+and the switch visibly read off. Three statements contradicting each other, from
+one `catch` block with no `finally`. The flag is now cleared regardless, and
+stopping no longer raises an error at all: the scan is over either way, and a
+complaint about tearing down the radio is not something anyone can act on.
+`stopAdvertising()` had the identical bug and got the identical fix.
+
+### Fixed — the scan is re-armed when it dies
+
+Android stops WiFi Direct discovery on its own: when the app goes to the
+background, when another app takes the radio, when a connection tears the group
+down. The plugin reports endpoints appearing and disappearing but **never** that
+discovery itself stopped, and Throw had no lifecycle handling at all. So the app
+went on believing it was scanning while the radio did nothing — the forever
+"Scanning…" with zero results, cured only by toggling the switch by hand.
+
+Two things now re-arm it:
+
+* **On resume.** Returning to the foreground restarts whichever of advertising
+  and discovery the user had switched on, and only those — a scan that was
+  switched off stays off.
+* **On a watchdog.** A self-rescheduling timer re-issues the scan every 20
+  seconds while one is meant to be running. `startDiscovery` is idempotent at the
+  plugin level, so a healthy scan is unaffected, while a dead one recovers
+  without the user knowing anything happened. The watchdog never raises a banner:
+  a background retry is not a user action.
+
+### Fixed — a 3-second stall on the first advertise
+
+`resolvedDeviceName()` awaited the name lookup whenever it was still pending,
+including before the lookup had even started, so the first advertise could wait
+out the full three-second timeout for nothing. It now returns immediately when
+there is no lookup in flight. Two smaller things surfaced with it: constructing
+the provider threw outright when no Flutter binding existed, which made it
+impossible to unit-test, and the watchdog's `Timer.periodic` outlived the object
+that owned it — it is now a self-rescheduling one-shot that stops when the scan
+stops.
+
 ## [1.3.4] — 2026-11-25
 
 The swipe was re-creating every tab three times a change, which is why the text

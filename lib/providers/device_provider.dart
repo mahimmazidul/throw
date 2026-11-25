@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import '../core/permissions.dart';
 import '../core/preferences.dart';
@@ -18,7 +18,7 @@ import '../services/transfer_service_factory.dart';
 /// used to advertise with whatever `_deviceName` held at that moment, which was
 /// the default `'Throw Device'` until an async `DeviceInfo` lookup finished.
 /// [startAdvertising] and [startDiscovery] now await [_nameReady] first.
-class DeviceProvider extends ChangeNotifier {
+class DeviceProvider extends ChangeNotifier with WidgetsBindingObserver {
   final TransferService _service;
   final AppPreferences _preferences;
 
@@ -39,6 +39,17 @@ class DeviceProvider extends ChangeNotifier {
   bool _disposed = false;
   bool _autoStarted = false;
 
+  /// Fires while a scan is meant to be running, to re-arm one that has died.
+  ///
+  /// Android stops WiFi Direct discovery on its own — when the app is
+  /// backgrounded, when another app takes the radio, when a connection tears
+  /// down the group. The plugin reports only endpoints coming and going, never
+  /// that discovery itself stopped, so without this the app would sit claiming
+  /// to scan indefinitely and the user had to toggle the switch to recover.
+  Timer? _discoveryWatchdog;
+  bool _observingLifecycle = false;
+  static const Duration _watchdogPeriod = Duration(seconds: 20);
+
   /// Completes once [deviceName] is either the saved override or the OS name.
   final Completer<void> _nameReady = Completer<void>();
 
@@ -49,18 +60,67 @@ class DeviceProvider extends ChangeNotifier {
     return 'Throw device';
   }
 
-  DeviceProvider({TransferService? service, AppPreferences? preferences})
-      : _service = service ?? TransferServiceFactory.instance,
+  /// True when a Flutter binding has been initialised.
+  static bool _bindingExists() {
+    try {
+      WidgetsBinding.instance;
+      return true;
+    } on FlutterError {
+      return false;
+    }
+  }
+
+  DeviceProvider({
+    TransferService? service,
+    AppPreferences? preferences,
+    bool observeLifecycle = true,
+  })  : _service = service ?? TransferServiceFactory.instance,
         _preferences = preferences ?? AppPreferences.inMemory() {
-    _devicesSub = _service.devices.listen((device) {
+    // Reading `WidgetsBinding.instance` throws when no binding has been
+    // initialised, and a provider that cannot be constructed outside a running
+    // app is a provider that cannot be unit-tested. Checking the private
+    // `BindingBase.debugBindingType()` is the supported way to ask "is there a
+    // binding?" without throwing; tests and pure-Dart callers simply skip
+    // lifecycle observation, which has no meaning for them anyway.
+    if (observeLifecycle && _bindingExists()) {
+      WidgetsBinding.instance.addObserver(this);
+      _observingLifecycle = true;
+    }
+    _devicesSub = _service.devices.listen((incoming) {
+      var device = incoming;
+      // Identity is the *device*, not the endpoint.
+      //
+      // An endpoint id is a WiFi Direct P2P address, and one phone can advertise
+      // on more than one — a second network interface, a stale session that was
+      // never torn down, or the peer re-advertising after its group formed. The
+      // map is keyed by id, so each of those became a separate row and the same
+      // phone appeared two or three times in Discover, each with its own
+      // "Connect" button.
+      //
+      // Matching on the advertised name collapses them. The name is what the
+      // user identifies a phone by anyway, and it is what the other device
+      // advertises; if two genuinely different devices share a name, showing one
+      // row is still better than showing both as twins, and connecting still
+      // targets the id held in the row.
+      final previous = _sameNameAs(device);
+      if (previous != null && previous.id != device.id) {
+        // The new endpoint wins: it is the one that reported in most recently,
+        // so its P2P address is the live one. Its connection state and any name
+        // learned for it come along — dropping them silently disconnected a row
+        // the user was already sending to.
+        _devicesMap.remove(previous.id);
+        device = device.copyWith(
+          isConnected: previous.isConnected || device.isConnected,
+        );
+      }
+
       final existing = _devicesMap[device.id];
-      // Never let a nameless update undo a name we learned elsewhere.
       final merged = existing == null
           ? device
           : existing
               .withLearnedName(device.hasRealName ? device.name : null)
               .copyWith(
-                isConnected: device.isConnected,
+                isConnected: device.isConnected || existing.isConnected,
                 channel: device.channel,
                 platform: device.platform == DevicePlatform.unknown
                     ? existing.platform
@@ -87,30 +147,14 @@ class DeviceProvider extends ChangeNotifier {
       _deviceName = saved.trim();
     } else {
       try {
-        final plugin = DeviceInfoPlugin();
-        String? name;
-        if (Platform.isAndroid) {
-          final info = await plugin.androidInfo;
-          final model = info.model.trim();
-          final brand = info.brand.trim();
-          name = model.isNotEmpty
-              ? (brand.isNotEmpty &&
-                      !model.toLowerCase().startsWith(brand.toLowerCase())
-                  ? '$brand $model'
-                  : model)
-              : info.device;
-        } else if (Platform.isWindows) {
-          name = (await plugin.windowsInfo).computerName;
-        } else if (Platform.isLinux) {
-          final info = await plugin.linuxInfo;
-          name = info.prettyName.isNotEmpty ? info.prettyName : info.name;
-        } else if (Platform.isMacOS) {
-          name = (await plugin.macOsInfo).computerName;
-        }
-        if (name != null && name.trim().isNotEmpty) {
-          _deviceName = name.trim();
-        }
-      } catch (_) {
+        // Deliberately no `.timeout()` here. It was tried, and it put a real
+        // three-second timer into every launch: widget tests never advance the
+        // clock, so the timer was still pending when the tree was disposed and
+        // the framework failed them. The waiting that actually matters is
+        // handled in `resolvedDeviceName`, which no longer waits for a lookup
+        // that has not started.
+        _deviceName = await _lookupOsName();
+      } on Object {
         // Keep the default; advertising still works, just less personal.
       }
     }
@@ -121,6 +165,39 @@ class DeviceProvider extends ChangeNotifier {
     // test that disposes early, a screen popped mid-lookup). Notifying a
     // disposed ChangeNotifier throws.
     if (!_disposed) notifyListeners();
+  }
+
+  /// Reads this device's name from the OS, or returns [_deviceName] when the
+  /// platform cannot answer.
+  Future<String> _lookupOsName() async {
+    try {
+      final plugin = DeviceInfoPlugin();
+      String? name;
+      if (Platform.isAndroid) {
+        final info = await plugin.androidInfo;
+        final model = info.model.trim();
+        final brand = info.brand.trim();
+        name = model.isNotEmpty
+            ? (brand.isNotEmpty &&
+                    !model.toLowerCase().startsWith(brand.toLowerCase())
+                ? '$brand $model'
+                : model)
+            : info.device;
+      } else if (Platform.isWindows) {
+        name = (await plugin.windowsInfo).computerName;
+      } else if (Platform.isLinux) {
+        final info = await plugin.linuxInfo;
+        name = info.prettyName.isNotEmpty ? info.prettyName : info.name;
+      } else if (Platform.isMacOS) {
+        name = (await plugin.macOsInfo).computerName;
+      }
+      if (name != null && name.trim().isNotEmpty) {
+        return name.trim();
+      }
+    } catch (_) {
+      // Fall through to the current value.
+    }
+    return _deviceName;
   }
 
   List<DeviceModel> get devices => List.unmodifiable(_devicesMap.values);
@@ -140,7 +217,13 @@ class DeviceProvider extends ChangeNotifier {
   /// Resolves to the name this install advertises, waiting for the OS lookup
   /// when necessary.
   Future<String> resolvedDeviceName() async {
-    if (!_nameReady.isCompleted) {
+    // Nothing to wait for once the lookup has finished, and nothing to wait for
+    // before it has started. The old version awaited the completer whenever it
+    // was pending, which meant a caller that ran before `_resolveDeviceName`
+    // had been scheduled waited the full three-second timeout for no reason —
+    // three seconds of dead air on the first advertise, and an unelapsed timer
+    // in any test that started a provider without a platform behind it.
+    if (!_nameResolved && !_nameReady.isCompleted) {
       await _nameReady.future.timeout(
         const Duration(seconds: 3),
         onTimeout: () {},
@@ -225,14 +308,59 @@ class DeviceProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Stops advertising. Same reasoning as [stopDiscovery]: the switch is off
+  /// because the user switched it off, and a native complaint about tearing
+  /// down the radio is not something they can act on. Leaving `_isAdvertising`
+  /// true on failure showed a "visible" switch over an invisible device.
   Future<void> stopAdvertising() async {
     try {
       await _service.stopAdvertising();
+    } on Object {
+      // Swallowed on purpose; see above.
+    } finally {
       _isAdvertising = false;
-    } catch (e) {
-      _error = AppError.fromObject(e, fallback: AppErrorCode.discoveryFailed);
+      if (_error?.code == AppErrorCode.discoveryFailed) _error = null;
     }
     notifyListeners();
+  }
+
+  /// Re-arms discovery whenever the flag says it should be running.
+  ///
+  /// A periodic no-op rather than a health check: `startDiscovery` is
+  /// idempotent at the plugin level (a second start while already scanning is
+  /// rejected and ignored), so calling it on a healthy scan costs nothing,
+  /// while calling it after the OS killed the scan is exactly the recovery the
+  /// user used to perform by hand.
+  void _startWatchdog() {
+    _discoveryWatchdog?.cancel();
+    // A repeating timer keeps the whole process awake and, in a test, keeps the
+    // fake clock from ever going quiet — a leak that shows up as "a Timer is
+    // still pending even after the widget tree was disposed" long after the
+    // provider was forgotten. A self-rescheduling one-shot stops the moment it
+    // is no longer wanted, whether that is because the provider was disposed,
+    // the scan was switched off, or the isolate is shutting down.
+    _discoveryWatchdog = Timer(_watchdogPeriod, _watchdogTick);
+  }
+
+  void _watchdogTick() {
+    if (_disposed || !_isDiscovering) return;
+    unawaited(() async {
+      try {
+        await _service.startDiscovery();
+      } on Object {
+        // A watchdog restart is not a user action; it must never raise a
+        // banner. The next deliberate attempt reports failures properly.
+      }
+    }());
+    // Re-arm, unless something stopped the scan in the meantime.
+    if (!_disposed && _isDiscovering) {
+      _discoveryWatchdog = Timer(_watchdogPeriod, _watchdogTick);
+    }
+  }
+
+  void _stopWatchdog() {
+    _discoveryWatchdog?.cancel();
+    _discoveryWatchdog = null;
   }
 
   Future<void> startDiscovery() async {
@@ -252,19 +380,37 @@ class DeviceProvider extends ChangeNotifier {
       // [autoStart].
       await _service.startDiscovery();
       _isDiscovering = true;
+      _startWatchdog();
     } catch (e) {
       _error = AppError.fromObject(e, fallback: AppErrorCode.discoveryFailed);
       _isDiscovering = false;
+      _stopWatchdog();
     }
     notifyListeners();
   }
 
+  /// Stops scanning.
+  ///
+  /// The flag is cleared in `finally`, and a native failure is **not** reported
+  /// as a scan failure. Both halves of that are fixes for the same screenshot:
+  /// a failed `stopDiscovery` used to leave `_isDiscovering` true while setting
+  /// `_error` to `discoveryFailed`, so Discover showed "Scanning... keep Throw
+  /// open" and a red "Scanning for devices failed" banner at the same time,
+  /// with the switch visibly off. The user asked to stop; the scan is over
+  /// either way. What the native call thinks about it is not the user's
+  /// problem, and the next [startDiscovery] will surface a real fault if one
+  /// exists.
   Future<void> stopDiscovery() async {
     try {
       await _service.stopDiscovery();
+    } on Object {
+      // Intentionally swallowed: see above. Stopping cannot fail in a way the
+      // user can act on.
+    } finally {
       _isDiscovering = false;
-    } catch (e) {
-      _error = AppError.fromObject(e, fallback: AppErrorCode.discoveryFailed);
+      _stopWatchdog();
+      // A stale discovery error must not outlive the scan it described.
+      if (_error?.code == AppErrorCode.discoveryFailed) _error = null;
     }
     notifyListeners();
   }
@@ -316,9 +462,79 @@ class DeviceProvider extends ChangeNotifier {
     }
   }
 
+  /// The already-known device advertising under [device]'s name, if any.
+  ///
+  /// Names are compared case-insensitively and trimmed, because the name comes
+  /// from the peer and two endpoints for the same phone can disagree on case.
+  /// A nameless announcement never matches: that is how several anonymous peers
+  /// would otherwise collapse into one row.
+  DeviceModel? _sameNameAs(DeviceModel device) {
+    if (!device.hasRealName) return null;
+    final key = device.name.trim().toLowerCase();
+    for (final known in _devicesMap.values) {
+      if (known.hasRealName && known.name.trim().toLowerCase() == key) {
+        return known;
+      }
+    }
+    return null;
+  }
+
+  /// Resumes scanning when the app comes back to the foreground.
+  ///
+  /// Android tears down WiFi Direct discovery when the app is backgrounded, and
+  /// the `nearby_connections` plugin has no callback for it — `DiscoveryCallback`
+  /// only reports endpoints appearing and disappearing, never that discovery
+  /// itself died. So the provider went on believing it was scanning while the
+  /// radio was doing nothing, and the screen sat on "Scanning... keep Throw
+  /// open" forever, finding nothing. Users read that as the app being broken,
+  /// and switching the toggle off and on again was the only cure.
+  ///
+  /// Restarting on resume is what the platform expects an app to do, and it is
+  /// invisible when discovery was healthy: `startDiscovery` is guarded by
+  /// `_isDiscovering`, so this only acts when the flag says we *should* be
+  /// scanning. Discovery that the user switched off stays off.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (_disposed) return;
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_restartIfStale());
+    }
+  }
+
+  /// Re-arms discovery and advertising after the OS may have stopped them.
+  ///
+  /// The service is asked to start again rather than trusted to still be
+  /// running: a duplicate start on the native side is rejected harmlessly by
+  /// the plugin, while a missing one is the bug being fixed.
+  Future<void> _restartIfStale() async {
+    if (_isAdvertising) {
+      try {
+        // `_deviceName`, not `resolvedDeviceName()`. The name was resolved
+        // before the first advertise, and the resolver waits up to three
+        // seconds for a lookup that has already happened — a resume would have
+        // stalled three seconds before re-arming the radio, and left a pending
+        // timer behind. By the time anything is advertising, the name is known.
+        await _service.startAdvertising(deviceName: _deviceName);
+      } on Object {
+        // A restart that fails is not a new user-facing error; the next
+        // explicit action will report properly.
+      }
+    }
+    if (_isDiscovering) {
+      try {
+        await _service.startDiscovery();
+      } on Object {
+        // See above.
+      }
+    }
+  }
+
   @override
   void dispose() {
     _disposed = true;
+    _stopWatchdog();
+    if (_observingLifecycle) WidgetsBinding.instance.removeObserver(this);
     _devicesSub?.cancel();
     _requestsSub?.cancel();
     super.dispose();

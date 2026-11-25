@@ -142,6 +142,7 @@ Widget _transfers(FakeTransferService service) {
 }
 
 void main() {
+
   // Ambient motion never settles, so `pumpAndSettle` would wait for its
   // timeout on every screen. The widgets are exercised statically here.
   setUp(() => Atmosphere.enabled = false);
