@@ -32,6 +32,17 @@ abstract final class Motion {
   static const Curve curve = Curves.easeOutCubic;
   static const Curve pressCurve = Curves.easeOut;
 
+  /// Travel curve for a tab change.
+  ///
+  /// The incoming tab's position eases out faster than its opacity so it
+  /// settles almost immediately and the rest of the move is pure dissolve:
+  /// the eye reads a fade with a hint of direction rather than a slide.
+  static const Curve dissolve = Curves.easeOutQuint;
+
+  /// Duration of a tab change. The transition is short and mostly fades, so it
+  /// can be quicker than [standard] without feeling abrupt.
+  static const Duration tabChange = Duration(milliseconds: 260);
+
   /// True when the platform asks for reduced motion.
   static bool reduceMotion(BuildContext context) =>
       MediaQuery.maybeDisableAnimationsOf(context) ?? false;

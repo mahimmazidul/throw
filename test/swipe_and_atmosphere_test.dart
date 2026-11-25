@@ -393,4 +393,133 @@ void main() {
       await back.up();
       await tester.pumpAndSettle();
     });
+
+    testWidgets('a tab change is a transition, not a full-width slide',
+        (tester) async {
+      // Reported: "swipe ain't smooth, it overlays the whole second screen,
+      // make it like transition rather than whole swiping". The incoming tab
+      // used to arrive from a full screen width away, so every pixel of one
+      // screen travelled over every pixel of the other.
+      //
+      // This measures how far the incoming screen actually moves across the
+      // whole transition. A full-width slide is 800 px here; a transition
+      // should be a short nudge.
+      Atmosphere.enabled = false;
+
+      await tester.pumpWidget(const _TabHost());
+      await tester.pump();
+      final homeDx = tester.getTopLeft(find.text('ONE')).dx;
+
+      // Switch to tab 1 and watch the incoming screen's first frame.
+      await tester.tap(find.text('go'));
+      await tester.pump();
+      final firstDx = tester.getTopLeft(find.text('TWO')).dx;
+
+      await tester.pump(const Duration(milliseconds: 60));
+      final midDx = tester.getTopLeft(find.text('TWO')).dx;
+
+      await tester.pumpAndSettle();
+      final settledDx = tester.getTopLeft(find.text('TWO')).dx;
+
+      final travelled = (settledDx - firstDx).abs();
+      expect(travelled, greaterThan(0),
+          reason: 'there should be directional movement');
+      expect(travelled, lessThan(80),
+          reason: 'the screen should ease in a short distance, not cross the '
+              'whole window; travelled $travelled px');
+
+      // It moves monotonically toward rest: never backwards mid-transition.
+      expect((midDx - firstDx).abs(), lessThanOrEqualTo(travelled + 0.5));
+      // And the text was already near its resting place, not off screen.
+      expect((firstDx - homeDx).abs(), lessThan(80),
+          reason: 'the incoming text must not start a screen away');
+    });
+
+    testWidgets('releasing a committed drag does not snap the screen back',
+        (tester) async {
+      // "Not smooth": `forward(from: 0)` restarted the transition from the far
+      // edge, so on release the incoming screen jumped back to its starting
+      // offset and replayed the whole move. Progress now carries across.
+      Atmosphere.enabled = false;
+
+      await tester.pumpWidget(const _TabHost());
+      await tester.pump();
+
+      final gesture = await tester.startGesture(const Offset(400, 300));
+      await gesture.moveBy(const Offset(-200, 0));
+      await tester.pump();
+
+      // Scoped to the incoming screen's own subtree. Taking the largest
+      // opacity in the tree would measure the *outgoing* screen, which stays
+      // near 1.0 and would make this assertion vacuous.
+      double incomingOpacity() {
+        final opacities = find.ancestor(
+          of: find.text('TWO'),
+          matching: find.byType(Opacity),
+        );
+        expect(opacities, findsWidgets,
+            reason: 'the incoming screen must be inside an animated Opacity');
+        return tester
+            .widgetList<Opacity>(opacities)
+            .map((o) => o.opacity)
+            .reduce((a, b) => a < b ? a : b);
+      }
+
+      final before = incomingOpacity();
+      expect(before, greaterThan(0),
+          reason: 'the incoming screen is already part-way in during the drag');
+
+      await gesture.up();
+      await tester.pump(); // first frame after release
+
+      final after = incomingOpacity();
+      expect(after, greaterThanOrEqualTo(before - 0.02),
+          reason: 'the incoming screen must not snap back to transparent when '
+              'the finger lifts');
+      await tester.pumpAndSettle();
+      expect(find.text('TWO'), findsOneWidget);
+    });
+}
+
+
+/// Two tabs with a button that swaps the index the way the app does, so tests
+/// can drive a real committed move rather than guessing at rebuild order.
+class _TabHost extends StatefulWidget {
+  const _TabHost();
+
+  @override
+  State<_TabHost> createState() => _TabHostState();
+}
+
+class _TabHostState extends State<_TabHost> {
+  int _index = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: SwipeableTabs(
+                index: _index,
+                onChanged: (i) => setState(() => _index = i),
+                children: const [
+                  Center(child: Text('ONE')),
+                  Center(child: Text('TWO')),
+                ],
+              ),
+            ),
+            Align(
+              alignment: Alignment.topLeft,
+              child: TextButton(
+                onPressed: () => setState(() => _index = 1),
+                child: const Text('go'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

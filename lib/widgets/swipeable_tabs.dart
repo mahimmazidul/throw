@@ -67,6 +67,16 @@ class _SwipeableTabsState extends State<SwipeableTabs>
   int? _outgoing;
   int? _incoming;
 
+  /// Progress carried over from a drag that has just been committed.
+  ///
+  /// When a drag crosses the commit threshold the gesture is handed to the
+  /// owner, which rebuilds with the new index and starts an animation. Starting
+  /// that animation at zero snapped the incoming screen back off the edge and
+  /// replayed the whole transition from the beginning — the transition visibly
+  /// stuttered at the moment of release. Carrying the gesture's progress across
+  /// makes the release continue from where the finger left off.
+  double? _handOffFrom;
+
   /// Which way the incoming screen travels: 1 when moving to a higher index
   /// (it comes from the right), -1 when moving to a lower one.
   int _direction = 1;
@@ -86,6 +96,12 @@ class _SwipeableTabsState extends State<SwipeableTabs>
   /// the direction entirely.
   double _drag = 0;
 
+  /// Fraction of a screen of travel that commits a move.
+  ///
+  /// This was 0.28 when a swipe shoved a whole screen across; the transition is
+  /// short now, so 0.18 (a fifth of the width, or a modest flick) is enough.
+  static const double _commitAt = 0.18;
+
   @override
   void didUpdateWidget(SwipeableTabs old) {
     super.didUpdateWidget(old);
@@ -94,15 +110,21 @@ class _SwipeableTabsState extends State<SwipeableTabs>
       // No slide at all; the new tab is simply shown.
       _outgoing = null;
       _incoming = null;
+      _handOffFrom = null;
       _controller.value = 1;
       return;
     }
     _outgoing = old.index;
     _incoming = widget.index;
     _direction = widget.index > old.index ? 1 : -1;
+
+    // Resume from the gesture when there is one, otherwise start clean.
+    final start = _handOffFrom?.clamp(0.0, 0.92);
+    _handOffFrom = null;
     _controller
-      ..duration = Motion.standard
-      ..forward(from: 0).whenCompleteOrCancel(() {
+      ..duration = Motion.tabChange
+      ..value = start ?? 0;
+    _controller.forward().whenCompleteOrCancel(() {
         if (!mounted) return;
         // The move is done: drop the stage, or the next drag would replay it.
         setState(() {
@@ -124,17 +146,21 @@ class _SwipeableTabsState extends State<SwipeableTabs>
     final projected = _drag - velocity * 0.12 / width;
 
     var target = widget.index;
-    if (projected > 0.28) {
+    if (projected > _commitAt) {
       target = widget.index + 1;
-    } else if (projected < -0.28) {
+    } else if (projected < -_commitAt) {
       target = widget.index - 1;
     }
     target = target.clamp(0, widget.children.length - 1);
 
+    // Progress already on screen. The transition is short, so it takes less
+    // travel than a full-screen slide would to feel committed.
+    final carried = _controller.value;
+
     _drag = 0;
 
     if (target == widget.index) {
-      // Not far enough: spring back rather than leaving a half-shifted screen.
+      // Not far enough: ease back rather than leaving a half-shifted screen.
       _controller.animateBack(
         0,
         duration: Motion.fast,
@@ -143,8 +169,12 @@ class _SwipeableTabsState extends State<SwipeableTabs>
       return;
     }
 
-    // Hand off to the owner, which rebuilds with the new index; the movement so
-    // far is reused so the gesture feels continuous rather than restarting.
+    // Hand off to the owner, which rebuilds with the new index. The progress
+    // the gesture had reached is carried into the animation so it continues
+    // from under the finger instead of snapping back and replaying. This was
+    // the visible stutter on release: `forward(from: 0)` restarted the move
+    // from the far edge.
+    _handOffFrom = carried;
     widget.onChanged(target);
   }
 
@@ -215,41 +245,45 @@ class _SwipeableTabsState extends State<SwipeableTabs>
             incoming = null;
           }
 
-          final moving = incoming != null && incoming != outgoing && t > 0;
+          final moving = incoming != null && incoming != outgoing;
+          final travel = _drag != 0
+              ? (_drag > 0 ? 1 : -1)
+              : _direction;
 
           return Stack(
             fit: StackFit.expand,
             children: [
-              // The outgoing screen stays put and stays fully opaque.
+              // A transition, not a slide.
               //
-              // It is deliberately not faded. Fading it was what made the app
-              // look transparent during a swipe: the screens paint onto a clear
-              // canvas (the ambient drift is translucent and the page itself has
-              // no background — the shell's Scaffold supplied the fill). With
-              // both layers at partial opacity you saw straight through them to
-              // the window behind.
-              _buildScreen(outgoing, canvas: canvas),
-              if (moving)
-                FractionalTranslation(
-                  translation: Offset(
-                    (_drag != 0 ? (_drag > 0 ? 1 : -1) : _direction) * (1 - t),
-                    0,
+              // The incoming tab used to be pushed across the full width of the
+              // window, so a swipe shoved every pixel of one screen over every
+              // pixel of the other — the whole second screen travelling over the
+              // first. That is a page-turn, not a tab change, and on a wide
+              // window it is a long way to watch.
+              //
+              // Instead the outgoing tab eases back a short distance, dims
+              // slightly and settles, while the incoming tab arrives from a
+              // short offset in the direction of travel with a staggered fade.
+              // The movement is 16–28 px on a phone and a shade more on a wide
+              // window: a change of state, like a cross-dissolve with direction,
+              // rather than a journey across the screen.
+              if (moving) ...[
+                Opacity(
+                  opacity: 1.0 - 0.42 * t,
+                  child: Transform.translate(
+                    offset: Offset(-travel * _outgoingNudge * t, 0),
+                    child: _buildScreen(outgoing, canvas: canvas),
                   ),
-                  child: DecoratedBox(
-                    // An edge shadow sells it as a surface sliding over another
-                    // rather than two layers swapping in place.
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.28),
-                          blurRadius: 24,
-                          offset: Offset(
-                            -(_drag != 0 ? (_drag > 0 ? 1 : -1) : _direction) *
-                                6.0,
-                            0,
-                          ),
-                        ),
-                      ],
+                ),
+              ] else
+                _buildScreen(outgoing, canvas: canvas),
+              if (moving)
+                Opacity(
+                  opacity: t,
+                  child: Transform.translate(
+                    offset: Offset(
+                      travel * _incomingOffset * (1 - Motion.dissolve.transform(t)),
+                      0,
                     ),
                     child: _buildScreen(incoming, canvas: canvas),
                   ),
@@ -262,6 +296,12 @@ class _SwipeableTabsState extends State<SwipeableTabs>
       },
     );
   }
+
+  /// How far the outgoing tab eases back, in logical pixels.
+  static const double _outgoingNudge = 28;
+
+  /// The distance the incoming tab travels on its way in.
+  static const double _incomingOffset = 34;
 
   /// A tab, guaranteed opaque.
   ///

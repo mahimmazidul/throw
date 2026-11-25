@@ -5,6 +5,40 @@ All notable changes to Throw are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] — 2026-11-24
+
+The tab change was a full-screen slide, and it stuttered on release. It is now
+a transition: a short directional ease with a staggered dissolve.
+
+### Changed — swiping slides a whole screen, and it should not
+
+Requested plainly: *"swipe ain't smooth, it overlays the whole second screen,
+just make it like transition rather than whole swiping."* The incoming tab
+arrived translated from a full screen width away, so every pixel of one screen
+travelled over every pixel of the other — a page-turn, not a tab change. On a
+wide window that is a long way to watch for something as small as moving one tab
+to the right.
+
+The outgoing tab now eases back 28 px, dims to 58% and settles; the incoming tab
+arrives from a 34 px offset in the direction of travel, on a faster easing curve
+than its own fade so it settles almost at once and the rest of the move is pure
+dissolve. Measured: the incoming screen travels **34 px of an 800 px window** and
+is in place within 200 ms, versus a full 800 px before. The gesture still drives
+it — a drag cross-dissolves under the finger — but the travel never exceeds a
+short nudge regardless of how far the finger goes.
+
+### Fixed — the transition jumped backwards when the finger lifted
+
+On a committed drag the animation restarted with `forward(from: 0)`, snapping
+the incoming screen from wherever the gesture had taken it (57.9% opacity in the
+measured case) all the way back to **0.0** — fully transparent, off its offset —
+and then replayed the entire move. That backwards jump is what read as "not
+smooth". Progress is now carried from the gesture into the animation, so release
+continues from under the finger.
+
+The commit threshold drops from 28% of the width to 18% (a modest flick), since
+the transition no longer needs a screen's worth of travel to feel deliberate.
+
 ## [1.3.1] — 2026-11-24
 
 Three defects in the v1.3.0 motion layer, all found by using the app rather than
