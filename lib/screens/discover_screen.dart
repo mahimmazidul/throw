@@ -281,24 +281,63 @@ class _ConnectionRequestRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FlatRow(
-      leading: const Icon(Icons.link_rounded),
-      title: title,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.space1,
+        vertical: AppConstants.space3,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Pressable(
-            child: TextButton(
-              onPressed: onReject,
-              child: Text(rejectLabel),
-            ),
+          // The name goes on its own line, full width, and is allowed two lines.
+          //
+          // Both buttons used to be crammed into `FlatRow.trailing`, which caps
+          // its slot at 40% of the window. At 360dp that is 144dp for two
+          // controls that need roughly 248 — the row overflowed by 104dp, the
+          // Accept button was pushed off the right edge and the Reject button
+          // was clipped into it. On a narrow phone there is no width at which
+          // "Reject" and "Accept" belong on the same line as a device name, so
+          // they get their own.
+          Row(
+            children: [
+              IconTheme(
+                data: IconTheme.of(context).copyWith(
+                  size: 22,
+                  color: ThrowTheme.accentFg(context),
+                ),
+                child: const Icon(Icons.link_rounded),
+              ),
+              const SizedBox(width: AppConstants.space3),
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.bodyLarge
+                      ?.copyWith(fontWeight: FontWeight.w500),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: AppConstants.space1),
-          Pressable(
-            child: DepthButton(
-              onPressed: onAccept,
-              child: Text(acceptLabel),
-            ),
+          const SizedBox(height: AppConstants.space3),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Pressable(
+                child: TextButton(
+                  onPressed: onReject,
+                  child: Text(rejectLabel),
+                ),
+              ),
+              const SizedBox(width: AppConstants.space2),
+              Pressable(
+                child: DepthButton(
+                  onPressed: onAccept,
+                  child: Text(acceptLabel),
+                ),
+              ),
+            ],
           ),
         ],
       ),

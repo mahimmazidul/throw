@@ -12,6 +12,7 @@ import 'package:throw_app/services/transfer_service.dart';
 /// A service that records the order of calls and what name it was handed.
 class RecordingService implements TransferService {
   final devicesController = StreamController<DeviceModel>.broadcast();
+  final requestsController = StreamController<ConnectionRequest>.broadcast();
   final calls = <String>[];
   final advertisedNames = <String>[];
   bool failAdvertising = false;
@@ -24,7 +25,7 @@ class RecordingService implements TransferService {
   @override
   Stream<TransferModel> get transfers => const Stream.empty();
   @override
-  Stream<ConnectionRequest> get connectionRequests => const Stream.empty();
+  Stream<ConnectionRequest> get connectionRequests => requestsController.stream;
   @override
   Stream<PayloadModel> get receivedPayloads => const Stream.empty();
 

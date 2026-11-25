@@ -5,6 +5,40 @@ All notable changes to Throw are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.6] — 2026-11-26
+
+The row that asks you to accept an incoming connection was broken on a phone.
+It is a 360dp-wide window and the row needed 464.
+
+### Fixed — the accept row overflowed off the screen
+
+The name and both buttons were on one line. The buttons lived in `FlatRow`'s
+trailing slot, which caps itself at 40% of the window — 144dp on a 360dp phone —
+while "Reject" and "Accept" together need roughly 248. The row overflowed by
+104dp: **Accept was pushed off the right edge entirely** and Reject was clipped
+into it, with the debug build's striped overflow marker drawn over both. That is
+the "no name nothing" row — the label was there, off-screen, and what remained
+visible was two clipped fragments of button.
+
+The name now has its own full-width line and may wrap to two, and the buttons sit
+below it, right-aligned. There is no width at which "Reject" and "Accept" belong
+on the same line as a device name on a phone, so they no longer try.
+
+Widths are now checked rather than assumed: `connection_request_layout_test.dart`
+renders the row at 360dp and fails on any overflow, asserts both labels are
+inside the window bounds, and covers a nameless peer (which gets a short token
+such as "Nearby device · 1122" rather than a blank or a raw UUID).
+`narrow_layout_test.dart` sweeps Home, Discover and Transfers at 360dp and 392dp
+so the same class of bug cannot appear on another screen unnoticed.
+
+### Fixed — the depth button had no Material ancestor
+
+`DepthButton` renders a `FilledButton`, which is ink-aware and requires a
+`Material` above it. It only worked because every call site happened to sit under
+a `Scaffold`; rendering a button on its own failed with "No Material widget
+found". It now owns a transparent `Material`, which also scopes the ink splash to
+the button so a splash can never paint outside its own pill.
+
 ## [1.3.5] — 2026-11-26
 
 Discovery was listing the same phone twice and could sit spinning with a red

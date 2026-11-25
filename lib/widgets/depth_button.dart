@@ -47,24 +47,33 @@ class DepthButton extends StatelessWidget {
             ],
           );
 
-    return DecoratedBox(
-      decoration: ShapeDecoration(
+    // The `Material` is not optional. `FilledButton` is an ink-aware widget and
+    // asserts if it cannot find one; without this it only worked because every
+    // call site happened to sit under a Scaffold, and a golden that rendered a
+    // button on its own failed with "No Material widget found". Owning the
+    // Material here also scopes the ink splash to the button, so a splash can
+    // never paint outside its own pill.
+    return Material(
+      color: Colors.transparent,
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
         shape: shape,
         gradient: _enabled ? ThrowSurface.controlFill(context) : null,
         color: _enabled ? null : ThrowSurface.disabledFill(context),
         shadows: _enabled ? ThrowSurface.controlShadow(context) : const [],
       ),
-      child: FilledButton(
-        onPressed: onPressed,
-        style: FilledButton.styleFrom(
-          // Transparent so the gradient above shows through; the disabled
-          // colour still comes from the theme via the shape decoration.
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          elevation: 0,
-          shape: shape,
+        child: FilledButton(
+          onPressed: onPressed,
+          style: FilledButton.styleFrom(
+            // Transparent so the gradient above shows through; the disabled
+            // colour still comes from the theme via the shape decoration.
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            elevation: 0,
+            shape: shape,
+          ),
+          child: content,
         ),
-        child: content,
       ),
     );
   }
