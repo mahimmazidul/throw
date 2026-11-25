@@ -9,6 +9,7 @@ import '../l10n/app_localizations.dart';
 import '../models/device_model.dart';
 import '../models/transfer_model.dart';
 import '../providers/device_provider.dart';
+import '../widgets/depth_button.dart';
 import '../widgets/entrance.dart';
 import '../widgets/error_banner.dart';
 import '../widgets/panel.dart';
@@ -294,7 +295,7 @@ class _ConnectionRequestRow extends StatelessWidget {
           ),
           const SizedBox(width: AppConstants.space1),
           Pressable(
-            child: FilledButton(
+            child: DepthButton(
               onPressed: onAccept,
               child: Text(acceptLabel),
             ),

@@ -250,6 +250,14 @@ jobs:
       # then failed differently, because the release already existed. Both
       # outcomes are survivable now: publishing an existing release updates it
       # in place, and the retry settings ride out a transient 5xx.
+      # The release body is this version's section only. Handing GitHub the
+      # whole CHANGELOG put 530 lines above the download assets, so getting to
+      # a file meant scrolling past every change since 1.0.
+      - name: Trim release notes to this version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          python3 tool/release_notes.py "$VERSION" release-notes.md
+
       - uses: ncipollo/release-action@v1
         id: release
         with:
@@ -258,7 +266,7 @@ jobs:
           artifacts: "release-files/**/*"
           tag: ${{ github.event.inputs.tag || github.ref_name }}
           name: "Throw ${{ github.event.inputs.tag || github.ref_name }}"
-          bodyFile: "CHANGELOG.md"
+          bodyFile: "release-notes.md"
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
           replacesArtifacts: false

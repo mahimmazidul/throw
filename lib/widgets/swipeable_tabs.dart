@@ -222,15 +222,12 @@ class _SwipeableTabsState extends State<SwipeableTabs>
         animation: _controller,
         builder: (context, _) {
           final t = Motion.curve.transform(_controller.value.clamp(0.0, 1.0));
-          final canvas = Theme.of(context).scaffoldBackgroundColor;
 
           // Which screens are on stage.
           //
           // A committed move has both ends named by `didUpdateWidget`. A live
           // drag has neither: the owner is only told on release, so the
-          // incoming screen is inferred from the gesture. Without that branch
-          // nothing on screen moved while a finger was down, and the gesture
-          // felt dead until it was let go.
+          // incoming screen is inferred from the gesture.
           final int outgoing;
           final int? incoming;
           if (_outgoing != null && _incoming != null) {
@@ -250,55 +247,46 @@ class _SwipeableTabsState extends State<SwipeableTabs>
               ? (_drag > 0 ? 1 : -1)
               : _direction;
 
+          if (!moving) {
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                for (var i = 0; i < widget.children.length; i++)
+                  _layer(
+                    i,
+                    visible: i == outgoing,
+                    translation: Offset.zero,
+                    shadow: false,
+                  ),
+              ],
+            );
+          }
+
           return Stack(
             fit: StackFit.expand,
             children: [
-              // Movement, not a cross-fade.
-              //
-              // Two earlier attempts got this wrong in opposite directions. The
-              // first slid the incoming screen across the entire window, which
-              // shoved every pixel of one screen over every pixel of the other.
-              // The second dissolved the two screens in place, which put both
-              // screens' text on top of each other at partial opacity — the
-              // exact "overlapping, transparent" complaint, arrived at from the
-              // other side.
-              //
-              // What a tab change wants is neither: the two screens move
-              // *together*, pinned to each other, so the boundary sweeps across
-              // and no two pieces of text are ever legible in the same place.
-              // That is how iOS does it: `UIPageViewController` with a scroll
-              // transition moves both views as one rigid pair. Nothing fades.
-              if (incoming != null && incoming != outgoing)
-                ClipRect(
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      // Outgoing: pushed out along the axis of travel.
-                      FractionalTranslation(
-                        translation: Offset(-travel * t, 0),
-                        child: _buildScreen(outgoing, canvas: canvas),
-                      ),
-                      // Incoming: arrives from the opposite edge, in lockstep.
-                      FractionalTranslation(
-                        translation: Offset(travel * (1 - t), 0),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.16),
-                                blurRadius: 20,
-                                offset: Offset(-travel * 4, 0),
-                              ),
-                            ],
-                          ),
-                          child: _buildScreen(incoming, canvas: canvas),
-                        ),
-                      ),
-                    ],
+              for (var i = 0; i < widget.children.length; i++)
+                if (i == outgoing)
+                  _layer(
+                    i,
+                    visible: true,
+                    translation: Offset(-travel * t, 0),
+                    shadow: false,
+                  )
+                else if (i == incoming)
+                  _layer(
+                    i,
+                    visible: true,
+                    translation: Offset(travel * (1 - t), 0),
+                    shadow: true,
+                  )
+                else
+                  _layer(
+                    i,
+                    visible: false,
+                    translation: Offset.zero,
+                    shadow: false,
                   ),
-                )
-              else
-                _buildScreen(outgoing, canvas: canvas),
             ],
           );
         },
@@ -308,34 +296,69 @@ class _SwipeableTabsState extends State<SwipeableTabs>
     );
   }
 
-  /// A tab, guaranteed opaque.
+  /// One tab, at a fixed position in the tree.
   ///
-  /// The `ColoredBox` is the load-bearing part. Every screen draws onto a clear
-  /// canvas — the ambient drift is a translucent layer and the page itself
-  /// paints no background — so a screen only looked opaque because it happened
-  /// to sit directly on the shell's Scaffold. The moment two of them are
-  /// stacked during a swipe, both are see-through and the whole transition
-  /// reads as the app going transparent. Painting the canvas colour under each
-  /// one makes "in front" mean something.
-  Widget _buildScreen(int index, {required Color canvas}) {
-    return ColoredBox(
-      color: canvas,
-      child: _KeepAliveStack(index: index, children: widget.children),
+  /// Every tab is built here, every frame, in index order — the same length,
+  /// the same order, whatever the transition is doing. Only whether it paints
+  /// and where it sits changes.
+  ///
+  /// That fixed position is the whole point. The previous version built the
+  /// transition from two separate `IndexedStack`s, one per screen on stage, so
+  /// a tab lived at `Stack/children[0]` while idling and at
+  /// `Stack/ClipRect/Stack/children[1]` mid-swipe. Flutter cannot migrate an
+  /// element between positions, so it destroyed every tab and rebuilt it from
+  /// scratch three times per swipe. Each rebuild restarted [Entrance] from
+  /// transparent, so a swipe made the text fade in and drop again and again
+  /// while the screen slid — the "text comes twice or thrice" report. It also
+  /// silently broke the keep-alive promise this widget exists to keep: a scan
+  /// in progress and every scroll offset were discarded on each tab change.
+  ///
+  /// `maintainState` keeps an off-stage tab mounted, so state survives; it just
+  /// is not painted and does not take part in layout.
+  ///
+  /// The `ColoredBox` is load-bearing: every screen draws onto a clear canvas
+  /// (the ambient drift is a translucent layer and the page paints no
+  /// background), so a screen only looked opaque because it happened to sit
+  /// directly on the shell's Scaffold. The moment two are on screen together,
+  /// both are see-through and the transition reads as the app going
+  /// transparent. Painting the canvas colour under each one makes "in front"
+  /// mean something.
+  Widget _layer(
+    int index, {
+    required bool visible,
+    required Offset translation,
+    required bool shadow,
+  }) {
+    final canvas = Theme.of(context).scaffoldBackgroundColor;
+
+    // The wrapper chain is the same for every tab in every state — shadow or
+    // not, on stage or not. Swapping a wrapper in and out when a tab becomes
+    // the incoming screen changes the widget type at that position, and Flutter
+    // answers a changed type by throwing the subtree away: the tab was rebuilt
+    // the moment it started entering and again when it finished. Only the
+    // decoration's value varies.
+    return Visibility(
+      visible: visible,
+      maintainState: true,
+      maintainAnimation: true,
+      child: FractionalTranslation(
+        translation: translation,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            boxShadow: shadow
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.16),
+                      blurRadius: 20,
+                      offset: Offset(translation.dx.sign * 4, 0),
+                    ),
+                  ]
+                : const <BoxShadow>[],
+          ),
+          child: ColoredBox(color: canvas, child: widget.children[index]),
+        ),
+      ),
     );
-  }
-}
-
-/// An [IndexedStack] with the same keep-alive behaviour, factored out so the
-/// animated stack and the resting stack cannot drift apart.
-class _KeepAliveStack extends StatelessWidget {
-  const _KeepAliveStack({required this.index, required this.children});
-
-  final int index;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return IndexedStack(index: index, children: children);
   }
 }
 

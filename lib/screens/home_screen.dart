@@ -19,6 +19,7 @@ import '../models/transfer_model.dart';
 import '../providers/device_provider.dart';
 import '../providers/share_inbox_provider.dart';
 import '../providers/transfer_provider.dart';
+import '../widgets/depth_button.dart';
 import '../widgets/entrance.dart';
 import '../widgets/error_banner.dart';
 import '../widgets/no_peer_hint.dart';
@@ -539,10 +540,10 @@ class _SendSection extends StatelessWidget {
             const Spacer(),
             Pressable(
               enabled: canSend,
-              child: FilledButton.icon(
+              child: DepthButton(
                 onPressed: canSend ? onSendText : null,
                 icon: const Icon(Icons.send_rounded, size: 18),
-                label: Text(
+                child: Text(
                   targetCount > 1
                       ? l10n.sendToCount(targetCount)
                       : l10n.actionSend,

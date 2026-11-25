@@ -5,6 +5,83 @@ All notable changes to Throw are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.4] — 2026-11-25
+
+The swipe was re-creating every tab three times a change, which is why the text
+appeared to fall into place two or three times over itself. The release page
+buried its own downloads under half a thousand lines. And the buttons were flat
+rectangles that only changed colour.
+
+### Fixed — the swipe no longer rebuilds the app
+
+Every screen in the tab strip was being destroyed and rebuilt **three times per
+tab change**. The motion was fine; the content underneath it was restarting from
+scratch, so the staggered entrance fade replayed twice or three times while a
+screen was sliding, and the text visibly dropped into place over and over. Worse
+for anyone mid-task: a scan in progress, a typed draft, a scroll position — all
+of it was thrown away on every swipe, even though this widget exists specifically
+to keep tabs alive.
+
+The cause was structural. The transition was assembled from two separate stacks,
+one per screen on stage, so a tab lived at a different position in the widget
+tree depending on what the transition was doing. Flutter cannot move an element
+between positions; when the type or position at a slot changes it discards the
+subtree and builds a new one. Each swipe moved every tab once on the way in and
+once on the way out.
+
+Now all tabs are built in one stack, in index order, every frame — the same
+children at the same positions, whatever is moving. Only visibility and
+translation change. A tab mounts once and stays mounted until the app closes.
+Two tests in `tab_lifecycle_test.dart` assert the count directly: a tab's state
+must be created exactly once across a walk through all four tabs and back, and a
+tab must still show its original contents when the user returns to it.
+
+### Fixed — the download page is a download page again
+
+The release body was the entire CHANGELOG: 530 lines, 26,757 characters, every
+change since 1.0. Getting to the actual files meant scrolling past all of it.
+
+`tool/release_notes.py` now extracts only the current version's section and
+writes it with a one-line header pointing at the downloads. The v1.3.4 page is
+that section, and nothing else.
+
+### Fixed — Pages deployments retry, and cannot fail quietly
+
+The site showed v1.0.15 through several releases. The cause was a single `500`
+from the Pages service during an outage, which the workflow treated as final.
+Because Pages deploys on its own workflow, separate from the release job, a
+release could be green while the site had not moved in months — which is exactly
+what happened.
+
+`Deploy Pages` now retries the deployment once if the first attempt fails, and a
+confirmation step fails the run if both attempts fail, so a stale site shows up
+as a red build instead of going unnoticed. Pages was also re-dispatched and the
+live site is current.
+
+### Added — filled buttons have depth
+
+Borrowed from `taka`, the reference app: a two-stop gradient fill and a soft
+shadow tinted with the button's own colour rather than black.
+
+The palette documented "no gradient, no glow, no tinted elevation". That rule was
+written about *surfaces* — the radiant background washes the home and discover
+headers used to carry — and applying it to the control in your hand was the wrong
+reading. The doc now says so explicitly: the page stays flat, the things on it
+have depth. The gradient is tonal, two cuts of the app's own moss, and lives
+inside the button's own bounds, so nothing radiates onto the page.
+
+It is deliberately narrow rather than a showy ramp, and the range is checked
+instead of assumed. The first attempt used a top stop of `#14887C`, which
+measured **4.13:1** against the button's white label — below AA, on the largest
+control in the app. My own comment claimed every stop cleared 4.5:1; the test
+said otherwise, so the range was narrowed. It now runs 4.89 / 6.12 / 8.35 in dark
+mode and 5.32 / 6.42 / 8.80 in light, and `depth_test.dart` recomputes every stop
+in both themes so it cannot drift below AA later.
+
+A disabled button drops its shadow and takes a muted surface for the theme in
+play — the first version fell back to the dark surface in light mode and painted
+a near-black pill on sage paper.
+
 ## [1.3.3] — 2026-11-25
 
 The tab change was still wrong, the update check could hang forever on a working

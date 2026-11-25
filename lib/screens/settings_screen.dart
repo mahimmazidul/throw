@@ -16,6 +16,7 @@ import '../models/app_error.dart';
 import '../providers/device_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/update_service.dart';
+import '../widgets/depth_button.dart';
 import '../widgets/entrance.dart';
 import '../widgets/panel.dart';
 import '../widgets/screen_header.dart';
@@ -68,7 +69,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           Pressable(
-            child: FilledButton(
+            child: DepthButton(
               onPressed: () => Navigator.pop(context, controller.text),
               child: Text(l10n.actionAccept),
             ),
@@ -259,7 +260,7 @@ Future<void> runUpdateCheck(BuildContext context) async {
               ),
             ),
             Pressable(
-              child: FilledButton(
+              child: DepthButton(
                 onPressed: () async {
                   Navigator.pop(ctx);
                   await launchUrl(

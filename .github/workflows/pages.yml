@@ -34,5 +34,30 @@ jobs:
       # github-pages were found". Give the API time to register the upload.
       - name: Wait for artifact registration
         run: sleep 20
+      # deploy-pages talks to the Pages service, which returns a 500 under load
+      # or during an incident. That is transient: the artifact is uploaded and
+      # valid, and the only thing missing is the deployment record. Retrying in
+      # place meant a failed deploy needed a human to re-dispatch the workflow -
+      # and because this workflow is not part of the release job, a release
+      # could go green while the site still showed a version from months ago.
+      # (That is exactly what happened: the site sat on v1.0.15 through several
+      # releases because one 500 was treated as final.)
       - id: deployment
         uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      - name: Retry deployment
+        if: steps.deployment.outcome == 'failure'
+        id: retry
+        uses: actions/deploy-pages@v4
+
+      - name: Confirm a deployment was created
+        run: |
+          if [ "${{ steps.deployment.outcome }}" = "success" ]; then
+            echo "deployed on first attempt"
+          elif [ "${{ steps.retry.outcome }}" = "success" ]; then
+            echo "deployed on retry"
+          else
+            echo "::error::Pages deployment failed twice; the live site is stale."
+            exit 1
+          fi

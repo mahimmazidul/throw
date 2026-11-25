@@ -26,10 +26,20 @@ import 'package:flutter/material.dart';
 ///    (moss, olive, chalky sage) plus warm neutrals (stone, sand) rather than
 ///    a single obvious green or a bright accent.
 ///
-/// Nothing here uses a gradient, a glow, or a tinted elevation — the surface
-/// ramp is flat on purpose. That rule used to stop at this file: the home and
-/// discover headers still carried a `LinearGradient` wash, the exact kind of
-/// radiant effect this palette exists to avoid. They are flat now.
+/// The surface ramp stays flat: no gradient washes behind content, no glow
+/// halos, no tinted ambient elevation. That rule used to stop at this file —
+/// the home and discover headers still carried a `LinearGradient` wash, the
+/// exact kind of radiant effect this palette exists to avoid. They are flat now.
+///
+/// **The rule covers surfaces, not controls.** A filled control is a physical
+/// object sitting on the ramp, and a single flat fill leaves it looking like a
+/// painted rectangle. [ThrowSurface.controlFill] gives filled buttons a
+/// two-stop gradient running light-to-dark down their own height, and
+/// [ThrowSurface.controlShadow] drops a soft tinted shadow beneath them. The
+/// gradient is tonal — two cuts of one moss, never two colours — and it lives
+/// inside the button's own bounds, so nothing radiates onto the page. That is
+/// the distinction the original sentence was reaching for, now stated: the
+/// page is flat, the things on it have depth.
 ///
 /// The accent ships in three cuts rather than one, because a single moss
 /// cannot clear WCAG AA on both a near-black and a sage field:
@@ -113,6 +123,93 @@ abstract final class ThrowColors {
 /// These numbers used to be re-typed inline across the screens — 4, 10, 12,
 /// 14, 16 and 20 within a few hundred lines — so neighbouring cards rounded
 /// differently for no reason. Everything reads from here.
+/// Depth for filled controls.
+///
+/// Borrowed from the reference app the user pointed at (`taka`), which gives its
+/// primary button a two-stop gradient and a soft shadow tinted with the button's
+/// own hue rather than black. That shadow is what sells the depth: a black drop
+/// shadow reads as a hole in the page, while one tinted with the fill reads as
+/// light bouncing off a raised object.
+///
+/// Two deliberate departures from the reference:
+///
+///  * **Tonal, not exotic.** `taka` runs #12A98C to #0A6E58 — a bright teal that
+///    does not belong in this palette at all. Here both stops are cuts of the
+///    app's own moss, roughly 12% lighter and 18% darker than the flat fill it
+///    replaces, so the button reads as the same material as the rest of the app,
+///    just lit.
+///  * **Both themes.** A gradient lightened only for dark mode turns into a pale
+///    smear on sage paper. [controlFill] takes brightness and picks a pair built
+///    for it; in light mode the range is compressed because the paper is
+///    already bright and a full-range gradient there looks like a mistake.
+///
+/// The range is deliberately narrow, and it is checked rather than assumed. The
+/// first cut of this used a top stop of #14887C, which measured **4.13:1**
+/// against the button's own white text — below AA, on the largest control in the
+/// app. `depth_test.dart` computes the ratio for every stop in both themes and
+/// fails the build if any drops under 4.5:1, so the gradient cannot be widened
+/// later without the failure being visible. Current range, dark: 4.89 / 6.12 /
+/// 8.35. Light: 5.32 / 6.42 / 8.80.
+abstract final class ThrowSurface {
+  /// Gradient for a filled control's own fill, top to bottom.
+  ///
+  /// Top stop is a lighter cut of the accent, bottom a darker one, so light
+  /// falls the way it does on a real key. Stops are 40/60 rather than evenly
+  /// split, which keeps the midpoint close to the flat accent and stops the
+  /// transition from reading as a band.
+  static LinearGradient controlFill(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: dark
+          ? const [Color(0xFF1E7A73), ThrowColors.accent, Color(0xFF0A544F)]
+          : const [Color(0xFF27736C), ThrowColors.lightAccent, Color(0xFF135049)],
+      stops: const [0.0, 0.45, 1.0],
+    );
+  }
+
+  /// Fill for a *disabled* control.
+  ///
+  /// `styleFrom` derives its disabled colour from the set background, and the
+  /// resolve below only ever falls back to the dark palette — which painted a
+  /// near-black pill on sage paper. This picks the muted surface for the
+  /// brightness actually in play, so a disabled button reads as switched off in
+  /// both themes instead of as a different material.
+  static Color disabledFill(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? ThrowColors.surfaceHigh
+          : ThrowColors.lightSurfaceHigh;
+
+  /// Soft shadow under a filled control, tinted with its own fill.
+  ///
+  /// `spreadRadius` is zero and the blur is wide, so it reads as contact shadow
+  /// rather than a border. The offset is small: the goal is "the button is on
+  /// the surface", not "the button is hovering".
+  static List<BoxShadow> controlShadow(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return [
+      BoxShadow(
+        color: (dark ? const Color(0xFF0E9F6E) : ThrowColors.lightAccent)
+            .withValues(alpha: dark ? 0.34 : 0.26),
+        blurRadius: 14,
+        offset: const Offset(0, 6),
+      ),
+    ];
+  }
+
+  /// The pressed state: the shadow tightens and the button sits lower, as if
+  /// pushed into the surface. Shadows that stay put under a press are the
+  /// reason a "pressed" button can still look like it is floating.
+  static List<BoxShadow> controlShadowPressed(BuildContext context) => [
+        BoxShadow(
+          color: ThrowColors.accent.withValues(alpha: 0.28),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
+        ),
+      ];
+}
+
 abstract final class ThrowRadius {
   /// Progress-bar tracks — a pill, never a rectangle.
   static const BorderRadius track = BorderRadius.all(Radius.circular(999));
