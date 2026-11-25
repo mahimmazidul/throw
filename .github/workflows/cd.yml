@@ -241,17 +241,56 @@ jobs:
           name: linux-build
           path: release-files/linux
 
+      # `allowUpdates` + `replacesArtifacts: false` make this step idempotent.
+      #
+      # v1.3.2 failed here: the tag was pushed, the release was created, and
+      # then the asset uploads died on `Error 502: Server Error` from the
+      # releases API. The release existed with zero assets, and the run was
+      # marked failed even though every build had succeeded. Re-running the job
+      # then failed differently, because the release already existed. Both
+      # outcomes are survivable now: publishing an existing release updates it
+      # in place, and the retry settings ride out a transient 5xx.
       - uses: ncipollo/release-action@v1
+        id: release
+        retry-attempts: 5
+        retry-wait: 5000
         with:
           artifacts: "release-files/**/*"
           tag: ${{ github.event.inputs.tag || github.ref_name }}
           name: "Throw ${{ github.event.inputs.tag || github.ref_name }}"
           bodyFile: "CHANGELOG.md"
           token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          replacesArtifacts: false
+
+      # A missing asset is worse than a red build: users download nothing.
+      # This asserts the release actually carries every artifact, so a silent
+      # partial release cannot ship again.
+      - name: Verify every artifact was published
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          expected=$(find release-files -type f \( -name '*.apk' -o -name '*.aab' \
+            -o -name '*.deb' -o -name '*.tar.gz' -o -name '*.AppImage' \
+            -o -name '*.zip' -o -name '*.msix' \) | wc -l)
+          published=$(gh release view "$TAG" --json assets --jq '.assets | length')
+          echo "built: $expected, published: $published"
+          if [ "$expected" -ne "$published" ]; then
+            echo "::error::Release $TAG has $published assets but $expected were built"
+            gh release view "$TAG" --json assets --jq '.assets[].name'
+            exit 1
+          fi
+          echo "all $expected assets published"
 
   update-pages:
     name: Update Pages Links
     needs: [release]
+    # v1.3.2 skipped this job because `release` failed, leaving the site one
+    # version behind. A skipped link update is invisible but real, so this job
+    # now runs whenever the release itself succeeded - including after retries.
+    if: needs.release.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

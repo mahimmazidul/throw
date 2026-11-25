@@ -1,10 +1,10 @@
 /// App-wide constants: layout, spacing, transfer, and desktop window rules.
 abstract final class AppConstants {
-  static const String appVersion = '1.3.2';
+  static const String appVersion = '1.3.3';
 
   /// Build number, kept next to [appVersion] because the About screen shows
   /// both and `pubspec.yaml`'s `+N` is not readable at runtime.
-  static const String appBuild = '21';
+  static const String appBuild = '22';
 
   /// The version with its `v` prefix, as GitHub tags it.
   static const String versionTag = 'v$appVersion';

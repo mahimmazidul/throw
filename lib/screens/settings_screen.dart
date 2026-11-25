@@ -15,6 +15,7 @@ import '../l10n/app_localizations.dart';
 import '../models/app_error.dart';
 import '../providers/device_provider.dart';
 import '../providers/locale_provider.dart';
+import '../services/update_service.dart';
 import '../widgets/entrance.dart';
 import '../widgets/panel.dart';
 import '../widgets/screen_header.dart';
@@ -80,106 +81,9 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _checkForUpdates(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
-    unawaited(showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        content: Row(
-          children: [
-            const SizedBox(
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(strokeWidth: 2.5),
-            ),
-            const SizedBox(width: 16),
-            Expanded(child: Text(l10n.updateChecking)),
-          ],
-        ),
-      ),
-    ));
-
-    try {
-      final client = HttpClient();
-      client.connectionTimeout = const Duration(seconds: 8);
-      final request = await client.getUrl(Uri.parse(
-        'https://api.github.com/repos/${AppConstants.githubRepo}/releases/latest',
-      ));
-      request.headers.set(
-        HttpHeaders.acceptHeader,
-        'application/vnd.github+json',
-      );
-      request.headers.set(HttpHeaders.userAgentHeader, 'Throw-App');
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      client.close(force: true);
-
-      if (response.statusCode != 200) {
-        throw Exception('GitHub returned ${response.statusCode}');
-      }
-      final json = jsonDecode(body) as Map<String, dynamic>;
-      final latestTag = (json['tag_name'] as String? ?? '').trim();
-      final latest =
-          latestTag.startsWith('v') ? latestTag.substring(1) : latestTag;
-      const current = AppConstants.appVersion;
-      final hasUpdate = AppUtils.isNewerVersion(latest, current);
-
-      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-      if (!context.mounted) return;
-
-      if (hasUpdate) {
-        unawaited(showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(l10n.updateAvailableTitle),
-            content: Text(l10n.updateAvailableBody(current, latestTag)),
-            actions: [
-              Pressable(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: Text(l10n.actionLater),
-                ),
-              ),
-              Pressable(
-                child: FilledButton(
-                  onPressed: () async {
-                    Navigator.pop(ctx);
-                    final uri = Uri.parse(
-                      json['html_url'] as String? ?? AppConstants.releasesUrl,
-                    );
-                    await launchUrl(
-                      uri,
-                      mode: LaunchMode.externalApplication,
-                    );
-                  },
-                  child: Text(l10n.actionOpenRelease),
-                ),
-              ),
-            ],
-          ),
-        ));
-      } else {
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(l10n.updateUpToDate(current)),
-            backgroundColor: theme.colorScheme.surfaceContainerHigh,
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-      // Classified, not stringified. An offline check is not a failure — the
-      // user is told they are offline, in the app's own voice, instead of
-      // being shown `SocketException: Failed host lookup`.
-      final error = AppError.fromObject(e, fallback: AppErrorCode.updateFailed);
-      messenger.showSnackBar(
-        SnackBar(content: Text(describeError(error, l10n))),
-      );
-    }
-  }
+  /// Opens the update check. The check itself lives in [_UpdateCheckTile],
+  /// which owns the in-flight guard; this only hands it a context.
+  void _checkForUpdates(BuildContext context) => runUpdateCheck(context);
 
   @override
   Widget build(BuildContext context) {
@@ -296,6 +200,108 @@ class SettingsScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Runs an update check and reports the result.
+///
+/// No re-entry guard is needed: the progress dialog uses a non-dismissible
+/// barrier, which absorbs every tap until it is popped, so a second check
+/// cannot be started while one is in flight.
+Future<void> runUpdateCheck(BuildContext context) async {
+    final service = UpdateService();
+    final messenger = ScaffoldMessenger.of(context);
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
+    final dialog = showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _UpdateCheckingDialog(),
+    );
+
+    final result = await service.check();
+
+    if (!context.mounted) return;
+    // Dismiss the progress dialog and wait for it to actually go, so the
+    // result is never shown behind a lingering barrier.
+    Navigator.of(context, rootNavigator: true).pop();
+    await dialog;
+    if (!context.mounted) return;
+
+    final release = result.release;
+    if (release == null) {
+      // Classified, never stringified: no `SocketException` reaches the user.
+      final code = switch (result.failure) {
+        UpdateFailure.offline => AppErrorCode.offline,
+        _ => AppErrorCode.updateFailed,
+      };
+      messenger.showSnackBar(
+        SnackBar(content: Text(describeError(AppError(code), l10n))),
+      );
+      return;
+    }
+
+    const current = AppConstants.appVersion;
+    if (AppUtils.isNewerVersion(release.version, current)) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.updateAvailableTitle),
+          content: Text(l10n.updateAvailableBody(current, release.tag)),
+          actions: [
+            Pressable(
+              child: TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(l10n.actionLater),
+              ),
+            ),
+            Pressable(
+              child: FilledButton(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  await launchUrl(
+                    Uri.parse(release.url),
+                    mode: LaunchMode.externalApplication,
+                  );
+                },
+                child: Text(l10n.actionOpenRelease),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n.updateUpToDate(current)),
+          backgroundColor: theme.colorScheme.surfaceContainerHigh,
+        ),
+      );
+    }
+  }
+
+
+/// The blocking progress dialog shown while a check is in flight.
+class _UpdateCheckingDialog extends StatelessWidget {
+  const _UpdateCheckingDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return AlertDialog(
+      content: Row(
+        children: [
+          const SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2.5),
+          ),
+          const SizedBox(width: 16),
+          Expanded(child: Text(l10n.updateChecking)),
+        ],
       ),
     );
   }

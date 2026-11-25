@@ -5,6 +5,70 @@ All notable changes to Throw are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] — 2026-11-25
+
+The tab change was still wrong, the update check could hang forever on a working
+network, and a release could publish with no assets and still be marked failed.
+
+### Changed — the tab change is now a moving pair, like iOS
+
+Two failed attempts preceded this one, in opposite directions. The first slid the
+incoming screen across the whole window — "it overlays the whole second screen".
+The second dissolved the two screens in place, which put both screens' text at
+partial opacity in the same place — the "transparent, overlapping" complaint,
+arrived at from the other side.
+
+Neither is what a tab change wants. The two screens now move **together as one
+rigid pair**: the outgoing tab is pushed out along the axis of travel while the
+incoming tab arrives from the opposite edge, always exactly one window width
+apart, with nothing fading. The boundary sweeps across and no two pieces of text
+are ever legible in the same place. This is the `UIPageViewController` scroll
+transition, which is what "make it like iOS" describes.
+
+A test asserts the invariant directly: mid-transition the two screens must be
+one window width apart (the rejected cross-fade measured **0.0 px**).
+
+### Fixed — the update check could hang forever on a connected network
+
+`client.connectionTimeout` covers only the TCP handshake. Once connected, reading
+the response had **no deadline at all**, so on a slow or captive network — a
+hotel portal, a tether, mobile data that accepted the connection and then went
+quiet — the spinner never stopped. That is "update is broken even when
+connected".
+
+The check is now a testable `UpdateService` instead of forty lines inside the
+settings screen:
+
+* a deadline wraps the **whole** exchange, not just the connect — reproduced in
+  a test with a client that opens a connection and never answers; without the
+  fix that test hangs until the runner kills it;
+* transient faults (5xx, 429, timeouts) are retried three times with backoff —
+  GitHub's API 502'd during this project's own release, so a single blip being
+  reported as a permanent defect was always wrong;
+* a 404 and an unreadable body are *not* retried, and a tag that is not a
+  version is rejected rather than silently read as "up to date" forever;
+* offline is reported as offline, once — an answer, not a failure.
+
+The error copy is unchanged: `AppError` and its classifications still stand, and
+the new service maps onto them, so an offline check reads exactly as it did.
+
+### Changed — presses spring like an iOS control
+
+`Pressable` used one duration and one curve for both directions, which is why the
+feedback read as a colour flicker. The press now lands in 90 ms and the release
+springs back over 260 ms with a slight overshoot past 1.0, and the press scale
+deepens from 0.97 to 0.955. Navigation icons grow 8% when selected instead of
+hard-cutting between two glyphs.
+
+### Fixed — a release could publish with zero assets and still read as failed
+
+v1.3.2's `Create Release` died on `Error 502: Server Error` after creating the
+release, leaving it with no downloadable files, and the re-run then failed
+because the release already existed. The step now uses `allowUpdates` so it can
+update an existing release in place, retries asset uploads five times, and a new
+job asserts the number of published assets equals the number built — so a silent
+partial release fails loudly instead of shipping nothing.
+
 ## [1.3.2] — 2026-11-24
 
 The tab change was a full-screen slide, and it stuttered on release. It is now

@@ -394,90 +394,90 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('a tab change is a transition, not a full-width slide',
+    testWidgets('the two screens move as one pair, never cross-fading in place',
         (tester) async {
-      // Reported: "swipe ain't smooth, it overlays the whole second screen,
-      // make it like transition rather than whole swiping". The incoming tab
-      // used to arrive from a full screen width away, so every pixel of one
-      // screen travelled over every pixel of the other.
+      // Reported twice, from opposite directions: first "it overlays the whole
+      // second screen" (full-width slide), then "transparent, overlaps" when I
+      // replaced it with a cross-dissolve and both screens' text landed on top
+      // of each other at partial opacity.
       //
-      // This measures how far the incoming screen actually moves across the
-      // whole transition. A full-width slide is 800 px here; a transition
-      // should be a short nudge.
+      // The invariant that satisfies both: the outgoing and incoming screens
+      // stay exactly one screen apart for the whole transition, so the boundary
+      // sweeps across and no two pieces of text are ever legible in the same
+      // place. iOS does it this way — UIPageViewController moves both views as a
+      // rigid pair and fades nothing.
       Atmosphere.enabled = false;
 
       await tester.pumpWidget(const _TabHost());
       await tester.pump();
-      final homeDx = tester.getTopLeft(find.text('ONE')).dx;
 
-      // Switch to tab 1 and watch the incoming screen's first frame.
       await tester.tap(find.text('go'));
       await tester.pump();
-      final firstDx = tester.getTopLeft(find.text('TWO')).dx;
+      await tester.pump(const Duration(milliseconds: 40));
 
-      await tester.pump(const Duration(milliseconds: 60));
-      final midDx = tester.getTopLeft(find.text('TWO')).dx;
+      // Both screens are on stage mid-transition.
+      expect(find.text('ONE'), findsOneWidget);
+      expect(find.text('TWO'), findsOneWidget);
 
-      await tester.pumpAndSettle();
-      final settledDx = tester.getTopLeft(find.text('TWO')).dx;
+      final one = tester.getTopLeft(find.text('ONE')).dx;
+      final two = tester.getTopLeft(find.text('TWO')).dx;
 
-      final travelled = (settledDx - firstDx).abs();
-      expect(travelled, greaterThan(0),
-          reason: 'there should be directional movement');
-      expect(travelled, lessThan(80),
-          reason: 'the screen should ease in a short distance, not cross the '
-              'whole window; travelled $travelled px');
+      // Locked together: their separation is the window width, not a small
+      // offset that would put both texts in the same place.
+      final gap = (two - one).abs();
+      expect(gap, greaterThan(400),
+          reason: 'the screens must stay a screen apart, not overlap in place; '
+              'gap was $gap px');
 
-      // It moves monotonically toward rest: never backwards mid-transition.
-      expect((midDx - firstDx).abs(), lessThanOrEqualTo(travelled + 0.5));
-      // And the text was already near its resting place, not off screen.
-      expect((firstDx - homeDx).abs(), lessThan(80),
-          reason: 'the incoming text must not start a screen away');
+      // And nothing is transparent: each screen is fully painted (the pair
+      // model relies on opacity 1.0, unlike the dissolve it replaces).
+      final opacities = tester
+          .widgetList<Opacity>(
+            find.descendant(
+              of: find.byType(SwipeableTabs),
+              matching: find.byType(Opacity),
+            ),
+          )
+          .map((o) => o.opacity)
+          .toList();
+      for (final o in opacities) {
+        expect(o, 1.0,
+            reason: 'a moving pair must not fade; found opacity $o');
+      }
     });
 
-    testWidgets('releasing a committed drag does not snap the screen back',
+    testWidgets('the pair travels exactly one window width in total',
         (tester) async {
-      // "Not smooth": `forward(from: 0)` restarted the transition from the far
-      // edge, so on release the incoming screen jumped back to its starting
-      // offset and replayed the whole move. Progress now carries across.
+      // Direction and lockstep: the outgoing screen leaves by exactly the
+      // distance the incoming one covers, so the two always sum to one width.
+      // If they drifted apart the seam would stretch or gap.
       Atmosphere.enabled = false;
 
       await tester.pumpWidget(const _TabHost());
       await tester.pump();
 
-      final gesture = await tester.startGesture(const Offset(400, 300));
-      await gesture.moveBy(const Offset(-200, 0));
+      await tester.tap(find.text('go'));
       await tester.pump();
 
-      // Scoped to the incoming screen's own subtree. Taking the largest
-      // opacity in the tree would measure the *outgoing* screen, which stays
-      // near 1.0 and would make this assertion vacuous.
-      double incomingOpacity() {
-        final opacities = find.ancestor(
-          of: find.text('TWO'),
-          matching: find.byType(Opacity),
-        );
-        expect(opacities, findsWidgets,
-            reason: 'the incoming screen must be inside an animated Opacity');
-        return tester
-            .widgetList<Opacity>(opacities)
-            .map((o) => o.opacity)
-            .reduce((a, b) => a < b ? a : b);
+      double gapAt() =>
+          (tester.getTopLeft(find.text('TWO')).dx -
+                  tester.getTopLeft(find.text('ONE')).dx)
+              .abs();
+
+      final samples = <double>[];
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 20));
+        if (find.text('ONE').evaluate().isEmpty) break;
+        samples.add(gapAt());
       }
-
-      final before = incomingOpacity();
-      expect(before, greaterThan(0),
-          reason: 'the incoming screen is already part-way in during the drag');
-
-      await gesture.up();
-      await tester.pump(); // first frame after release
-
-      final after = incomingOpacity();
-      expect(after, greaterThanOrEqualTo(before - 0.02),
-          reason: 'the incoming screen must not snap back to transparent when '
-              'the finger lifts');
       await tester.pumpAndSettle();
-      expect(find.text('TWO'), findsOneWidget);
+
+      expect(samples, isNotEmpty);
+      // The host window is 800 wide; the pair stays one width apart throughout.
+      for (final g in samples) {
+        expect((g - 800).abs(), lessThan(1.0),
+            reason: 'pair separation drifted to $g px mid-transition');
+      }
     });
 }
 

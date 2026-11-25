@@ -13,9 +13,14 @@ import 'package:flutter/material.dart';
 /// one place — and [Motion.respectReduceMotion] makes the OS "remove
 /// animations" setting a hard override.
 abstract final class Motion {
-  /// Press-down scale for anything tappable. 0.97 is enough to feel without
-  /// making neighbouring rows look like they wobble.
-  static const double pressScale = 0.97;
+  /// Press-down scale for anything tappable.
+  ///
+  /// 0.955 rather than 0.97: at 0.97 the press was so shallow it read as a
+  /// colour flicker on a large row. iOS buttons dip further and come back with
+  /// a little overshoot, which is what makes them feel physical rather than
+  /// merely responsive. The scale is paired with [pressCurve] and the spring
+  /// below so the release carries that slight bounce.
+  static const double pressScale = 0.955;
 
   /// Quick, for state the user caused (press, selection).
   static const Duration fast = Duration(milliseconds: 120);
@@ -30,7 +35,22 @@ abstract final class Motion {
   static const Duration stagger = Duration(milliseconds: 45);
 
   static const Curve curve = Curves.easeOutCubic;
-  static const Curve pressCurve = Curves.easeOut;
+
+  /// Down-press easing. Fast out of the gate — the finger should feel the
+  /// button yield immediately — then settle softly into the compressed scale.
+  static const Curve pressCurve = Curves.easeOutQuart;
+
+  /// Release easing. Slight overshoot past 1.0, like a spring: this is the
+  /// detail that makes an iOS button feel alive rather than merely animated.
+  /// Applied only on the way back up, never on the press.
+  static const Curve releaseCurve = Curves.easeOutBack;
+
+  /// Duration of the press-down. Shorter than [fast] on purpose: any longer and
+  /// the control feels laggy under the finger.
+  static const Duration pressIn = Duration(milliseconds: 90);
+
+  /// Release is slower than the press so the spring has room to overshoot.
+  static const Duration pressOut = Duration(milliseconds: 260);
 
   /// Travel curve for a tab change.
   ///
@@ -90,7 +110,12 @@ class _PressableState extends State<Pressable> {
 
   @override
   Widget build(BuildContext context) {
-    final duration = Motion.adapt(context, Motion.fast);
+    final reduce = Motion.reduceMotion(context);
+    // The press and the release are different gestures and want different
+    // physics. Pressing down is quick and lands softly; letting go springs back
+    // with a touch of overshoot. A single AnimatedScale cannot express that —
+    // one duration and one curve had to serve both directions, which is why the
+    // old feedback read as a colour flicker rather than a button being pushed.
     return Listener(
       // `translucent` puts this Listener on the hit-test path even when the
       // child does not paint an opaque box, while still letting children win
@@ -102,8 +127,10 @@ class _PressableState extends State<Pressable> {
       onPointerCancel: (_) => _set(false),
       child: AnimatedScale(
         scale: _down ? widget.scale : 1,
-        duration: duration,
-        curve: Motion.pressCurve,
+        duration: reduce
+            ? Duration.zero
+            : (_down ? Motion.pressIn : Motion.pressOut),
+        curve: _down ? Motion.pressCurve : Motion.releaseCurve,
         child: widget.child,
       ),
     );

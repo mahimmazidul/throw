@@ -253,41 +253,52 @@ class _SwipeableTabsState extends State<SwipeableTabs>
           return Stack(
             fit: StackFit.expand,
             children: [
-              // A transition, not a slide.
+              // Movement, not a cross-fade.
               //
-              // The incoming tab used to be pushed across the full width of the
-              // window, so a swipe shoved every pixel of one screen over every
-              // pixel of the other — the whole second screen travelling over the
-              // first. That is a page-turn, not a tab change, and on a wide
-              // window it is a long way to watch.
+              // Two earlier attempts got this wrong in opposite directions. The
+              // first slid the incoming screen across the entire window, which
+              // shoved every pixel of one screen over every pixel of the other.
+              // The second dissolved the two screens in place, which put both
+              // screens' text on top of each other at partial opacity — the
+              // exact "overlapping, transparent" complaint, arrived at from the
+              // other side.
               //
-              // Instead the outgoing tab eases back a short distance, dims
-              // slightly and settles, while the incoming tab arrives from a
-              // short offset in the direction of travel with a staggered fade.
-              // The movement is 16–28 px on a phone and a shade more on a wide
-              // window: a change of state, like a cross-dissolve with direction,
-              // rather than a journey across the screen.
-              if (moving) ...[
-                Opacity(
-                  opacity: 1.0 - 0.42 * t,
-                  child: Transform.translate(
-                    offset: Offset(-travel * _outgoingNudge * t, 0),
-                    child: _buildScreen(outgoing, canvas: canvas),
+              // What a tab change wants is neither: the two screens move
+              // *together*, pinned to each other, so the boundary sweeps across
+              // and no two pieces of text are ever legible in the same place.
+              // That is how iOS does it: `UIPageViewController` with a scroll
+              // transition moves both views as one rigid pair. Nothing fades.
+              if (incoming != null && incoming != outgoing)
+                ClipRect(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Outgoing: pushed out along the axis of travel.
+                      FractionalTranslation(
+                        translation: Offset(-travel * t, 0),
+                        child: _buildScreen(outgoing, canvas: canvas),
+                      ),
+                      // Incoming: arrives from the opposite edge, in lockstep.
+                      FractionalTranslation(
+                        translation: Offset(travel * (1 - t), 0),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.16),
+                                blurRadius: 20,
+                                offset: Offset(-travel * 4, 0),
+                              ),
+                            ],
+                          ),
+                          child: _buildScreen(incoming, canvas: canvas),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ] else
+                )
+              else
                 _buildScreen(outgoing, canvas: canvas),
-              if (moving)
-                Opacity(
-                  opacity: t,
-                  child: Transform.translate(
-                    offset: Offset(
-                      travel * _incomingOffset * (1 - Motion.dissolve.transform(t)),
-                      0,
-                    ),
-                    child: _buildScreen(incoming, canvas: canvas),
-                  ),
-                ),
             ],
           );
         },
@@ -296,12 +307,6 @@ class _SwipeableTabsState extends State<SwipeableTabs>
       },
     );
   }
-
-  /// How far the outgoing tab eases back, in logical pixels.
-  static const double _outgoingNudge = 28;
-
-  /// The distance the incoming tab travels on its way in.
-  static const double _incomingOffset = 34;
 
   /// A tab, guaranteed opaque.
   ///

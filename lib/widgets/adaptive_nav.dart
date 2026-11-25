@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/motion.dart';
+
 import '../core/theme.dart';
 
 import '../core/breakpoints.dart';
@@ -54,8 +56,8 @@ class AdaptiveNav extends StatelessWidget {
           destinations: destinations
               .map(
                 (d) => NavigationDestination(
-                  icon: Icon(d.icon),
-                  selectedIcon: Icon(d.activeIcon),
+                  icon: _NavIcon(icon: d.icon),
+                  selectedIcon: _NavIcon(icon: d.activeIcon, selected: true),
                   label: d.label,
                 ),
               )
@@ -84,8 +86,8 @@ class AdaptiveNav extends StatelessWidget {
             destinations: destinations
                 .map(
                   (d) => NavigationRailDestination(
-                    icon: Icon(d.icon),
-                    selectedIcon: Icon(d.activeIcon),
+                    icon: _NavIcon(icon: d.icon),
+                    selectedIcon: _NavIcon(icon: d.activeIcon, selected: true),
                     label: Text(d.label),
                   ),
                 )
@@ -95,6 +97,31 @@ class AdaptiveNav extends StatelessWidget {
           Expanded(child: body),
         ],
       ),
+    );
+  }
+}
+
+/// A destination icon that reacts to being selected.
+///
+/// Stock `NavigationBar` swaps one icon for another instantly, which on a
+/// desktop rail reads as a flicker rather than a selection. iOS never hard-cuts
+/// a selected control: the glyph grows slightly and settles. 1.08 over 180 ms
+/// with the same overshoot curve the buttons use is enough to make the change
+/// legible without drawing attention to itself.
+class _NavIcon extends StatelessWidget {
+  const _NavIcon({required this.icon, this.selected = false});
+
+  final IconData icon;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduce = Motion.reduceMotion(context);
+    return AnimatedScale(
+      scale: selected && !reduce ? 1.08 : 1.0,
+      duration: reduce ? Duration.zero : Motion.pressOut,
+      curve: Motion.releaseCurve,
+      child: Icon(icon),
     );
   }
 }
