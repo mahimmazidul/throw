@@ -252,9 +252,9 @@ jobs:
       # in place, and the retry settings ride out a transient 5xx.
       - uses: ncipollo/release-action@v1
         id: release
-        retry-attempts: 5
-        retry-wait: 5000
         with:
+          retry-attempts: 5
+          retry-wait: 5000
           artifacts: "release-files/**/*"
           tag: ${{ github.event.inputs.tag || github.ref_name }}
           name: "Throw ${{ github.event.inputs.tag || github.ref_name }}"
